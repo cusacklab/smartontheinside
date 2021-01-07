@@ -4,7 +4,7 @@ import numpy as np
 
 
 # These should be DLPFC regions
-roilist=[10,12]
+roilist=[26,67,68,70,71,73,83,84,85,86,87,96,98]
 # Also select task contrasts
 taskcons=[1,3,77]
 
