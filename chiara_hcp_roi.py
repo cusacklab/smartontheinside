@@ -6,7 +6,8 @@ import numpy as np
 # These should be DLPFC regions
 roilist=[26,67,68,70,71,73,83,84,85,86,87,96,98]
 # Also select task contrasts
-taskcons=[1,3,77]
+taskcons=['tfMRI_WM_2BK','tfMRI_WM_0BK', 'tfMRI_WM_BODY', 'tfMRI_WM_FACE', 'tfMRI_WM_PLACE', 'tfMRI_WM_TOOL', 'tfMRI_GAMBLING_PUNISH', 'tfMRI_GAMBLING_REWARD', 'tfMRI_MOTOR_CUE', 'tfMRI_MOTOR_LF', 'tfMRI_MOTOR_LH', 'tfMRI_MOTOR_RF', 'tfMRI_MOTOR_RH', 'tfMRI_MOTOR_T', 'tfMRI_LANGUAGE_MATH', 'tfMRI_LANGUAGE_STORY', 'tfMRI_SOCIAL_RANDOM', 'tfMRI_SOCIAL_TOM', 'tfMRI_RELATIONAL_MATCH', 'tfMRI_RELATIONAL_REL', 'tfMRI_EMOTION_FACES', 'tfMRI_EMOTION_SHAPES']
+
 
 nroi=len(roilist)
 ntaskcons=len(taskcons)
