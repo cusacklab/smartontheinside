@@ -30,12 +30,13 @@ nroi=len(roilist)
 ntaskcons=len(taskcons)
 
 s3 = boto3.resource('s3')
-obj = s3.Object(bucketname, itemname)
+obj = s3.Object(hcp-openaccess, itemname)
 body = obj.get()['Body'].read()
-
+# bucket name is hcp-openaccess
 
 # Load fMRI task data
 task_img=nib.load('Q1-Q6_RelatedParcellation210_tfMRI_ALLTASKS_level3_beta_hp200_s2_MSMAll_2_d41_WRN_DeDrift_norm.dscalar.nii')
+# name of the file we need: 424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii
 # If we use temp file then
 task_img=nib.load(body)
 task_dat=task_img.get_fdata()
