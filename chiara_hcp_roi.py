@@ -24,28 +24,35 @@ roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98]
 #'tfMRI_LANGUAGE_STORY', 'tfMRI_SOCIAL_RANDOM', 'tfMRI_SOCIAL_TOM', 'tfMRI_RELATIONAL_MATCH', 'tfMRI_RELATIONAL_REL', 'tfMRI_EMOTION_FACES', 'tfMRI_EMOTION_SHAPES'
 #taskcons=[8, 9, 14, 15, 16, 17, 30, 31, 36, 37, 38, 39, 40, 41, 62, 63, 68, 69, 80, 81] 
 #these are all the folders, we need to select a few
-roilist=['PRE rfMRI_REST1_LR', 'PRE rfMRI_REST1_RL', 'PRE rfMRI_REST2_LR', 'PRE rfMRI_REST2_RL', 'PRE tfMRI_EMOTION', 'PRE tfMRI_EMOTION_LR', 'PRE tfMRI_EMOTION_RL', 'PRE tfMRI_GAMBLING', 'PRE tfMRI_GAMBLING_LR', 'PRE tfMRI_GAMBLING_RL', 'PRE tfMRI_LANGUAGE', 'PRE tfMRI_LANGUAGE_LR', 'PRE tfMRI_LANGUAGE_RL', 'PRE tfMRI_MOTOR', 'PRE tfMRI_MOTOR_LR', 'PRE tfMRI_MOTOR_RL', 'PRE tfMRI_RELATIONAL', 'PRE tfMRI_RELATIONAL_LR', 'PRE tfMRI_RELATIONAL_RL', 'PRE tfMRI_SOCIAL', 'PRE tfMRI_SOCIAL_LR', 'PRE tfMRI_SOCIAL_RL', 'PRE tfMRI_WM', 'PRE tfMRI_WM_LR', 'PRE tfMRI_WM_RL']
+taskcons=['PRE tfMRI_EMOTION', 'PRE tfMRI_GAMBLING', 'PRE tfMRI_LANGUAGE', 'PRE tfMRI_MOTOR', 'PRE tfMRI_RELATIONAL', 'PRE tfMRI_SOCIAL', 'PRE tfMRI_WM']
 
 nroi=len(roilist)
 ntaskcons=len(taskcons)
 
+#####       OPTION 1
 s3 = boto3.resource('s3')
+# bucket name is hcp-openaccess
 obj = s3.Object(hcp-openaccess, itemname)
 body = obj.get()['Body'].read()
-# bucket name is hcp-openaccess
 
-# Load fMRI task data
-task_img=nib.load('Q1-Q6_RelatedParcellation210_tfMRI_ALLTASKS_level3_beta_hp200_s2_MSMAll_2_d41_WRN_DeDrift_norm.dscalar.nii')
-# name of the file we need: 424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii
+#####       OPTION 2
 # If we use temp file then
 task_img=nib.load(body)
 task_dat=task_img.get_fdata()
-# Find which vertices correspond to the cortex
-task_surfmask=task_img.header.get_axis(1).surface_mask
-task_dat_surf=task_dat[:,task_surfmask]
+
+
+
+# Load fMRI task data, name of the file we need: 424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii
+# We need to choose smoothing (2 mm, 4 mm, 8 mm, 12 mm)
+task_img=nib.load('424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii')
+
 
 roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
 roi_dat=roi_img.get_fdata().ravel()
+
+# Find which vertices correspond to the cortex
+task_surfmask=task_img.header.get_axis(1).surface_mask
+task_dat_surf=task_dat[:,task_surfmask]
 
 meanact=np.zeros((ntaskcons,nroi))
 
