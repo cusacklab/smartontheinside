@@ -4,6 +4,7 @@ import numpy as np
 import boto3
 
 ## Exploratory subjects from  Ito T, Hearne LJ, Cole MW (2020)
+## We can validate this analysis on the validation subjects also from them
 subjNums = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860',
             '103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234',
             '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744',
@@ -18,6 +19,7 @@ subjNums = ['178950','189450','199453','209228','220721','298455','356948','4192
             '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
 
 # These are the DLPFC regions
+# Add 180 for the other hemisphere
 roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98]
 # Selecting these task contrasts: 'tfMRI_WM_2BK','tfMRI_WM_0BK', 'tfMRI_WM_BODY', 'tfMRI_WM_FACE', 'tfMRI_WM_PLACE', 'tfMRI_WM_TOOL', 'tfMRI_GAMBLING_PUNISH',
 #'tfMRI_GAMBLING_REWARD', 'tfMRI_MOTOR_CUE', 'tfMRI_MOTOR_LF', 'tfMRI_MOTOR_LH', 'tfMRI_MOTOR_RF', 'tfMRI_MOTOR_RH', 'tfMRI_MOTOR_T', 'tfMRI_LANGUAGE_MATH', 
@@ -26,9 +28,11 @@ roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98]
 #these are all the folders, we need to select a few
 taskcons=['PRE tfMRI_EMOTION', 'PRE tfMRI_GAMBLING', 'PRE tfMRI_LANGUAGE', 'PRE tfMRI_MOTOR', 'PRE tfMRI_RELATIONAL', 'PRE tfMRI_SOCIAL', 'PRE tfMRI_WM']
 
+nsub=len(subjNums)
 nroi=len(roilist)
 ntaskcons=len(taskcons)
 
+# add s3
 #####       OPTION 1
 s3 = boto3.resource('s3')
 # bucket name is hcp-openaccess
@@ -41,10 +45,13 @@ task_img=nib.load(body)
 task_dat=task_img.get_fdata()
 
 
-
-# Load fMRI task data, name of the file we need: 424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii
-# We need to choose smoothing (2 mm, 4 mm, 8 mm, 12 mm)
-task_img=nib.load('424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii')
+for sub in nsub:
+    for task in ntaskcons:
+    # Load fMRI task data, name of the file we need: 424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii
+    task_img=nib.load('%s'%(sub)+'_' %s(task)+'_level2_hp200_s2_MSMAll.dscalar.nii')
+        for roiind, roi in enumerate(nroi):
+            sel=task_dat_surf[:, roi_dat == roi]
+            meanact[:, roiind] = np.mean(sel, 1)[taskcons]
 
 
 roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
@@ -56,9 +63,7 @@ task_dat_surf=task_dat[:,task_surfmask]
 
 meanact=np.zeros((ntaskcons,nroi))
 
-for roiind, roi in enumerate(roilist):
-    sel=task_dat_surf[:, roi_dat == roi]
-    meanact[:, roiind] = np.mean(sel, 1)[taskcons]
+
 
 print(meanact)
 print(meanact.shape)
