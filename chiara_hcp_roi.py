@@ -20,16 +20,18 @@ subjNums = ['178950','189450','199453','209228','220721','298455','356948','4192
 
 # These are the DLPFC regions
 # Add 180 for the other hemisphere
-roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98]
+roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250, 251, 253, 264, 265, 266, 267, 276, 278]
 # Selecting these task contrasts: 'tfMRI_WM_2BK','tfMRI_WM_0BK', 'tfMRI_WM_BODY', 'tfMRI_WM_FACE', 'tfMRI_WM_PLACE', 'tfMRI_WM_TOOL', 'tfMRI_GAMBLING_PUNISH',
 #'tfMRI_GAMBLING_REWARD', 'tfMRI_MOTOR_CUE', 'tfMRI_MOTOR_LF', 'tfMRI_MOTOR_LH', 'tfMRI_MOTOR_RF', 'tfMRI_MOTOR_RH', 'tfMRI_MOTOR_T', 'tfMRI_LANGUAGE_MATH', 
 #'tfMRI_LANGUAGE_STORY', 'tfMRI_SOCIAL_RANDOM', 'tfMRI_SOCIAL_TOM', 'tfMRI_RELATIONAL_MATCH', 'tfMRI_RELATIONAL_REL', 'tfMRI_EMOTION_FACES', 'tfMRI_EMOTION_SHAPES'
 #taskcons=[8, 9, 14, 15, 16, 17, 30, 31, 36, 37, 38, 39, 40, 41, 62, 63, 68, 69, 80, 81] 
 #these are all the folders, we need to select a few
-taskcons=['PRE tfMRI_EMOTION', 'PRE tfMRI_GAMBLING', 'PRE tfMRI_LANGUAGE', 'PRE tfMRI_MOTOR', 'PRE tfMRI_RELATIONAL', 'PRE tfMRI_SOCIAL', 'PRE tfMRI_WM']
-
+taskfol=['PRE tfMRI_EMOTION', 'PRE tfMRI_GAMBLING', 'PRE tfMRI_LANGUAGE', 'PRE tfMRI_MOTOR', 'PRE tfMRI_RELATIONAL', 'PRE tfMRI_SOCIAL', 'PRE tfMRI_WM']
+taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 'tfMRI_RELATIONAL', 'tfMRI_SOCIAL', 'tfMRI_WM']
+ 
 nsub=len(subjNums)
 nroi=len(roilist)
+ntaskfols=len(taskfol)
 ntaskcons=len(taskcons)
 
 # add s3
@@ -37,7 +39,16 @@ ntaskcons=len(taskcons)
 s3 = boto3.resource('s3')
 # bucket name is hcp-openaccess
 obj = s3.Object(hcp-openaccess, ('%s'%(sub)+'_' %s(task)+'_level2_hp200_s2_MSMAll.dscalar.nii'))
+
+s3.download_file(hcp-openaccess, objcc, 's3://hcp-openaccess/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii' --profile=hcpcc)
+
+s3.download_file(hcp-openaccess, obj, '/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii --profile=hcpcc.dscalar.nii')
+
+
+#obj = s3.Object('hcp-openaccess', 's3://hcp-openaccess/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii --profile=hcpcc.dscalar.nii')
 body = obj.get()['Body'].read()
+
+
 
 #####       OPTION 2
 # If we use temp file then
