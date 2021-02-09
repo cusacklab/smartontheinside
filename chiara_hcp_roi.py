@@ -36,7 +36,7 @@ ntaskcons=len(taskcons)
 #####       OPTION 1
 s3 = boto3.resource('s3')
 # bucket name is hcp-openaccess
-obj = s3.Object(hcp-openaccess, itemname)
+obj = s3.Object(hcp-openaccess, ('%s'%(sub)+'_' %s(task)+'_level2_hp200_s2_MSMAll.dscalar.nii'))
 body = obj.get()['Body'].read()
 
 #####       OPTION 2
@@ -47,8 +47,9 @@ task_dat=task_img.get_fdata()
 
 for sub in nsub:
     for task in ntaskcons:
+            (os.path.join(self.resultspth,'Activity.txt'))
     # Load fMRI task data, name of the file we need: 424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii
-    task_img=nib.load('%s'%(sub)+'_' %s(task)+'_level2_hp200_s2_MSMAll.dscalar.nii')
+    task_img=nib.load(obj)
         for roiind, roi in enumerate(nroi):
             sel=task_dat_surf[:, roi_dat == roi]
             meanact[:, roiind] = np.mean(sel, 1)[taskcons]
