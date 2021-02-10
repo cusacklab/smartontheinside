@@ -36,16 +36,10 @@ ntaskcons=len(taskcons)
 
 # add s3
 #####       OPTION 1
-s3 = boto3.resource('s3')
+s3 = boto3.client('s3')
 # bucket name is hcp-openaccess
 obj = s3.Object(hcp-openaccess, ('%s'%(sub)+'_' %s(task)+'_level2_hp200_s2_MSMAll.dscalar.nii'))
-
-s3.download_file(hcp-openaccess, objcc, 's3://hcp-openaccess/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii' --profile=hcpcc)
-
-s3.download_file(hcp-openaccess, obj, '/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii --profile=hcpcc.dscalar.nii')
-
-
-#obj = s3.Object('hcp-openaccess', 's3://hcp-openaccess/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii --profile=hcpcc.dscalar.nii')
+#s3.download_file('hcp-openaccess', 'objcc', 's3://hcp-openaccess/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii')
 body = obj.get()['Body'].read()
 
 
