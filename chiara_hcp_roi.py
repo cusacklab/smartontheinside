@@ -21,12 +21,10 @@ subjNums = ['178950','189450','199453','209228','220721','298455','356948','4192
 # These are the DLPFC regions
 # Add 180 for the other hemisphere
 roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250, 251, 253, 264, 265, 266, 267, 276, 278]
-# Selecting these task contrasts: 'tfMRI_WM_2BK','tfMRI_WM_0BK', 'tfMRI_WM_BODY', 'tfMRI_WM_FACE', 'tfMRI_WM_PLACE', 'tfMRI_WM_TOOL', 'tfMRI_GAMBLING_PUNISH',
-#'tfMRI_GAMBLING_REWARD', 'tfMRI_MOTOR_CUE', 'tfMRI_MOTOR_LF', 'tfMRI_MOTOR_LH', 'tfMRI_MOTOR_RF', 'tfMRI_MOTOR_RH', 'tfMRI_MOTOR_T', 'tfMRI_LANGUAGE_MATH', 
-#'tfMRI_LANGUAGE_STORY', 'tfMRI_SOCIAL_RANDOM', 'tfMRI_SOCIAL_TOM', 'tfMRI_RELATIONAL_MATCH', 'tfMRI_RELATIONAL_REL', 'tfMRI_EMOTION_FACES', 'tfMRI_EMOTION_SHAPES'
 #taskcons=[8, 9, 14, 15, 16, 17, 30, 31, 36, 37, 38, 39, 40, 41, 62, 63, 68, 69, 80, 81] 
-#these are all the folders, we need to select a few
+#these are  the folders
 taskfol=['PRE tfMRI_EMOTION', 'PRE tfMRI_GAMBLING', 'PRE tfMRI_LANGUAGE', 'PRE tfMRI_MOTOR', 'PRE tfMRI_RELATIONAL', 'PRE tfMRI_SOCIAL', 'PRE tfMRI_WM']
+#these are the tasks
 taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 'tfMRI_RELATIONAL', 'tfMRI_SOCIAL', 'tfMRI_WM']
  
 nsub=len(subjNums)
@@ -34,44 +32,34 @@ nroi=len(roilist)
 ntaskfols=len(taskfol)
 ntaskcons=len(taskcons)
 
-# add s3
-#####       OPTION 1
-s3 = boto3.client('s3')
-# bucket name is hcp-openaccess
-obj = s3.Object(hcp-openaccess, ('%s'%(sub)+'_' %s(task)+'_level2_hp200_s2_MSMAll.dscalar.nii'))
-#s3.download_file('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
-body = obj.get()['Body'].read()
-
-
-
-#####       OPTION 2
-# If we use temp file then
-task_img=nib.load(body)
-task_dat=task_img.get_fdata()
-
 
 for sub in nsub:
     for task in ntaskcons:
-            (os.path.join(self.resultspth,'Activity.txt'))
-    # Load fMRI task data, name of the file we need: 424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii
-    task_img=nib.load(obj)
+        s3 = boto3.client('s3')
+        # doc at https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-example-download-file.html
+        # bucket name is hcp-openaccess
+        # Load t-fMRI time series, name of the file we need: '/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii','
+        obj = s3.Object(hcp-openaccess, ('HCP_1200/%s'%(subjNums[sub])+'/MNINonLinear/Results/%s'%s(taskcons[task])+'/%s'%(subjNums[sub])+'_'%s(taskcons[task])+'_level2_hp200_s2_MSMAll.dscalar.nii'), 'objname')
+        #s3.download_file('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
+        # Not sure about the next part, will probably need to be adjusted        
+        ts = obj.get()['TS'].read()
+        task_img=nib.load(ts)
+        task_dat=task_img.get_fdata()
+        task_img=nib.load(obj)
         for roiind, roi in enumerate(nroi):
             sel=task_dat_surf[:, roi_dat == roi]
             meanact[:, roiind] = np.mean(sel, 1)[taskcons]
 
-
-roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
-roi_dat=roi_img.get_fdata().ravel()
+#roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
+#roi_dat=roi_img.get_fdata().ravel()
 
 # Find which vertices correspond to the cortex
-task_surfmask=task_img.header.get_axis(1).surface_mask
-task_dat_surf=task_dat[:,task_surfmask]
+#task_surfmask=task_img.header.get_axis(1).surface_mask
+#task_dat_surf=task_dat[:,task_surfmask]
 
-meanact=np.zeros((ntaskcons,nroi))
+#meanact=np.zeros((ntaskcons,nroi))
 
-
-
-print(meanact)
-print(meanact.shape)
+#print(meanact)
+#print(meanact.shape)
 
 
