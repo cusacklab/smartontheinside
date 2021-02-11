@@ -19,27 +19,23 @@ subjNums = ['178950','189450','199453','209228','220721','298455','356948','4192
             '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
 
 # These are the DLPFC regions
-# Add 180 for the other hemisphere
 roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250, 251, 253, 264, 265, 266, 267, 276, 278]
 #taskcons=[8, 9, 14, 15, 16, 17, 30, 31, 36, 37, 38, 39, 40, 41, 62, 63, 68, 69, 80, 81] 
-#these are  the folders
-taskfol=['PRE tfMRI_EMOTION', 'PRE tfMRI_GAMBLING', 'PRE tfMRI_LANGUAGE', 'PRE tfMRI_MOTOR', 'PRE tfMRI_RELATIONAL', 'PRE tfMRI_SOCIAL', 'PRE tfMRI_WM']
 #these are the tasks
 taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 'tfMRI_RELATIONAL', 'tfMRI_SOCIAL', 'tfMRI_WM']
- 
-nsub=len(subjNums)
-nroi=len(roilist)
-ntaskfols=len(taskfol)
-ntaskcons=len(taskcons)
 
-
-for sub in nsub:
-    for task in ntaskcons:
-        s3 = boto3.client('s3')
+s3 = boto3.client('s3')
+for sub in enumerate(subjNums): 
+    for task in enumerate(ntaskcons):
         # doc at https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-example-download-file.html
         # bucket name is hcp-openaccess
         # Load t-fMRI time series, name of the file we need: '/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii','
-        obj = s3.Object(hcp-openaccess, ('HCP_1200/%s'%(subjNums[sub])+'/MNINonLinear/Results/%s'%s(taskcons[task])+'/%s'%(subjNums[sub])+'_'%s(taskcons[task])+'_level2_hp200_s2_MSMAll.dscalar.nii'), 'objname')
+
+#RHODRI: I'd suggest you make the object name with a line like this:	objname=f''HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii' then do 
+#print(objname)
+#and use aws s3 ls s3://hcp-openaccess/[whatever it printed out]
+#to check you've got the filename right. If you haven't (i.e., the ls command doesn't show anything), then progressively chop bits off the end until you get something, to work out where the error is
+        obj = s3.Object('hcp-openaccess', (f''HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii'), 'objname')
         #s3.download_file('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
         # Not sure about the next part, will probably need to be adjusted        
         ts = obj.get()['TS'].read()
