@@ -26,7 +26,7 @@ taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 't
 
 s3 = boto3.client('s3')
 for sub in enumerate(subjNums): 
-    for task in enumerate(ntaskcons):
+    for con in enumerate(taskcons):
         # doc at https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-example-download-file.html
         # bucket name is hcp-openaccess
         # Load t-fMRI time series, name of the file we need: '/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii','
@@ -35,16 +35,16 @@ for sub in enumerate(subjNums):
 #print(objname)
 #and use aws s3 ls s3://hcp-openaccess/[whatever it printed out]
 #to check you've got the filename right. If you haven't (i.e., the ls command doesn't show anything), then progressively chop bits off the end until you get something, to work out where the error is
-        obj = s3.Object('hcp-openaccess', (f''HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii'), 'objname')
+        obj = s3.Object('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')
         #s3.download_file('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
         # Not sure about the next part, will probably need to be adjusted        
         ts = obj.get()['TS'].read()
         task_img=nib.load(ts)
         task_dat=task_img.get_fdata()
         task_img=nib.load(obj)
-        for roiind, roi in enumerate(nroi):
+        for roi in enumerate(roilist):
             sel=task_dat_surf[:, roi_dat == roi]
-            meanact[:, roiind] = np.mean(sel, 1)[taskcons]
+            meanact[:, roi] = np.mean(sel, 1)[taskcons]
 
 #roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
 #roi_dat=roi_img.get_fdata().ravel()
