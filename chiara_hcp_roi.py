@@ -37,7 +37,8 @@ for sub in enumerate(subjNums):
 #to check you've got the filename right. If you haven't (i.e., the ls command doesn't show anything), then progressively chop bits off the end until you get something, to work out where the error is
         obj = s3.Object('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')
         #s3.download_file('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
-        # Not sure about the next part, will probably need to be adjusted        
+        # Not sure about the next part, will probably need to be adjusted   
+        print(objname)
         ts = obj.get()['TS'].read()
         task_img=nib.load(ts)
         task_dat=task_img.get_fdata()
