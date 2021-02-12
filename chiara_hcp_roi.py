@@ -23,29 +23,29 @@ roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250,
 #taskcons=[8, 9, 14, 15, 16, 17, 30, 31, 36, 37, 38, 39, 40, 41, 62, 63, 68, 69, 80, 81] 
 #these are the tasks
 taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 'tfMRI_RELATIONAL', 'tfMRI_SOCIAL', 'tfMRI_WM']
+obj = s3.Object('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
 
-s3 = boto3.resource('s3')
-for sub in enumerate(subjNums): 
-    for con in enumerate(taskcons):
+#s3 = boto3.resource('s3')
+#for sub in enumerate(subjNums): 
+#    for con in enumerate(taskcons):
         # doc at https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-example-download-file.html
         # bucket name is hcp-openaccess
         # Load t-fMRI time series, name of the file we need: '/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii','
-
+        
 #RHODRI: I'd suggest you make the object name with a line like this:	objname=f''HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii' then do 
 #print(objname)
 #and use aws s3 ls s3://hcp-openaccess/[whatever it printed out]
 #to check you've got the filename right. If you haven't (i.e., the ls command doesn't show anything), then progressively chop bits off the end until you get something, to work out where the error is
-        obj = s3.Object('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')
-        #s3.download_file('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
+        #obj = s3.Object('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')
         # Not sure about the next part, will probably need to be adjusted   
-        print(objname)
-        ts = obj.get()['TS'].read()
-        task_img=nib.load(ts)
-        task_dat=task_img.get_fdata()
-        task_img=nib.load(obj)
-        for roi in enumerate(roilist):
-            sel=task_dat_surf[:, roi_dat == roi]
-            meanact[:, roi] = np.mean(sel, 1)[taskcons]
+        #print(objname)
+        #ts = obj.get()['TS'].read()
+        #task_img=nib.load(ts)
+        #task_dat=task_img.get_fdata()
+        #task_img=nib.load(obj)
+        #for roi in enumerate(roilist):
+        #    sel=task_dat_surf[:, roi_dat == roi]
+        #    meanact[:, roi] = np.mean(sel, 1)[taskcons]
 
 #roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
 #roi_dat=roi_img.get_fdata().ravel()
