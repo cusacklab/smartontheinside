@@ -23,9 +23,10 @@ roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250,
 #taskcons=[8, 9, 14, 15, 16, 17, 30, 31, 36, 37, 38, 39, 40, 41, 62, 63, 68, 69, 80, 81] 
 #these are the tasks
 taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 'tfMRI_RELATIONAL', 'tfMRI_SOCIAL', 'tfMRI_WM']
+s3 = boto3.resource('s3')
 obj = s3.Object('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
 
-#s3 = boto3.resource('s3')
+#
 #for sub in enumerate(subjNums): 
 #    for con in enumerate(taskcons):
         # doc at https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-example-download-file.html
