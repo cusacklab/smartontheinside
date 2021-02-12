@@ -24,7 +24,7 @@ roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250,
 #these are the tasks
 taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 'tfMRI_RELATIONAL', 'tfMRI_SOCIAL', 'tfMRI_WM']
 
-s3 = boto3.client('s3')
+s3 = boto3.resource('s3')
 for sub in enumerate(subjNums): 
     for con in enumerate(taskcons):
         # doc at https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-example-download-file.html
