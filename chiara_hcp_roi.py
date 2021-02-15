@@ -2,6 +2,7 @@
 import nibabel as nib
 import numpy as np
 import boto3
+import botocore
 
 ## Exploratory subjects from  Ito T, Hearne LJ, Cole MW (2020)
 ## We can validate this analysis on the validation subjects also from them
@@ -23,13 +24,17 @@ roilist=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250,
 #taskcons=[8, 9, 14, 15, 16, 17, 30, 31, 36, 37, 38, 39, 40, 41, 62, 63, 68, 69, 80, 81] 
 #these are the tasks
 taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 'tfMRI_RELATIONAL', 'tfMRI_SOCIAL', 'tfMRI_WM']
-s3 = boto3.resource('s3')
+#s3 = boto3.resource('s3')
+#s3.Object('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii').download_file('/tmp/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii')
 #obj = s3.Object('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'objname')
 #obj = s3.Object('s3://hcp-openaccess/HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/PRE tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii', 'try.nii')
-#
+
+s3 = boto3.client('s3')
 for sub in enumerate(subjNums): 
     for con in enumerate(taskcons):
-        obj = s3.Object('s3://hcp-openaccess/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')  
+        obj = s3.download_file('hcp-openaccess', 's3://hcp-openaccess/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii','testme.nii')
+
+        #obj = s3.Object('s3://hcp-openaccess/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')  
         # Checking the previous command ran OK
         print(obj)
         ts = obj.get()['TS'].read()
