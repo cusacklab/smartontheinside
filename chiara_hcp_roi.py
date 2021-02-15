@@ -40,7 +40,7 @@ print(obj)
 
         #obj = s3.Object('s3://hcp-openaccess/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')  
         # Checking the previous command ran OK
-        print(obj)
+        #print(obj)
 #        ts = obj.get()['TS'].read()
 #        task_img=nib.load(ts)
 #        task_dat=task_img.get_fdata()
