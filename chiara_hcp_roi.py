@@ -32,7 +32,7 @@ taskcons=['tfMRI_EMOTION', 'tfMRI_GAMBLING', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 't
 s3 = boto3.client('s3')
 for sub in enumerate(subjNums): 
     for con in enumerate(taskcons):
-        obj = s3.download_file('hcp-openaccess', f's3://hcp-openaccess/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii','testme.nii')
+        obj = s3.download_file('hcp-openaccess', f'/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii','testme.nii')
 
         #obj = s3.Object('s3://hcp-openaccess/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')  
         # Checking the previous command ran OK
