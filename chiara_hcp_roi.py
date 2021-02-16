@@ -41,6 +41,25 @@ for sub in subjNums:
         for roi in enumerate(roilist):
             sel=task_dat_surf[:, roi_dat == roi]
             meanact[:, roi] = np.mean(sel, 1)[taskcons]
+            
+            
+            
+        # Creating violin plots with each ROI (27 in total), one plot per contrast (7 in total) - for the DLFC 
+        plt.figure()
+        ax = sns.violinplot(x="DFLP", y="MeanActivation", data=dfROI, ci=68, palette=custom_p, order=["FPN", "CON", "SAN", "DAN", "VAN", "DMN", "Motor", "Aud.", "Vis.", "Subc."])
+        ax.set_ylabel("Mean activation", fontsize=16)
+        plt.title('BVC')
+        plt.xlabel('')
+        plt.grid(False)
+        if corr==1:
+            outFileViolin = "ViolinPlotBVCcorr.png"
+            plt.savefig((os.path.join(self.resultspth,'ViolinPlotBVCcorr%d'%(chunklen) + '.png')), dpi=200)
+        else:
+            outFileViolin = "ViolinPlotBVC.png"
+            plt.savefig((os.path.join(self.resultspth,'ViolinPlotBVCreg%d'%(chunklen) + '.png')), dpi=200)
+        print(("Figure saved as {0}".format(outFileViolin)))
+
+        plt.figure()
 
 #roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
 #roi_dat=roi_img.get_fdata().ravel()
