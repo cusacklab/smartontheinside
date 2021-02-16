@@ -30,21 +30,17 @@ s3 = boto3.client('s3')
 
 for sub in subjNums: 
     for con in taskcons:
-        # This was running:
-        #obj = s3.download_file('hcp-openaccess', 'HCP_1200/424939/MNINonLinear/Results/tfMRI_MOTOR/tfMRI_MOTOR_hp200_s2_level2.feat/424939_tfMRI_MOTOR_level2_hp200_s2.dscalar.nii','testme.nii')
         print(f'/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii')        
         obj = s3.download_file('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'testme.nii')
-
-#obj = s3.Object('s3://hcp-openaccess/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'objname')  
         # Checking the previous command ran OK
         print(obj)
-#        ts = obj.get()['TS'].read()
-#        task_img=nib.load(ts)
-#        task_dat=task_img.get_fdata()
-#        task_img=nib.load(obj)
-#        for roi in enumerate(roilist):
-#            sel=task_dat_surf[:, roi_dat == roi]
-#            meanact[:, roi] = np.mean(sel, 1)[taskcons]
+        ts = obj.get()['TS'].read()
+        task_img=nib.load(ts)
+        task_dat=task_img.get_fdata()
+        task_img=nib.load(obj)
+        for roi in enumerate(roilist):
+            sel=task_dat_surf[:, roi_dat == roi]
+            meanact[:, roi] = np.mean(sel, 1)[taskcons]
 
 #roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
 #roi_dat=roi_img.get_fdata().ravel()
