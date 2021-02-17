@@ -30,16 +30,15 @@ s3 = boto3.client('s3')
 
 for sub in subjNums: 
     for con in taskcons:
-        print(f'/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii')        
-        obj = s3.download_file('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'testme.nii')
-        # Checking the previous command ran OK
-        print(obj)
-        ts = obj.get()['TS'].read()
-        task_img=nib.load(ts)
+        # Download file from S3        
+        obj = s3.download_file('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'timeseries.nii')     
+        task_img=nib.load('timeseries.nii')
+        task_img.to_filename(f'temp/timeseries{sub}.nii.gz')
+        # Get functional data - this is <nibabel.cifti2.cifti2.Cifti2Image object at 0x7fcb9951e430>
         task_dat=task_img.get_fdata()
-        task_img=nib.load(obj)
+
         for roi in enumerate(roilist):
-            sel=task_dat_surf[:, roi_dat == roi]
+            sel=task_dat[:, roi_dat == roi]
             meanact[:, roi] = np.mean(sel, 1)[taskcons]
             
             
@@ -51,12 +50,8 @@ for sub in subjNums:
         plt.title('BVC')
         plt.xlabel('')
         plt.grid(False)
-        if corr==1:
-            outFileViolin = "ViolinPlotBVCcorr.png"
-            plt.savefig((os.path.join(self.resultspth,'ViolinPlotBVCcorr%d'%(chunklen) + '.png')), dpi=200)
-        else:
-            outFileViolin = "ViolinPlotBVC.png"
-            plt.savefig((os.path.join(self.resultspth,'ViolinPlotBVCreg%d'%(chunklen) + '.png')), dpi=200)
+        outFileViolin = "ViolinPlotROI.png"
+        plt.savefig('path/ViolinPlotROI.png'), dpi=200)
         print(("Figure saved as {0}".format(outFileViolin)))
 
         plt.figure()
