@@ -3,6 +3,7 @@ import nibabel as nib
 import numpy as np
 import boto3
 import botocore
+import matplotlib.pyplot as plt
 
 ## Exploratory subjects from  Ito T, Hearne LJ, Cole MW (2020)
 ## We can validate this analysis on the validation subjects also from them
@@ -30,31 +31,33 @@ s3 = boto3.client('s3')
 
 for sub in subjNums: 
     for con in taskcons:
-        # Download file from S3        
-        obj = s3.download_file('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'timeseries.nii')     
-        task_img=nib.load('timeseries.nii')
-        task_img.to_filename(f'temp/timeseries{sub}.nii.gz')
-        # Get functional data - this is <nibabel.cifti2.cifti2.Cifti2Image object at 0x7fcb9951e430>
+        print(f'/HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii')
+        # replace testme with f'/tmp/{first_file_name}') 
+        obj = s3.download_file('hcp-openaccess', f'HCP_1200/{sub}/MNINonLinear/Results/{con}/{con}_hp200_s2_level2.feat/{sub}_{con}_level2_hp200_s2.dscalar.nii', 'testme.nii')
+        # Checking the previous command ran OK
+        print(obj)
+        task_img=nib.load('testme.nii')
         task_dat=task_img.get_fdata()
+        task=task_dat.ravel()
+        print(task)
+        type(task)
+        print(len(task))
 
+        data_1d = task.ravel()
+        #plot = plt.hist(data_1d, bins=100)
+        plot = plt.imshow(data_1d[:, :, 30], cmap='gray')
+        outFile = 'Plot.png'
+        plt.savefig(('plot.png'), dpi=200)
+        print(("Figure saved as {0}".format(outFile)))
+
+
+        ts = obj.get()['TS'].read()
+        task_img=nib.load(ts)
+        task_dat=task_img.get_fdata()
+        task_img=nib.load(obj)
         for roi in enumerate(roilist):
-            sel=task_dat[:, roi_dat == roi]
+            sel=task_dat_surf[:, roi_dat == roi]
             meanact[:, roi] = np.mean(sel, 1)[taskcons]
-            
-            
-            
-        # Creating violin plots with each ROI (27 in total), one plot per contrast (7 in total) - for the DLFC 
-        plt.figure()
-        ax = sns.violinplot(x="DFLP", y="MeanActivation", data=dfROI, ci=68, palette=custom_p, order=["FPN", "CON", "SAN", "DAN", "VAN", "DMN", "Motor", "Aud.", "Vis.", "Subc."])
-        ax.set_ylabel("Mean activation", fontsize=16)
-        plt.title('BVC')
-        plt.xlabel('')
-        plt.grid(False)
-        outFileViolin = "ViolinPlotROI.png"
-        plt.savefig('path/ViolinPlotROI.png'), dpi=200)
-        print(("Figure saved as {0}".format(outFileViolin)))
-
-        plt.figure()
 
 #roi_img=nib.load('ResultsRegions_ROI.dlabel.nii')
 #roi_dat=roi_img.get_fdata().ravel()
