@@ -6,11 +6,11 @@
 %% constants
 % HCP path
 hcppath='/imaging/rcusack/laura_ffa_diffusion/HCP_Files/Glasser_et_al_2016_HCP_MMP1.0_RVVG/HCP_PhaseTwo/Q1-Q6_RelatedParcellation210/MNINonLinear/fsaverage_LR32k';
-hemilab={'left','right'};
-g=load('/imaging/rcusack/laura_ffa_diffusion/temp_summary_results/adult_s2t_v1.mat');
-hcppath='/imaging/rcusack/laura_ffa_diffusion/HCP_Files/Glasser_et_al_2016_HCP_MMP1.0_RVVG/HCP_PhaseTwo/Q1-Q6_RelatedParcellation210/MNINonLinear/fsaverage_LR32k';
-tmppath='/imaging/rcusack/laura_ffa_diffusion/analysis_adult_v1/temp_toptarget_v3';
-figpth='/imaging/rcusack/laura_ffa_diffusion/figs_v3';
+hemilab={'left','right'}; %timeseries
+g=load('/imaging/rcusack/laura_ffa_diffusion/temp_summary_results/adult_s2t_v1.mat'); %matrix subj x target ROI x seed ROI
+hcppath='/imaging/rcusack/laura_ffa_diffusion/HCP_Files/Glasser_et_al_2016_HCP_MMP1.0_RVVG/HCP_PhaseTwo/Q1-Q6_RelatedParcellation210/MNINonLinear/fsaverage_LR32k'; %timeseries - repeated?
+tmppath='/imaging/rcusack/laura_ffa_diffusion/analysis_adult_v1/temp_toptarget_v3'; %top ROIs
+figpth='/imaging/rcusack/laura_ffa_diffusion/figs_v3'; %results' plots output
 %Load the path to find the ROI's
 roipth='/imaging/rcusack/laura_ffa_diffusion/rois';
 
@@ -61,7 +61,7 @@ s2t_infant_perm=s2t_infant_perm(:,:,isnonzero);
 
 maskind=find(Yhcp_seed(:)==1);
 
-diary(fullfile(figpth,'trainadult_testinfant_diary.txt'));
+diary(fullfile(figpth,'trainadult_testinfant_diary.txt')); %keep track of what was run
 
 fprintf('Train adult test infant\n');
 ax=0;
