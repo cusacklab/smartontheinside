@@ -9,7 +9,7 @@ frontalregs.sort()
 # All the other regions
 regs = list(range(1,361))
 regs = [x for x in regs if not x in frontalregs]
-
+print(regs)
 
 for hemi in ['L','R']:
     # *********************
