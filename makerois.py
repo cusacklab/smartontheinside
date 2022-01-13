@@ -42,7 +42,7 @@ for hemi in ['L','R']:
     imgNOT_DLPFC.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
     # ...and replace with mask
     imgNOT_DLPFC.add_gifti_data_array(GiftiDataArray(data=maskNOT_DLPFC.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
-    nib.save(imgNOT_DLPFC, f'/Users/chiara/smartontheinside/Rois/NOT_frontal.{hemi}.label.gii')
+    nib.save(imgNOT_DLPFC, f'/dhcp/smartontheinside/Rois/NOT_frontal.{hemi}.label.gii')
     
     # *******************************************
     # ***** EACH ROI OTHER THAN DLFC'S MASK *****
@@ -60,7 +60,7 @@ for hemi in ['L','R']:
                 img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
                 # ...and replace with mask
                 img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
-                nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
+                nib.save(img, f'/dhcp/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
             else:
                 print('Right hem')
         else:
@@ -70,6 +70,6 @@ for hemi in ['L','R']:
                 img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
                 # ...and replace with mask
                 img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
-                nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
+                nib.save(img, f'/dhcp/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
             else:
                 print('Left hem')
