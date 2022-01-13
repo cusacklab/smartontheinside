@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dir=/home/chiaracaldinelli/smartontheinside/
+dir=/home/chiaracaldinelli/smartontheinside/smartontheinside/
 
 
 for roi in {1..180}; do
