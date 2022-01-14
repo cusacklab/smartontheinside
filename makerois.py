@@ -47,23 +47,31 @@ for hemi in ['L','R']:
     # *******************************************
     # ***** EACH ROI OTHER THAN DLFC'S MASK *****
     # *******************************************
-    for q in regs: 
+for q in regs: 
+    print(q)
+    if q <= 180:
+        hemi='L'
         img=nib.load(f'ff.{hemi}.label.gii')
         img.print_summary()
         labels=img.labeltable.get_labels_as_dict()
         dat = img.agg_data('NIFTI_INTENT_LABEL')
         mask=np.zeros(np.shape(dat))
-        if q > 180: 
-            mask[dat==q]=1
-            # Remove labels...
-            img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
-            # ...and replace with mask
-            img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
-            nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
-        else:
-            mask[dat==q]=1
-            # Remove labels...
-            img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
-            # ...and replace with mask
-            img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
-            nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
+        mask[dat==q]=1
+        # Remove labels...
+        img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
+        # ...and replace with mask
+        img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
+        nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
+    else:
+        hemi='R'
+        img=nib.load(f'ff.{hemi}.label.gii')
+        img.print_summary()
+        labels=img.labeltable.get_labels_as_dict()
+        dat = img.agg_data('NIFTI_INTENT_LABEL')
+        mask=np.zeros(np.shape(dat))
+        mask[dat==q]=1
+        # Remove labels...
+        img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
+        # ...and replace with mask
+        img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
+        nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
