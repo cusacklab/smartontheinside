@@ -33,7 +33,7 @@ for hemi in ['L','R']:
     # ************************************************
     imgNOT_DLPFC=nib.load(f'ff.{hemi}.label.gii')
     imgNOT_DLPFC.print_summary()
-    labels=imgNOT_DLPFC.labeltable.get_labels_as_dict()
+    imgNOT_DLFClabels=imgNOT_DLPFC.labeltable.get_labels_as_dict()
     datNOT_DLPFC = imgNOT_DLPFC.agg_data('NIFTI_INTENT_LABEL')
     maskNOT_DLPFC=np.zeros(np.shape(datNOT_DLPFC))
     for r in regs:
@@ -42,7 +42,7 @@ for hemi in ['L','R']:
     imgNOT_DLPFC.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
     # ...and replace with mask
     imgNOT_DLPFC.add_gifti_data_array(GiftiDataArray(data=maskNOT_DLPFC.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
-    nib.save(imgNOT_DLPFC, f'/dhcp/smartontheinside/Rois/NOT_frontal.{hemi}.label.gii')
+    nib.save(imgNOT_DLPFC, f'/Users/chiara/smartontheinside/Rois/NOT_frontal.{hemi}.label.gii')
     
     # *******************************************
     # ***** EACH ROI OTHER THAN DLFC'S MASK *****
@@ -53,23 +53,17 @@ for hemi in ['L','R']:
         labels=img.labeltable.get_labels_as_dict()
         dat = img.agg_data('NIFTI_INTENT_LABEL')
         mask=np.zeros(np.shape(dat))
-        if hemi == 'R':
-            if q > 180: 
-                mask[dat==q]=1
-                # Remove labels...
-                img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
-                # ...and replace with mask
-                img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
-                nib.save(img, f'/dhcp/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
-            else:
-                print('Right hem')
+        if q > 180: 
+            mask[dat==q]=1
+            # Remove labels...
+            img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
+            # ...and replace with mask
+            img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
+            nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
         else:
-            if q <= 180:
-                mask[dat==q]=1
-                # Remove labels...
-                img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
-                # ...and replace with mask
-                img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
-                nib.save(img, f'/dhcp/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
-            else:
-                print('Left hem')
+            mask[dat==q]=1
+            # Remove labels...
+            img.remove_gifti_data_array_by_intent('NIFTI_INTENT_LABEL')
+            # ...and replace with mask
+            img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
+            nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
