@@ -50,7 +50,7 @@ for hemi in ['L','R']:
 for q in regs: 
     print(q)
     if q <= 180:
-        hemi='L'
+        hemi='R'
         img=nib.load(f'ff.{hemi}.label.gii')
         img.print_summary()
         labels=img.labeltable.get_labels_as_dict()
@@ -63,7 +63,7 @@ for q in regs:
         img.add_gifti_data_array(GiftiDataArray(data=mask.astype('float32'), datatype='NIFTI_TYPE_FLOAT32', intent='NIFTI_INTENT_LABEL'))
         nib.save(img, f'/Users/chiara/smartontheinside/Rois/ROI.{q}.{hemi}.label.gii')
     else:
-        hemi='R'
+        hemi='L'
         img=nib.load(f'ff.{hemi}.label.gii')
         img.print_summary()
         labels=img.labeltable.get_labels_as_dict()
