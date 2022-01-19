@@ -19,8 +19,8 @@ tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
 
 
 # 2- Sync aws
-aws s3 sync --profile hcp s3://hcp-openaccess/HCP_1200/${subj}/T1w/Native ${tmp_dir}/
-aws s3 sync --profile hcp s3://hcp-openaccess/HCP_1200/${subj}/T1w/Diffusion.bedpostX ${tmp_dir}/
+aws s3 sync --profile hcp s3://hcp-openaccess/HCP_1200/$SUBJ/T1w/Native ${tmp_dir}/
+aws s3 sync --profile hcp s3://hcp-openaccess/HCP_1200/$SUBJ/T1w/Diffusion.bedpostX ${tmp_dir}/
 
 
 # 3- ROI.gii → .nii
