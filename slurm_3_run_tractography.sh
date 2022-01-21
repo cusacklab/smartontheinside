@@ -19,18 +19,23 @@ tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
 
 
 # 2- Sync aws
-aws s3 sync --profile hcp s3://hcp-openaccess/HCP_1200/$SUBJ/T1w/Native ${tmp_dir}/
+aws s3 sync --profile hcp s3://hcp-openaccess/HCP_1200/$SUBJ/T1w/T1w_acpc_dc.nii.gz ${tmp_dir}/
 aws s3 sync --profile hcp s3://hcp-openaccess/HCP_1200/$SUBJ/T1w/Diffusion.bedpostX ${tmp_dir}/
 
 
 # 3- ROI.gii → .nii
-
+# DLPFC mask
+for hem in {'L', 'R'}; do
+    wb_command -label-to-volume-mapping ${tmp_dir}/frontal.${hem}.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.${hem}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${dir}/T1w_acpc_dc.nii.gz ${dir}/frontal.${hem}.nii -nearest-vertex 1
+# ROIs
 for roi in {1..180}; do
-    wb_command -label-to-volume-mapping ${dir}/ROIs/ROI.${roi}.L.label.gii ${dir}/Q1-Q6_RelatedParcellation210.L.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${dir}/mean_Rsamples.nii.gz /dhcp/smartontheinside/smartontheinside/ROIs/ROI.${roi}.L.nii -nearest-vertex 1
+    wb_command -label-to-volume-mapping ${tmp_dir}/ROI.${roi}.R.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.R.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}ROI.${roi}.nii -nearest-vertex 1
+for roi in {181..360}; do
+    wb_command -label-to-volume-mapping ${tmp_dir}/ROI.${roi}.L.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.L.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROI.${roi}.nii -nearest-vertex 1
 
 
 # 4- Tractography
     for hem in {'L', 'R'}; do
-        /usr/local/fsl/bin/probtrackx2 -x /Users/chiara/smartontheinside/fronta${hem}.L.nii -l --onewaycondition -c 0.2 -S 2000 --steplength=0.5 -P 5000 --fibthresh=0.01 --distthresh=0.0 --sampvox=0.0 --forcedir --opd -s /Users/chiara/smartontheinside/./merged -m /Users/chiara/smartontheinside/./nodif_brain_mask --dir=/Users/chiara/smartontheinside/tractography-ouput
+        /usr/local/fsl/bin/probtrackx2 -x /Users/chiara/smartontheinside/frontal.${hem}.nii -l --onewaycondition -c 0.2 -S 2000 --steplength=0.5 -P 5000 --fibthresh=0.01 --distthresh=0.0 --sampvox=0.0 --forcedir --opd -s /Users/chiara/smartontheinside/./merged -m /Users/chiara/smartontheinside/./nodif_brain_mask --dir=/Users/chiara/smartontheinside/tractography-ouput
     done
 done
