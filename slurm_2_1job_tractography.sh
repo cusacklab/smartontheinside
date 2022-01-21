@@ -5,5 +5,5 @@
 #SBATCH --error=/home/chiaracaldinelli/smartonetheinside/smartontheinside/slurm-%j.err
 
 
-echo "In fslurm_run_tractography.sh parameter SUBJ=$SUBJ"
+echo "In slurm_3_run_tractography.sh parameter SUBJ=$SUBJ"
 /home/chiaracaldinelli/smartonetheinside/smartontheinside/slurm_run_tractography.sh $SUBJ
