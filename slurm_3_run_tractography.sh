@@ -39,6 +39,6 @@ for r in {181..360}; do
 # 4- Tractography
 for hem in {'L', 'R'}; do
     for q in {1..360}; do
-        /usr/local/fsl/bin/probtrackx2 -x /Users/chiara/smartontheinside/frontal.${hem}.nii -l --onewaycondition -c 0.2 -S 2000 --steplength=0.5 -P 5000 --fibthresh=0.01 --distthresh=0.0 --sampvox=0.0 --forcedir --opd -s /Users/chiara/smartontheinside/./merged -m /Users/chiara/smartontheinside/./nodif_brain_mask --dir=/Users/chiara/smartontheinside/tractography-ouput
+        /usr/local/fsl/bin/probtrackx2 -x /Users/chiara/smartontheinside/frontal.${hem}.nii -l --onewaycondition -c 0.2 -S 2000 --steplength=0.5 -P 5000 --fibthresh=0.01 --distthresh=0.0 --sampvox=0.0 --stop=/Users/chiara/smartontheinside/ROI.${q}.nii --forcedir --opd -s /Users/chiara/Desktop/Bedpostx/merged -m /Users/chiara/Desktop/Bedpostx/nodif_brain_mask --dir=/Users/chiara/Desktop/output_tract
     done
 done
