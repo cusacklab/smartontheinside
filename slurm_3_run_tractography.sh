@@ -49,4 +49,4 @@ for hem in {'L', 'R'}; do
         -o ${tmp_dir}/probtrackx2_res
 
 # Push results to S3
- aws s3 sync ${tmp_dir}/probtrackx2_res/ s3://smartontheinside/HCP_1200/$SUBJ/T1w/Diffusion.probtrackx2/
+aws s3 sync ${tmp_dir}/probtrackx2_res/ s3://smartontheinside/HCP_1200/$SUBJ/T1w/Diffusion.probtrackx2/
