@@ -1,4 +1,6 @@
+
 #!/bin/bash
+#SBATCH --gpus=1
 
 # Chiara Caldinelli, caldinec@tcd.ie
 # Cusack Lab, Trinity College Dublin
@@ -37,6 +39,33 @@ for r in {181..360}; do
 ls >> ${tmp_dir}/allROIs.txt
 
 # 4- Tractography
-for hem in {'L', 'R'}; do
+
     /usr/local/fsl/bin/probtrackx2 -x ${tmp_dir}/frontal.${hem}.nii -l --onewaycondition -c 0.2 -S 2000 --steplength=0.5 -P 5000 --fibthresh=0.01 --distthresh=0.0 --sampvox=0.0 --targetmasks /Users/chiara/smartontheinside/ROIs/allROIs.txt --forcedir --opd -s ${tmp_dir}/Diffusion.bedpostX/merged -m ${tmp_dir}/Diffusion.bedpostX/nodif_brain_mask --dir=/dhcp/smartontheiside/smartontheiside/output_tract_${q}
 done
+
+
+
+SUBJ=$1
+SES=$2
+DWIPTH=/dhcp/dhcp_dmri_pipeline
+TOSPLIT=${DWIPTH}/${SUBJ}/${SES}/probtrackx2/${SUBJ}_${SES}_hcp_regions_v4_targe
+t_dwi
+TEXTOUT=${TOSPLIT}_list.txt
+
+DONEFILE=${DWIPTH}/${SUBJ}/${SES}/probtrackx2/done_probtrackx2
+
+rm $DONEFILE
+
+for hem in {'L', 'R'}; do
+    probtrackx2_gpu --onewaycondition -P 5000 --forcedir --opd --os2t \
+	    --rseed=1234 -s ${DWIPTH}/${SUBJ}/${SES}/dwi.bedpostX/merged \
+	    --dir=${DWIPTH}/${SUBJ}/${SES}/probtrackx2 \
+	    -m ${DWIPTH}/${SUBJ}/${SES}/dwi/${SUBJ}_${SES}_desc-preproc_space-dwi_br
+    ainmask.nii.gz  \
+	    --targetmasks=$TEXTOUT  \
+	    -x ${DWIPTH}/${SUBJ}/${SES}/probtrackx2/${SUBJ}_${SES}_hcp_regions_v4_se
+    ed_dwi.nii.gz \
+        -o fdt_paths_hcp_rhodri
+
+touch $DONEFILE
+
