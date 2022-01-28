@@ -32,10 +32,10 @@ for hem in {'L', 'R'}; do
 # ROIs
 mkdir ${tmp_dir}/ROIs/
 for roi in {1..180}; do
-    wb_command -label-to-volume-mapping /dhcp/smartontheinside/smartontheinside//ROIs/ROI.${roi}.R.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.R.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROIs/ROI.${roi}.nii -nearest-vertex 1
+    wb_command -label-to-volume-mapping /dhcp/smartontheinside/smartontheinside/ROIs/ROI.${roi}.R.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.R.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROIs/ROI.${roi}.nii -nearest-vertex 1
     done
 for r in {181..360}; do
-    wb_command -label-to-volume-mapping /dhcp/smartontheinside/smartontheinside//ROIs/ROI.${roi}.L.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.L.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROIs/ROI.${roi}.nii -nearest-vertex 1
+    wb_command -label-to-volume-mapping /dhcp/smartontheinside/smartontheinside/ROIs/ROI.${roi}.L.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.L.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROIs/ROI.${roi}.nii -nearest-vertex 1
     done
 ls > ${tmp_dir}/ROIs/allROIs.txt
 
