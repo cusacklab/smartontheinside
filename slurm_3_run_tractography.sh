@@ -28,15 +28,15 @@ aws s3 sync s3://hcp-openaccess/HCP_1200/$SUBJ/T1w/Diffusion.bedpostX ${tmp_dir}
 # 3- ROI.gii → .nii
 # DLPFC mask
 for hem in {'L', 'R'}; do
-    wb_command -label-to-volume-mapping /dhcp/smartontheinside/smartontheinside/frontal.${hem}.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.${hem}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${dir}/T1w_acpc_dc.nii.gz ${dir}/frontal.${hem}.nii -nearest-vertex 1
+    wb_command -label-to-volume-mapping /dhcp/smartontheinside/smartontheinside/frontal.${hem}.label.gii /dhcp/smartontheinside/git/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.${hem}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${dir}/T1w_acpc_dc.nii.gz ${dir}/frontal.${hem}.nii -nearest-vertex 1
     done
 # ROIs
 mkdir ${tmp_dir}/ROIs/
 for roi in {1..15}; do
-    wb_command -label-to-volume-mapping /dhcp/smartontheinside/git/smartontheinside/smartontheinside/ROIs/ROI.${roi}.R.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.R.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROIs/ROI.${roi}.nii -nearest-vertex 1
+    wb_command -label-to-volume-mapping /dhcp/smartontheinside/git/smartontheinside/smartontheinside/ROIs/ROI.${roi}.R.label.gii /dhcp/smartontheinside/git/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.R.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROIs/ROI.${roi}.nii -nearest-vertex 1
     done
 #for r in {181..360}; do
-#    wb_command -label-to-volume-mapping /dhcp/smartontheinside/git/smartontheinside/smartontheinside/ROI.${roi}.L.label.gii /home/chiaracaldinelli/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.L.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROIs/ROI.${roi}.nii -nearest-vertex 1
+#    wb_command -label-to-volume-mapping /dhcp/smartontheinside/git/smartontheinside/smartontheinside/ROI.${roi}.L.label.gii /dhcp/smartontheinside/git/smartontheinside/smartontheinside/Q1-Q6_RelatedParcellation210.L.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii ${tmp_dir}/T1w_acpc_dc.nii.gz ${tmp_dir}/ROIs/ROI.${roi}.nii -nearest-vertex 1
 #    done
 ls > ${tmp_dir}/ROIs/allROIs.txt
 
