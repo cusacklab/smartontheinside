@@ -42,7 +42,7 @@ ls > ${tmp_dir}/ROIs/allROIs.txt
 
 # 4- Tractography
 for hem in {'L', 'R'}; do
-    probtrackx2 --onewaycondition -P 50 --forcedir --opd --os2t \
+    probtrackx2 --onewaycondition -P 5000 --forcedir --opd --os2t \
 	    --rseed=1234 -s ${tmp_dir}/Diffusion.bedpostX/merged \
 	    --dir=${tmp_dir}/probtrackx2 \
 	    -m ${tmp_dir}/Diffusion.bedpostX/merged/nodif_brain_mask.nii.gz  \
