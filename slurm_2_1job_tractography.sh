@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -J SOTI-CC
 #SBATCH --cpus-per-task=8
-#SBATCH --output=/home/chiaracaldinelli/slurm-%j.out
+#SBATCH --output=/home/chiaracaldinelli/smartontheinside/slurm-%j.out
 #SBATCH --error=/home/chiaracaldinelli/smartontheinside/slurm-%j.err
 
 
