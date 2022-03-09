@@ -6,4 +6,4 @@
 
 
 echo "In slurm_3_run_tractography.sh parameter SUBJ=$SUBJ"
-/home/chiaracaldinelli/smartontheinside/slurm_3_run_tractography.sh $SUBJ
+bash /home/chiaracaldinelli/smartontheinside/slurm_3_run_tractography.sh $SUBJ
