@@ -28,7 +28,7 @@ vox_res = {'L':None, 'R':None}
 
 for hemiind, hemi in enumerate(['L','R']):
     print(hemiind)
-    img=nib.load(f'ff.{hemiind}.label.gii')
+    img=nib.load(f'ff.{hemi}.label.gii')
     #img=nib.load(f"ff.{hemi}.label.gii") # Load label file
     print(hemi)    
     #img.print_summary()
@@ -46,14 +46,18 @@ for hemiind, hemi in enumerate(['L','R']):
             #img_s2t = nib.load(remotepath, f'/home/chiaracaldinelli/ROI.{target_roi}.shape.gii')  # Load results from tractography
             dat_s2t = img_s2t.agg_data()
             all_seed_values=[]
-            roi_frontal_right=[x+180 for x in frontalregs_left]
-            for seed_roi in roi_frontal_right: # check if 1-180 is left
+            frontalregs_right=[x+180 for x in frontalregs_left]
+            for seed_roi in frontalregs_left: # check if 1-180 is left, add right
                 seed_values=dat_s2t[labels==(seed_roi)]
-                #roi_res[hemiind][sub,:,target_roi] = np.mean(seed_values)
-                all_seed_values.extend(seed_values)
+                print(seed_roi)
+                #print(dat_s2t[labels==(seed_roi)])
+                print(seed_values)
+                roi_res[hemiind][sub,:,target_roi] = np.mean(seed_values)
+                all_seed_values.append(seed_values)
+                print(all_seed_values)
 
             if vox_res[hemi] is None:
-                vox_res[hemiind] = np.zeros((nsub, 334, len(all_seed_values))) # Average seed voxels for each subject (L and R, nsubj * 334 targets * nseedvoxels)
+                vox_res[hemiind] = np.zeros((nsub, 334, len(all_seed_values))) # Record seed voxels for each subject (L and R, nsubj * 334 targets * nseedvoxels)
 
-            vox_res[hemi][sub, target_roi, :] = all_seed_values
+                all_seed_values =  vox_res[hemi][sub, target_roi, :]
         print(vox_res)
