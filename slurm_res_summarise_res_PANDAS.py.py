@@ -3,7 +3,7 @@ import nibabel as nib
 import numpy as np 
 import os
 from os.path import exists as file_exists
-from matplotlib import pyplot as plt
+import pandas as pd
 
 #We'll need to load both the .label. file, 
 #which tells you which vertices belong to which ROI, 
@@ -27,24 +27,24 @@ nsub=len(subjlist)
 # Load both the .label. file (vertices corresponding to ROI) and the 360 .shape files for each subject
 ######################################################################################################
 
-roi_res = {'L':None, 'R':None} # 0 is right and 1 is left
-vox_res = {'L':None, 'R':None}
+roi_res = np.zeros(2, 334, 26) # 0 is right and 1 is left
+df = pd.DataFrame(data=roi_res)
+vox_res = {0:None, 1:None}
 frontalregs_right=[73,67,97,98,26,70,71,87,68,83,85,84,86] # All the ROIs in the right DLPFC regions
 frontalregs_right.sort() #  1-180 is right, 181-360 is left
 frontalregs_left=[x+180 for x in frontalregs_right]
 frontalregs_left.sort()
 
 for sub in range(nsub):
-    fig, ax = plt.subplots(nrows=2, figsize=(10,4))
     for hemiind, hemi in enumerate(['R','L']):
         img=nib.load(f'ff.{hemi}.label.gii') # Load label file 
         labels=img.labeltable.get_labels_as_dict()
         dat = img.agg_data('NIFTI_INTENT_LABEL') # dat contains ROI and voxels' coordinates
-        roi_res[hemi] = np.zeros((360, 13)) # Prepare the output file for the avg for each frontal ROI (L and R, nsubj * 334 targets * 26 frontal ROIs)
+        roi_res[hemiind] = np.zeros((334, 13)) # Prepare the output file for the avg for each frontal ROI (L and R, nsubj * 334 targets * 26 frontal ROIs)
+        all_seed_values=[]
+        all_seed_values = np.array(all_seed_values)
 
         for target_roi in range(1, 361): # For every target ROI (334 in total)
-            all_seed_values=[]
-            all_seed_values = np.array(all_seed_values)
             if not target_roi in frontalregs_right:
                 if not target_roi in frontalregs_left:
                     remotepath = f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{hemi}/seeds_to_ROI.{target_roi}.shape.gii'
@@ -58,30 +58,29 @@ for sub in range(nsub):
                             seed_values=dat_s2t[dat==(frontalregs_right[seed_roi])]
                         else:
                             seed_values=dat_s2t[dat==(frontalregs_left[seed_roi])]
-                        roi_res[hemi][target_roi-1,seed_roi] = np.mean(seed_values) # avg and copy res to roi_res
+                        print('this is seed values')
+                        print(len(seed_values))
+                        roi_res[hemiind][:,seed_roi] = np.mean(seed_values) # avg and copy res to roi_res
                         all_seed_values = np.append(all_seed_values, seed_values)
+                        print('this is all seed values')
+                        print(len(all_seed_values))
                         #print(seed_values)
-            if vox_res[hemi] is None:
-                vox_res[hemi] = np.zeros((360, len(all_seed_values))) # Record seed voxels for each subject (L and R, nsubj * 334 targets * nseedvoxels)
-            print(len(all_seed_values))
-            vox_res[hemi][target_roi-1, :] = all_seed_values # Careful: ROI 1 will be in position 0
+            if vox_res[hemiind] is None:
+                vox_res[hemiind] = np.zeros((360, len(all_seed_values))) # Record seed voxels for each subject (L and R, nsubj * 334 targets * nseedvoxels)
+                print(target_roi)
+                all_seed_values =  vox_res[hemiind][target_roi-1, :] # Careful: ROI 1 will be in position 0
             if file_exists(f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii'):
                 os.remove(f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')
-        ax[hemiind].imshow(roi_res[hemi].T, vmin=0, vmax=50, interpolation='none')
-        ax[hemiind].set_title(hemi)
-        ax[hemiind].set_xlabel('Target')
-        ax[hemiind].set_ylabel('Seed')
-    plt.savefig(f'/home/chiaracaldinelli/smartontheinside/{subjlist[sub]}_s2t.png')
-    plt.close()
-    # arr_vox0 = vox_res[0]
-    # arr_vox1 = vox_res[1]
-    # print(arr_vox0.shape)
-    # print(arr_vox1.shape)
-    # arr_roi0 = roi_res[0]
-    # arr_roi1 = roi_res[1]
-    # print(arr_roi0.shape)
-    # print(arr_roi1.shape)
-    # print(roi_res)
+                        
+    arr_vox0 = vox_res[0]
+    arr_vox1 = vox_res[1]
+    print(arr_vox0.shape)
+    print(arr_vox1.shape)
+    arr_roi0 = roi_res[0]
+    arr_roi1 = roi_res[1]
+    print(arr_roi0.shape)
+    print(arr_roi1.shape)
+    print(roi_res)
     # open file for writing
     f = open(f'/home/chiaracaldinelli/smartontheinside/{subjlist[sub]}_tractography_results_ROI.txt',"w")
     f.write( str(roi_res) )
