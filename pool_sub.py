@@ -20,7 +20,13 @@ listcon = ['WORKING_MEM_2BK_BODY', 'WORKING_MEM_2BK_FACE', 'WORKING_MEM_2BK_PLAC
 # topROI is the ranking of the most active ROIs
 # DLPFtoproi is the ranking of the most active ROIs of the DLPFC
 
-
+DLPFroilistplot = ['26', '67', '68', '70', '71', '73', '83', '84', '85', '86', '87', '96', '98', '206', '247', '248', '250', '251', '253', '263', '264', '265', '266', '267', '276', '278']
+data = np.load('DLPFCroi.npy')
+print(data.shape)
+data=np.mean(data,0)
+print(data.shape)
+rdm = np.corrcoef(data)
+print(rdm)
 
 # For every sub, download the results and put all of them together
 for sub in range(nsub):
@@ -41,19 +47,19 @@ for sub in range(nsub):
 
 
 # For each contrast:
-for contrast in listcon:
+#for contrast in listcon:
     # Create graph with activation by connections (26 DLPFC ROIs' activation by 26 DLPFC ROIs' tractography results)
     plt.figure()
-    ax = plt.plot(x=, y=, data=df, color=".8", scale='area')
-    ax = sns.stripplot(x=, y=, data=df, edgecolor="white", size=2, jitter=1) 
-    plt.ylim(0, 0.65)
-    plt.xlabel('')
-    ax.set_ylabel("Activation by Connectivity", fontsize=16)
-    plt.title('GVC')
-    outFile = "RainViolinPlotBVCcorr.png"
-    plt.savefig((os.path.join(path,'Plotpng')), dpi=200)
-    print(("Figure saved as {0}".format(outFile)))
+    #ax = plt.plot(x=, y=, data=df, color=".8", scale='area')
+    #ax = sns.stripplot(x=, y=, data=df, edgecolor="white", size=2, jitter=1) 
+    #plt.ylim(0, 0.65)
+    #plt.xlabel('')
+    #ax.set_ylabel("Activation by Connectivity", fontsize=16)
+    #plt.title('GVC')
+    #outFile = "RainViolinPlotBVCcorr.png"
+    #plt.savefig((os.path.join(path,'Plotpng')), dpi=200)
+    #print(("Figure saved as {0}".format(outFile)))
 
     # Create regression model with 26 ROIs and 1 
-    result=sm.OLS(df.iloc[:,roi1][:np.size(matrix,0)],matrix).fit()
-    allresults[r][int(df.columns[roi1])-1][int(df.columns[roi2])-1]=np.array(result.params)
+    #result=sm.OLS(df.iloc[:,roi1][:np.size(matrix,0)],matrix).fit()
+    #allresults[r][int(df.columns[roi1])-1][int(df.columns[roi2])-1]=np.array(result.params)
