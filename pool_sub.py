@@ -98,7 +98,7 @@ a = mean_act_DLPF[30,:]
 ax = plt.scatter(mean_conn_DLPF_235, mean_act_DLPF[22,:])
 plt.xlabel("Mean Connectivity DLPFC", fontsize=16)
 plt.ylabel("Mean Activation DLPFC", fontsize=16)
-plt.title('Language - Story', fontsize=20)
+plt.title('Motor - Average', fontsize=20)
 outFileplotConAct = ("motor-avg.png")
 plt.savefig(("plot_motor.png"), dpi=200)
 #print(("Figure saved as {0}".format(outFileplotConAct)))
