@@ -75,8 +75,8 @@ print(np.corrcoef(mean_conn_DLPF_198, mean_act_DLPF[30,:]))
 # 'LANGUAGE_STORY' (Language Con 1): [173 124 304]  
 plt.figure()
 mean_conn_DLPF_173 = np.zeros([26])
-mean_conn_DLPF_173[0:13] = mean_conn_DLPF_r[197,:]
-mean_conn_DLPF_173[13:] = mean_conn_DLPF_l[197,:]
+mean_conn_DLPF_173[0:13] = mean_conn_DLPF_r[172,:]
+mean_conn_DLPF_173[13:] = mean_conn_DLPF_l[172,:]
 a = mean_act_DLPF[30,:]
 ax = plt.scatter(mean_conn_DLPF_173, mean_act_DLPF[30,:])
 plt.xlabel("Mean Connectivity DLPFC", fontsize=16)
