@@ -9,6 +9,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import statsmodels.api as sm
+import scipy.stats
+import pickle
+
 
 ### POOL SUBJECTS
 subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860', '103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','122822','130821','137633','152427','160123','172938','180432','192035','200917','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140', '523032', '585862','654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
@@ -56,7 +59,13 @@ for task, taskcons in taskcondictnoneg.items():
         # use argsort along roi axis to find top rois         
         sortedregions = np.argsort(avg_hem)
         topROI = sortedregions[-3:]
-        file = open(('TopROI.txt'),'a') 
+        topROI_all = sortedregions
+        print(topROI_all)
+        print(topROI_all.shape)
+        open_file = open(f'/home/chiaracaldinelli/smartontheinside/list_{task}', "wb")
+        pickle.dump(topROI_all, open_file)
+        open_file.close()
+        file = open(('/home/chiaracaldinelli/smartontheinside/TopROI.txt'),'a') 
         file.write("\n The 3 most active ROIs for task %s, contrast %s are %s"%(task,con,topROI))
         file.close()
 
@@ -79,11 +88,11 @@ for sub in range(nsub):
     x = np.load(f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy',allow_pickle=True)
     x = np.ravel(x)[0]
     # Create an array to load the results for each hemisphere
-
     r = (x['R'])
     array_r[:,:,sub] = r
     l = (x['L'])
     array_l[:,:,sub] = l
+    os.remove(f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy')
 mean_conn_DLPF_r = np.mean(array_r, axis=2)
 mean_conn_DLPF_l = np.mean(array_l, axis=2)
 
@@ -101,6 +110,7 @@ top_roi_task = {
     '8': [5, 21, 6]
 }
 
+top_roi_task_list = ['tfMRI_EMOTION', 'tfMRI_LANGUAGE', 'tfMRI_MOTOR', 'tfMRI_SOCIAL', 'tfMRI_WM']
 
 for task, taskcons in top_roi_task.items():
     for roi in taskcons:
@@ -113,8 +123,9 @@ for task, taskcons in top_roi_task.items():
         list_act[0,:] = mean_act_DLPF[int(task),0:13]
         list_act[1,:] = mean_act_DLPF[int(task),13:]
         list_act = np.mean(list_act, axis = 0)
+        r, p = scipy.stats.pearsonr(mean_conn_DLPF, list_act)
         print(f'Correlation for contrast {listcon[int(task)]}, ROI {roi}')
-        print(np.corrcoef(mean_conn_DLPF, list_act))
+        print(r)
         ax = plt.scatter(mean_conn_DLPF, list_act)
         plt.xlabel("Mean Connectivity DLPFC", fontsize=16)
         plt.ylabel("Mean Activation DLPFC", fontsize=16)
@@ -123,144 +134,30 @@ for task, taskcons in top_roi_task.items():
         plt.savefig((f"/home/chiaracaldinelli/smartontheinside/plot_{listcon[int(task)]}_ROI_{roi}.png"), dpi=200)
         print(("Figure saved as {0}".format(outFileplotConAct)))
 
-''''
-mean_conn_DLPF_18 = np.zeros([2,13])
-mean_conn_DLPF_18[0,13] = mean_conn_DLPF_r[17,:]
-mean_conn_DLPF_18[1,13] = mean_conn_DLPF_l[17,:]
-mean_conn_DLPF_18 = np.mean(meanmean_conn_DLPF_18)
-mean_conn_DLPF_19 = np.zeros([26])
-mean_conn_DLPF_19[0:13] = mean_conn_DLPF_r[18,:]
-mean_conn_DLPF_19[13:] = mean_conn_DLPF_l[18,:]
-mean_conn_DLPF_157 = np.zeros([26])
-mean_conn_DLPF_157[0:13] = mean_conn_DLPF_r[156,:]
-mean_conn_DLPF_157[13:] = mean_conn_DLPF_l[156,:]
-ax = plt.scatter(mean_conn_DLPF_18, mean_act_DLPF[30,:])
-plt.xlabel("Mean Connectivity DLPFC", fontsize=16)
-plt.ylabel("Mean Activation DLPFC", fontsize=16)
-plt.title('Emotion - Shape', fontsize=20)
-outFileplotConAct = ("emotion.png")
-plt.savefig(("plot_emotion.png"), dpi=200)
-#print(("Figure saved as {0}".format(outFileplotConAct)))
-print('Correlation for contrast Emotion ROI 18')
-print(np.corrcoef(mean_conn_DLPF_18, mean_act_DLPF[30,:]))
-print('Correlation for contrast Emotion ROI 19')
-print(np.corrcoef(mean_conn_DLPF_19, mean_act_DLPF[30,:]))
-print('Correlation for contrast Emotion ROI 157')
-print(np.corrcoef(mean_conn_DLPF_157, mean_act_DLPF[30,:]))
+index = 0
+for task, taskcons in top_roi_task.items():
+    plt.figure()
+    list_roi = []
+    open_file = open(f'/home/chiaracaldinelli/smartontheinside/list_{top_roi_task_list[index]}', "rb")
+    topROI_all = pickle.load(open_file)
+    open_file.close()
+    index += 1
 
+    for all_roi in topROI_all:
+        if all_roi not in DLPFroilistplot:
+            mean_conn_DLPF = np.zeros([2,13])
+            mean_conn_DLPF[0,:] = mean_conn_DLPF_r[(all_roi-1),:]
+            mean_conn_DLPF[1,:] = mean_conn_DLPF_l[all_roi-1,:]
+            mean_conn_DLPF = np.mean(mean_conn_DLPF, axis=0)   
+            list_act = np.zeros([2,13])
+            list_act[0,:] = mean_act_DLPF[int(task),0:13]
+            list_act[1,:] = mean_act_DLPF[int(task),13:]
+            list_act = np.mean(list_act, axis = 0)
+            r, p = scipy.stats.pearsonr(mean_conn_DLPF, list_act)
+            list_roi.append(r)
 
-# LANGUAGE_STORY' (Language Con 1): [123 173 124]  
-plt.figure()
-mean_conn_DLPF_173 = np.zeros([26])
-mean_conn_DLPF_173[0:13] = mean_conn_DLPF_r[172,:]
-mean_conn_DLPF_173[13:] = mean_conn_DLPF_l[172,:]
-mean_conn_DLPF_124 = np.zeros([26])
-mean_conn_DLPF_124[0:13] = mean_conn_DLPF_r[123,:]
-mean_conn_DLPF_124[13:] = mean_conn_DLPF_l[123,:]
-mean_conn_DLPF_304 = np.zeros([26])
-mean_conn_DLPF_304[0:13] = mean_conn_DLPF_r[303,:]
-mean_conn_DLPF_304[13:] = mean_conn_DLPF_l[303,:]
-ax = plt.scatter(mean_conn_DLPF_173, mean_act_DLPF[24,:])
-plt.xlabel("Mean Connectivity DLPFC", fontsize=16)
-plt.ylabel("Mean Activation DLPFC", fontsize=16)
-plt.title('Language - Story', fontsize=20)
-outFileplotConAct = ("language-story.png")
-plt.savefig(("plot_language.png"), dpi=200)
-#print(("Figure saved as {0}".format(outFileplotConAct)))
-print('Correlation for contrast Language - Story and ROI 173')
-print(np.corrcoef(mean_conn_DLPF_173, mean_act_DLPF[24,:]))
-print('Correlation for contrast Language - Story and ROI 124')
-print(np.corrcoef(mean_conn_DLPF_124, mean_act_DLPF[24,:]))
-print('Correlation for contrast Language - Story and ROI 304')
-print(np.corrcoef(mean_conn_DLPF_304, mean_act_DLPF[24,:]))
-
-
-# 'MOTOR_AVG' (Motor Con 6): [112  42  55] 
-plt.figure()
-mean_conn_DLPF_235 = np.zeros([26])
-mean_conn_DLPF_235[0:13] = mean_conn_DLPF_r[234,:]
-mean_conn_DLPF_235[13:] = mean_conn_DLPF_l[234,:]
-mean_conn_DLPF_42 = np.zeros([26])
-mean_conn_DLPF_42[0:13] = mean_conn_DLPF_r[41,:]
-mean_conn_DLPF_42[13:] = mean_conn_DLPF_l[41,:]
-mean_conn_DLPF_55 = np.zeros([26])
-mean_conn_DLPF_55[0:13] = mean_conn_DLPF_r[54,:]
-mean_conn_DLPF_55[13:] = mean_conn_DLPF_l[54,:]
-a = mean_act_DLPF[30,:]
-ax = plt.scatter(mean_conn_DLPF_235, mean_act_DLPF[22,:])
-plt.xlabel("Mean Connectivity DLPFC", fontsize=16)
-plt.ylabel("Mean Activation DLPFC", fontsize=16)
-plt.title('Motor - Average', fontsize=20)
-outFileplotConAct = ("motor-avg.png")
-plt.savefig(("plot_motor.png"), dpi=200)
-#print(("Figure saved as {0}".format(outFileplotConAct)))
-print('Correlation for contrast Motor - Average and ROI 235')
-print(np.corrcoef(mean_conn_DLPF_235, mean_act_DLPF[22,:]))
-print('Correlation for contrast Motor - Average and ROI 42')
-print(np.corrcoef(mean_conn_DLPF_42, mean_act_DLPF[22,:]))
-print('Correlation for contrast Motor - Average and ROI 55')
-print(np.corrcoef(mean_conn_DLPF_55, mean_act_DLPF[22,:]))
-
-
-# 'SOCIAL_TOM' (Social Con 1): [155 156   1]
-plt.figure()
-mean_conn_DLPF_335 = np.zeros([26])
-mean_conn_DLPF_335[0:13] = mean_conn_DLPF_r[334,:]
-mean_conn_DLPF_335[13:] = mean_conn_DLPF_l[334,:]
-mean_conn_DLPF_1 = np.zeros([26])
-mean_conn_DLPF_1[0:13] = mean_conn_DLPF_r[0,:]
-mean_conn_DLPF_1[13:] = mean_conn_DLPF_l[0,:]
-mean_conn_DLPF_55 = np.zeros([26])
-mean_conn_DLPF_55[0:13] = mean_conn_DLPF_r[4,:]
-mean_conn_DLPF_55[13:] = mean_conn_DLPF_l[4,:]
-a = mean_act_DLPF[30,:]
-ax = plt.scatter(mean_conn_DLPF_335, mean_act_DLPF[26,:])
-plt.xlabel("Mean Connectivity DLPFC", fontsize=16)
-plt.ylabel("Mean Activation DLPFC", fontsize=16)
-plt.title('Social - TOM', fontsize=20)
-outFileplotConAct = ("social-tom.png")
-plt.savefig(("plot_social.png"), dpi=200)
-#print(("Figure saved as {0}".format(outFileplotConAct)))
-print('Correlation for contrast Social - TOM and ROI 335')
-print(np.corrcoef(mean_conn_DLPF_335, mean_act_DLPF[26,:]))
-print('Correlation for contrast Social - TOM and ROI 1')
-print(np.corrcoef(mean_conn_DLPF_1, mean_act_DLPF[26,:]))
-print('Correlation for contrast Social - TOM and ROI 55')
-print(np.corrcoef(mean_conn_DLPF_55, mean_act_DLPF[26,:]))
-
-
-# 'WORKING_MEM_2BK' (WM Con 8): [ 5 21  6]
-plt.figure()
-mean_conn_DLPF_201 = np.zeros([26])
-mean_conn_DLPF_201[0:13] = mean_conn_DLPF_r[200,:]
-mean_conn_DLPF_201[13:] = mean_conn_DLPF_l[200,:]
-mean_conn_DLPF_186 = np.zeros([26])
-mean_conn_DLPF_186[0:13] = mean_conn_DLPF_r[185,:]
-mean_conn_DLPF_186[13:] = mean_conn_DLPF_l[185,:]
-mean_conn_DLPF_6 = np.zeros([26])
-mean_conn_DLPF_6[0:13] = mean_conn_DLPF_r[5,:]
-mean_conn_DLPF_6[13:] = mean_conn_DLPF_l[5,:]
-a = mean_act_DLPF[30,:]
-ax = plt.scatter(mean_conn_DLPF_201, mean_act_DLPF[8,:])
-plt.xlabel("Mean Connectivity DLPFC", fontsize=16)
-plt.ylabel("Mean Activation DLPFC", fontsize=16)
-plt.title('Working memory - 2-back', fontsize=20)
-outFileplotConAct = ("wm_2bk.png")
-plt.savefig(("plot_wk.png"), dpi=200)
-#print(("Figure saved as {0}".format(outFileplotConAct)))
-print('Correlation for contrast Working Memory - 2-back and ROI 201')
-print(np.corrcoef(mean_conn_DLPF_201, mean_act_DLPF[8,:]))
-print('Correlation for contrast Working Memory - 2-back and ROI 186')
-print(np.corrcoef(mean_conn_DLPF_186, mean_act_DLPF[8,:]))
-print('Correlation for contrast Working Memory - 2-back and ROI 6')
-print(np.corrcoef(mean_conn_DLPF_6, mean_act_DLPF[8,:]))
-
-# 'LANGUAGE_STORY' (Language Con 1): [173 124 304]   'MOTOR_AVG' (Motor Con 6): [235  42  55] 'SOCIAL_TOM' (Social Con 1): [335   1 181]   'WORKING_MEM_2BK' (WM Con 8): [201 186   6]
-
-
-
-
-    # Create regression model with 26 ROIs and 1 
-    #result=sm.OLS(df.iloc[:,roi1][:np.size(matrix,0)],matrix).fit()
-    #allresults[r][int(df.columns[roi1])-1][int(df.columns[roi2])-1]=np.array(result.params)
-'''''
+    plt.plot(list_roi)
+    plt.title(f'{listcon[int(task)]} - ALL ROIs', fontsize=20)
+    outFileplotCorrAllROIs = (f"{listcon[int(task)]}_ALL_ROIs.png")
+    plt.savefig((f"/home/chiaracaldinelli/smartontheinside/plot_{listcon[int(task)]}_allROIs.png"), dpi=200)
+    print(("Figure saved as {0}".format(outFileplotCorrAllROIs)))
