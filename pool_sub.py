@@ -21,7 +21,7 @@ s3 = boto3.client('s3')
 listcon = ['WORKING_MEM_2BK_BODY', 'WORKING_MEM_2BK_FACE', 'WORKING_MEM_2BK_PLACE', 'WORKING_MEM_2BK_TOOL', 'WORKING_MEM_0BK_BODY', 'WORKING_MEM_0BK_FACE', 'WORKING_MEM_0BK_PLACE', 'WORKING_MEM_0BK_TOOL', 'WORKING_MEM_2BK', 'WORKING_MEM_0BK', 'WORKING_MEM_BODY', 'WORKING_MEM_FACE', 'WORKING_MEM_PLACE', 'WORKING_MEM_TOOL', 'GAMBLING_PUNISH', 'GAMBLING_REWARD','MOTOR_CUE', 'MOTOR_LF', 'MOTOR_LH', 'MOTOR_RF', 'MOTOR_RH', 'MOTOR_T', 'MOTOR_AVG',  'LANGUAGE_MATH', 'LANGUAGE_STORY',  'SOCIAL_RANDOM', 'SOCIAL_TOM', 'RELATIONAL_MATCH', 'RELATIONAL_REL', 'EMOTION_FACES', 'EMOTION_SHAPES']  
 ncon=len(listcon)
 # Load results from previous analysis -  subjs are already pooled
-# allresults is activation?
+# allresults is activation
 # topROI is the ranking of the most active ROIs
 # DLPFtoproi is the ranking of the most active ROIs of the DLPFC
 taskcondictnoneg = {
@@ -44,6 +44,7 @@ taskcondict = {
     }
 
 allresults = np.load('/home/chiaracaldinelli/smartontheinside/allresults.npy', allow_pickle=True).ravel()[0]
+
 
 newlist = []
 for task, taskcons in taskcondictnoneg.items():
@@ -73,28 +74,27 @@ DLPFroilistplot = ['26', '67', '68', '70', '71', '73', '83', '84', '85', '86', '
 mean_act_DLPF = np.load('/home/chiaracaldinelli/smartontheinside/DLPFCroi.npy')
 mean_act_DLPF=np.mean(mean_act_DLPF,axis=0)
 
-array_r = np.zeros([360, 13, nsub])
-array_l = np.zeros([360, 13, nsub])
+array_R = np.zeros([360, 13, nsub])
+array_L = np.zeros([360, 13, nsub])
 mean_conn_DLPF_r = np.zeros([360, 13])
 mean_conn_DLPF_l = np.zeros([360, 13])
 
-# For every sub, download the results and put all of them together
-for sub in range(nsub):
-    # Download files
-    s3.download_file('smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}_tractography_results_ROI.npy', f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy')
-    s3.download_file('smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}_tractography_results_ROI.npy', f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_VOXEL.npy')
-    print(f'Downloading participant {subjlist[sub]}')
-    # Load results
-    x = np.load(f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy',allow_pickle=True)
-    x = np.ravel(x)[0]
-    # Create an array to load the results for each hemisphere
-    r = (x['R'])
-    array_r[:,:,sub] = r
-    l = (x['L'])
-    array_l[:,:,sub] = l
-    os.remove(f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy')
-mean_conn_DLPF_r = np.mean(array_r, axis=2)
-mean_conn_DLPF_l = np.mean(array_l, axis=2)
+for hemiind, hemi in enumerate(['R','L']):
+    # For every sub, download the results and put all of them together
+    for sub in range(nsub):
+        # Download files
+        s3.download_file('smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}_tractography_results_ROI.npy', f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy')
+        s3.download_file('smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}_tractography_results_ROI.npy', f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_VOXEL.npy')
+        print(f'Downloading participant {subjlist[sub]}')
+        # Load results
+        x = np.load(f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy',allow_pickle=True)
+        x = np.ravel(x)[hemiind]
+        # Create an array to load the results for each hemisphere
+        r = (x[hemi])
+        array_R[:,:,sub] = r
+        os.remove(f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy')
+mean_conn_DLPF_r = np.mean(array_R, axis=2)
+mean_conn_DLPF_l = np.mean(array_L, axis=2)
 
 
 
