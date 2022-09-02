@@ -18,12 +18,13 @@ import os
 
 # Upload the file
 s3_client = boto3.client('s3') # Don't use special profile
-response = s3_client.upload_file(file_name, neurana-imaging, object_name)
+#response = s3_client.upload_file(file_name, neurana-imaging, object_name)
 
 
-hcp_keys = get_aws_hcp_keys()
-session = boto3.Session(aws_access_key_id=hcp_keys['AWS_ACCESS_KEY_ID'], aws_secret_access_key=hcp_keys['AWS_SECRET_ACCESS_KEY'])
-s3 = session.client('s3')
+#hcp_keys = get_aws_hcp_keys()
+#session = boto3.Session(aws_access_key_id=hcp_keys['AWS_ACCESS_KEY_ID'], aws_secret_access_key=hcp_keys['AWS_SECRET_ACCESS_KEY'])
+#s3 = session.client('s3')
+
 
 taskcondict = {
         'tfMRI_WM': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], # 2BK_BODY, 2BK_FACE, 2BK_PLACE, 2BK_TOOL, 0BK_BODY, 0BK_FACE, 0BK_PLACE, 0BK_TOOL, 2BK, 0BK, 2BK-0BK, neg_2BK, neg_0BK, 0BK-2BK, BODY, FACE, PLACE, TOOL, BODY-AVG, FACE-AVG, PLACE-AVG, TOOL-AVG, neg_BODY, neg_FACE, neg_PLACE, neg_TOOL, AVG-BODY, AVG-FACE, AVG-PLACE, VG-TOOL
@@ -48,8 +49,8 @@ subjlist = ['178950','189450','199453']
 # All ROIS
 roilist = range(1,361)
 # Load up ROI files for L and R
-roi_L_img=nib.load('rois/Q1-Q6_RelatedParcellation210.L.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii')
-roi_R_img=nib.load('rois/Q1-Q6_RelatedParcellation210.R.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii')
+roi_L_img=nib.load('Q1-Q6_RelatedParcellation210.L.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii')
+roi_R_img=nib.load('Q1-Q6_RelatedParcellation210.R.CorticalAreas_dil_Colors.32k_fs_LR.dlabel.nii')
 roi_L_dat=roi_L_img.get_fdata().ravel().astype(int)
 roi_R_dat=180 + roi_R_img.get_fdata().ravel().astype(int)
 roi_dat=np.concatenate((roi_L_dat,roi_R_dat))
@@ -70,7 +71,8 @@ for sub in subjlist:
         # For each task, download file from HCP S3
         hcpbucket = 'hcp-openaccess'
         hcpkey = f'HCP_1200/{sub}/MNINonLinear/Results/{task}/{task}_hp200_s2_level2.feat/{sub}_{task}_level2_hp200_s2.dscalar.nii'
-        s3.download_file(hcpbucket, hcpkey, '/tmp/timeseries.nii')     
+        #hcpkey = f'HCP_1200/199453/MNINonLinear/Results/tfMRI_WM/tfMRI_WM_hp200_s2_level2.feat/199453_tfMRI_WM_level2_hp200_s2.dscalar.nii'
+        s3.download_file(hcpbucket, hcpkey, '/tmp/timeseries.nii')
         task_img = nib.load('/tmp/timeseries.nii')
 
         # Pick out only voxels on the cortical surface
@@ -92,7 +94,3 @@ for sub in subjlist:
 
     # Upload to s3
     print(upload_file(path.join(outpth,outfn), args.output_bucket, path.join(args.output_prefix, outfn)))
-        
-if __name__=='__main__':
-    args = parse_args()
-    main(args)
