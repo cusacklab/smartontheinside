@@ -14,10 +14,14 @@ import base64
 from botocore.exceptions import ClientError
 import json
 import os
+from numpy import absolute
 
 
 # Upload the file
-s3_client = boto3.client('s3') # Don't use special profile
+session = boto3.Session(profile_name='hcp')
+s3 = session.client('s3')
+
+# s3_client = boto3.client('s3', profile_name='hcp') # Don't use special profile
 #response = s3_client.upload_file(file_name, neurana-imaging, object_name)
 
 
@@ -44,7 +48,8 @@ taskcondictnoneg = {
         'tfMRI_RELATIONAL':[0, 1],   # MATCH, REL, MATCH-REL, REL-MATCH, neg_MATCH, neg_REL
         'tfMRI_EMOTION': [0, 1],     # FACES, SHAPES, FACES-SHAPES, neg_FACES, neg_SHAPES, SHAPES-FACES
         }
-subjlist = ['178950','189450','199453']
+subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860', '103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','122822','130821','137633','152427','160123','172938','180432','192035','200917','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536', '180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140', '523032', '585862','654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968', '966975']
+#'105014', '114419',
 
 # All ROIS
 roilist = range(1,361)
@@ -56,7 +61,7 @@ roi_R_dat=180 + roi_R_img.get_fdata().ravel().astype(int)
 roi_dat=np.concatenate((roi_L_dat,roi_R_dat))
 
 # Handy later 
-nvox = 300000
+nvox = 59412
 ntask = len(taskcondictnoneg)
 
 # Initialise a space for the output summary values
@@ -66,31 +71,30 @@ for task, taskcon in taskcondictnoneg.items():
         
 for sub in subjlist:
     print(f'Working on subject {sub}')
+    # For each task, download file from HCP S3
+    hcpbucket = 'hcp-openaccess'
+
     # Main loop over contrast files
-    for task, taskcon in taskcondictnoneg.items():
-        # For each task, download file from HCP S3
-        hcpbucket = 'hcp-openaccess'
+    for task, taskcons in taskcondictnoneg.items():
         hcpkey = f'HCP_1200/{sub}/MNINonLinear/Results/{task}/{task}_hp200_s2_level2.feat/{sub}_{task}_level2_hp200_s2.dscalar.nii'
         #hcpkey = f'HCP_1200/199453/MNINonLinear/Results/tfMRI_WM/tfMRI_WM_hp200_s2_level2.feat/199453_tfMRI_WM_level2_hp200_s2.dscalar.nii'
         s3.download_file(hcpbucket, hcpkey, '/tmp/timeseries.nii')
         task_img = nib.load('/tmp/timeseries.nii')
+        for conind, con in enumerate(taskcons):
+            print(f'task {task} con {con}')
+            # Pick out only voxels on the cortical surface
+            task_dat=task_img.get_fdata()
+            task_surfmask=task_img.header.get_axis(1).surface_mask
+            task_dat_surf=task_dat[:,task_surfmask]
+            act[task][conind] = task_dat_surf[conind]
 
-        # Pick out only voxels on the cortical surface
-        task_dat=task_img.get_fdata()
-        task_surfmask=task_img.header.get_axis(1).surface_mask
-        task_dat_surf=task_dat[:,task_surfmask]
-
-        # For each ROI, summarise activity in the selected regions and contrasts for this task
-        for roiind, roi in enumerate(roilist):
-            sel=task_dat_surf[:, roi_dat == roi]
-            act[task][:, roiind] = np.mean(sel, 1)[taskcon]
-
-    # Write output file
-    outfn=f'sub-{sub}_roi.msgpack-numpy'
-    outpth='/tmp'
-    x_enc = msgpack.packb(meanact, default=m.encode)
-    with open(path.join(outpth,outfn),'wb') as f:
-        msgpack.dump(meanact, f, default=m.encode)
+    # Save dict
+    np.save(f'/Users/chiara/{sub}_timeseries.npy', act) 
 
     # Upload to s3
-    print(upload_file(path.join(outpth,outfn), args.output_bucket, path.join(args.output_prefix, outfn)))
+    #s3.upload_file(f'/Users/chiara/{sub}_timeseries.npy', 'smartontheinside', f'Results/{sub}_timeseries.npy')
+
+
+    # Load
+#read_dictionary = np.load('my_file.npy',allow_pickle='TRUE').item()
+#print(read_dictionary['hello']) # displays "world"

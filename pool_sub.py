@@ -16,10 +16,10 @@ import pickle
 ### POOL SUBJECTS
 subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860', '103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','122822','130821','137633','152427','160123','172938','180432','192035','200917','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140', '523032', '585862','654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
 #'105014', '114419', 
-nsub=len(subjlist)
+
 s3 = boto3.client('s3')
 listcon = ['WORKING_MEM_2BK_BODY', 'WORKING_MEM_2BK_FACE', 'WORKING_MEM_2BK_PLACE', 'WORKING_MEM_2BK_TOOL', 'WORKING_MEM_0BK_BODY', 'WORKING_MEM_0BK_FACE', 'WORKING_MEM_0BK_PLACE', 'WORKING_MEM_0BK_TOOL', 'WORKING_MEM_2BK', 'WORKING_MEM_0BK', 'WORKING_MEM_BODY', 'WORKING_MEM_FACE', 'WORKING_MEM_PLACE', 'WORKING_MEM_TOOL', 'GAMBLING_PUNISH', 'GAMBLING_REWARD','MOTOR_CUE', 'MOTOR_LF', 'MOTOR_LH', 'MOTOR_RF', 'MOTOR_RH', 'MOTOR_T', 'MOTOR_AVG',  'LANGUAGE_MATH', 'LANGUAGE_STORY',  'SOCIAL_RANDOM', 'SOCIAL_TOM', 'RELATIONAL_MATCH', 'RELATIONAL_REL', 'EMOTION_FACES', 'EMOTION_SHAPES']  
-ncon=len(listcon)
+
 # Load results from previous analysis -  subjs are already pooled
 # allresults is activation
 # topROI is the ranking of the most active ROIs
@@ -43,32 +43,40 @@ taskcondict = {
     'tfMRI_EMOTION': [0, 1, 2, 3, 4, 5],     # FACES, SHAPES, FACES-SHAPES, neg_FACES, neg_SHAPES, SHAPES-FACES
     }
 
-allresults = np.load('/home/chiaracaldinelli/smartontheinside/allresults.npy', allow_pickle=True).ravel()[0]
+ncon=len(listcon)
+nvox = 59412
+nsub=len(subjlist)
+
+#allresults = np.load('/home/chiaracaldinelli/smartontheinside/allresults.npy', allow_pickle=True).ravel()[0]
 
 
 newlist = []
-for task, taskcons in taskcondictnoneg.items():
-    for conind, con in enumerate(taskcons):
-        print(f'task {task} con {con}')
-        dat = np.vstack([allresults[subj][task][conind,:] for subj in allresults])
-        # take mean across subjects
-        mnact = np.mean(dat, axis=0)
-        avg_hem = np.zeros([2,180])
-        avg_hem[0,:] = mnact[0:180]
-        avg_hem[1,:] = mnact[180:360]
-        avg_hem = np.mean(avg_hem, axis = 0)
-        # use argsort along roi axis to find top rois         
-        sortedregions = np.argsort(avg_hem)
-        topROI = sortedregions[-3:]
-        topROI_all = sortedregions
-        print(topROI_all)
-        print(topROI_all.shape)
-        open_file = open(f'/home/chiaracaldinelli/smartontheinside/list_{task}', "wb")
-        pickle.dump(topROI_all, open_file)
-        open_file.close()
-        file = open(('/home/chiaracaldinelli/smartontheinside/TopROI.txt'),'a') 
-        file.write("\n The 3 most active ROIs for task %s, contrast %s are %s"%(task,con,topROI))
-        file.close()
+allresults = np.zeros((nsub, ncon, nvox))
+for sub in subjlist:
+    allresults = np.load(f'/Users/chiara/{sub}_timeseries.npy', allow_pickle=True).ravel()[0]
+    print(allresults)
+    for task, taskcons in taskcondictnoneg.items():
+        for conind, con in enumerate(taskcons):
+            print(f'task {task} con {con}')
+            dat = np.vstack([allresults[subj][task][conind,:] for subj in allresults])
+            # take mean across subjects
+            mnact = np.mean(dat, axis=0)
+            avg_hem = np.zeros([2,180])
+            avg_hem[0,:] = mnact[0:180]
+            avg_hem[1,:] = mnact[180:360]
+            avg_hem = np.mean(avg_hem, axis = 0)
+            # use argsort along roi axis to find top rois         
+            sortedregions = np.argsort(avg_hem)
+            topROI = sortedregions[-3:]
+            topROI_all = sortedregions
+            print(topROI_all)
+            print(topROI_all.shape)
+            open_file = open(f'/Users/chiara/smartontheinside/list_{task}', "wb")
+            pickle.dump(topROI_all, open_file)
+            open_file.close()
+            file = open(('/Users/chiara/smartontheinside/TopROI.txt'),'a') 
+            file.write("\n The 3 most active ROIs for task %s, contrast %s are %s"%(task,con,topROI))
+            file.close()
 
 DLPFroilistplot = ['26', '67', '68', '70', '71', '73', '83', '84', '85', '86', '87', '96', '98', '206', '247', '248', '250', '251', '253', '263', '264', '265', '266', '267', '276', '278']
 mean_act_DLPF = np.load('/home/chiaracaldinelli/smartontheinside/DLPFCroi.npy')

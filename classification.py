@@ -108,8 +108,6 @@ for task, taskcons in taskcondictnoneg.items():
 
 
 conn = np.random.randint(0,1, size=(360,13))
-act = np.random.randint(0,1, size=(360,13))
-
 print(act)
 print(conn)
 
