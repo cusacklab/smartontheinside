@@ -60,8 +60,9 @@ roi_L_dat=roi_L_img.get_fdata().ravel().astype(int)
 roi_R_dat=180 + roi_R_img.get_fdata().ravel().astype(int)
 roi_dat=np.concatenate((roi_L_dat,roi_R_dat))
 
-# Handy later 
+
 nvox = 59412
+nsub=len(subjlist)
 ntask = len(taskcondictnoneg)
 
 # Initialise a space for the output summary values

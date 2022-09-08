@@ -48,62 +48,55 @@ taskcondictnoneg = {
     'tfMRI_EMOTION': [0, 1],     # FACES, SHAPES, FACES-SHAPES, neg_FACES, neg_SHAPES, SHAPES-FACES
     }
 
-# create df for con
+taskconseldict = {
+    'tfMRI_WM': [8], # 8 2BK
+    'tfMRI_MOTOR': [6],  # 6 AVG
+    'tfMRI_LANGUAGE': [1],     # STORY
+    'tfMRI_SOCIAL': [1],     # TOM
+    'tfMRI_EMOTION': [1],     # FACES
+    }
 
-# create df for act
 
+nvox = 59412
+ntask = len(taskcondictnoneg)
+nsub=len(subjlist)
+session = boto3.session.Session()
+client = session.client('s3')
+s3 = boto3.client('s3')
 
-array_r = np.zeros([360, 13, nsub])
-array_l = np.zeros([360, 13, nsub])
 
 
 ###  ACTIVATION RESULTS  ###
 
-session = boto3.session.Session()
-client = session.client('s3')
-allresults={}
-act=[]
-print(type(act))
-s3 = boto3.client('s3')
+# create arrays to store all the results for each con
+act = np.zeros((nvox*nsub))
 
-# Load activation results
-res=np.load('allresults.npy', allow_pickle=True).ravel()[0]
-#res=np.load('/home/chiaracaldinelli/smartontheinside/allresults.npy', allow_pickle=True).ravel()[0]
+# Load activation results and create an array comprising all subjects and all voxels for each contrast. 
+for task, taskcons in taskconseldict.items():
+    for sub in range(nsub):
+        res_act=np.load(f'/Users/chiara/{subjlist[sub]}_timeseries.npy', allow_pickle=True).ravel()[0]
+        act[sub*nvox : (sub+1)*nvox] = res_act[task][taskcons]
+    np.savetxt(f'/Users/chiara/smartontheinside/results/activation_{task}.csv', (act), delimiter=',')
 
-'''''''''
-for task, taskcons in taskcondictnoneg.items():
+
+
+###  TRACTOGRAPHY RESULTS  ###
+
+# create arrays to store all the results for each con
+conn = np.zeros((nvox*nsub))
+
+for task, taskcons in taskconseldict.items():
     for sub in subjlist:
-        for conind, con in enumerate(taskcons):
-            # Select only the tasks we want
-            # This is selecting 360 numbers and stacking them together: each task, each con, each sub, avg of hemis?
-            # DIVIDE TASKS!!!!
-            print(f'task {task} con {conind}')
-            dat = np.vstack([res[sub][task][conind,:]])
-            act = act + (list(dat))
-            print(len(act))
-            print(act)
-        np.savetxt(f'activation_{task}.csv', (act), delimiter=',')
-'''''''''
-
-for task, taskcons in taskcondictnoneg.items():
-    for sub in subjlist:
-        for conind, con in enumerate(taskcons):
-            for hemiind, hemi in enumerate(['R','L']):
-
-                # Download files connectivity
-                s3.download_file('smartontheinside', f'HCP_1200/{sub}/T1w/Diffusion.probtrackx2/{sub}_tractography_results_ROI.npy', f'/home/chiaracaldinelli/{sub}_tractography_results_ROI.npy') # CHANGE TO VOXEL
-                print(f'Downloading participant {sub}')
-                # Load results
-                x = np.load(f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy',allow_pickle=True)
-                x = np.ravel(x)[0]
-                # Create an array to load the results for each hemisphere
-                r = (x['R'])
-                array_r[:,:,sub] = r
-                os.remove(f'/home/chiaracaldinelli/{subjlist[sub]}_tractography_results_ROI.npy')
-
-            print(allresults[sub]) 
-        #for DLPFC_ROI in DLPFroilist:
-        #    print('hi')
+        # Download files connectivity
+        s3.download_file('smartontheinside', f'HCP_1200/{sub}/T1w/Diffusion.probtrackx2/{sub}_tractography_results_VOXEL.npy', f'/Users/chiara{sub}_tractography_results_VOXEL.npy')
+        print(f'Downloading participant {sub}')
+        # Load results
+        x = np.load(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL.npy',allow_pickle=True).ravel()[0]
+        #x = np.ravel(x)[0]
+        res_conn=np.load(f'/Users/chiara/smartontheinside/results/{subjlist[sub]}_timeseries.npy', allow_pickle=True).ravel()[0]
+        conn[sub*nvox : (sub+1)*nvox] = res_conn[task][taskcons]
+        os.remove(f'/Users/chiara/smartontheinside/{subjlist[sub]}_tractography_results_VOXEL.npy')
+    np.savetxt(f'/Users/chiara/smartontheinside/results/connectivity_{task}.csv', (act), delimiter=',')
 
 
 
