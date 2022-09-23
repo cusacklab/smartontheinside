@@ -49,7 +49,10 @@ for sub in range(nsub):
                 if not target_roi in frontalregs_left:
                     remotepath = f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{hemi}/seeds_to_ROI.{target_roi}.shape.gii'
                     print(f'Downloading file {remotepath}')
-                    s3.download_file('smartontheinside', remotepath, f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')
+                    s3.download_file('smartontheinside', remotepath, f'/Users/chiara/seeds_to_ROI.{target_roi}.shape.gii')
+            
+
+                    #s3.download_file('smartontheinside', remotepath, f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')
                     print(hemi)
                     img_s2t = nib.load(f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')  
                     dat_s2t = img_s2t.agg_data() # dat_s2t has tractography results

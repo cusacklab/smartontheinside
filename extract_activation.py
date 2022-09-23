@@ -15,41 +15,13 @@ from botocore.exceptions import ClientError
 import json
 import os
 from numpy import absolute
+import pandas as pd
+from os.path import exists as file_exists
 
-
-# Upload the file
-session = boto3.Session(profile_name='hcp')
-s3 = session.client('s3')
-
-# s3_client = boto3.client('s3', profile_name='hcp') # Don't use special profile
-#response = s3_client.upload_file(file_name, neurana-imaging, object_name)
-
-
-#hcp_keys = get_aws_hcp_keys()
-#session = boto3.Session(aws_access_key_id=hcp_keys['AWS_ACCESS_KEY_ID'], aws_secret_access_key=hcp_keys['AWS_SECRET_ACCESS_KEY'])
-#s3 = session.client('s3')
-
-
-taskcondict = {
-        'tfMRI_WM': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], # 2BK_BODY, 2BK_FACE, 2BK_PLACE, 2BK_TOOL, 0BK_BODY, 0BK_FACE, 0BK_PLACE, 0BK_TOOL, 2BK, 0BK, 2BK-0BK, neg_2BK, neg_0BK, 0BK-2BK, BODY, FACE, PLACE, TOOL, BODY-AVG, FACE-AVG, PLACE-AVG, TOOL-AVG, neg_BODY, neg_FACE, neg_PLACE, neg_TOOL, AVG-BODY, AVG-FACE, AVG-PLACE, VG-TOOL
-        'tfMRI_GAMBLING': [0, 1, 2, 3, 4, 5],     # PUNISH, REWARD, PUNISH-REWARD, neg_PUNISH, neg_REWARD, REWARD-PUNISH
-        'tfMRI_MOTOR': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],  # CUE, LF, LH, RF, RH, T, AVG, CUE-AVG, LF-AVG, LH-AVG, RF-AVG, RH-AVG, T-AVG, neg_CUE, neg_LF, neg_LH, neg_RF, neg_RH, neg_T, neg_AVG, AVG-CUE, AVG-LF, AVG-LH, AVG-RF, AVG-RH, AVG-T
-        'tfMRI_LANGUAGE': [0, 1, 2, 3, 4, 5],     # MATH, STORY, MATH-STORY, STORY-MATH, neg_MATH, neg_STORY
-        'tfMRI_SOCIAL': [0, 1, 2, 3, 4, 5],     # RANDOM, TOM, RANDOM-TOM, neg_RANDOM, neg_TOM, TOM-RANDOM
-        'tfMRI_RELATIONAL':[0, 1, 2, 3, 4, 5],   # MATCH, REL, MATCH-REL, REL-MATCH, neg_MATCH, neg_REL
-        'tfMRI_EMOTION': [0, 1, 2, 3, 4, 5],     # FACES, SHAPES, FACES-SHAPES, neg_FACES, neg_SHAPES, SHAPES-FACES
-        }
-taskcondictnoneg = {
-        'tfMRI_WM': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 14, 15, 16, 17], # 0 2BK_BODY, 1 2BK_FACE, 2 2BK_PLACE, 3 2BK_TOOL, 4 0BK_BODY, 5 0BK_FACE, 6 0BK_PLACE, 7 0BK_TOOL, 8 2BK, 9 0BK, 10 2BK-0BK, 11 neg_2BK, 12 neg_0BK, 13 0BK-2BK, 14 BODY, 15 FACE, 16 PLACE, 17 TOOL, 18 BODY-AVG, 19 FACE-AVG, 20 PLACE-AVG, 21 TOOL-AVG, 22 neg_BODY, 23 neg_FACE, 24 neg_PLACE, 25 neg_TOOL, 26 AVG-BODY, 27 AVG-FACE, 28 AVG-PLACE, 29 VG-TOOL
-        'tfMRI_GAMBLING': [0, 1],     # PUNISH, REWARD, PUNISH-REWARD, neg_PUNISH, neg_REWARD, REWARD-PUNISH
-        'tfMRI_MOTOR': [0, 1, 2, 3, 4, 5, 6],  # 0 CUE, 1 LF, 2 LH, 3 RF, 4 RH, 5 T, 6 AVG, 7 CUE-AVG, 8 LF-AVG, 9 LH-AVG, 10 RF-AVG, 11 RH-AVG, 12 T-AVG, 13 neg_CUE, 14 neg_LF, 15 neg_LH, 16 neg_RF, 17 neg_RH, 18 neg_T, 19 neg_AVG, 20 AVG-CUE, 21 AVG-LF, 22 AVG-LH, 23 AVG-RF, 24 AVG-RH, 25 AVG-T
-        'tfMRI_LANGUAGE': [0, 1],     # MATH, STORY, MATH-STORY, STORY-MATH, neg_MATH, neg_STORY
-        'tfMRI_SOCIAL': [0, 1],     # RANDOM, TOM, RANDOM-TOM, neg_RANDOM, neg_TOM, TOM-RANDOM
-        'tfMRI_RELATIONAL':[0, 1],   # MATCH, REL, MATCH-REL, REL-MATCH, neg_MATCH, neg_REL
-        'tfMRI_EMOTION': [0, 1],     # FACES, SHAPES, FACES-SHAPES, neg_FACES, neg_SHAPES, SHAPES-FACES
-        }
-subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860', '103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','122822','130821','137633','152427','160123','172938','180432','192035','200917','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536', '180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140', '523032', '585862','654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968', '966975']
-#'105014', '114419',
+#subjlist = ['178950','189450','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860', '103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','122822','130821','137633','152427','160123','172938','180432','192035','200917','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536', '180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140', '523032', '585862','654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968', 
+subjlist = ['966975', '105014', '114419']
+#['199453'] '209228',
+nsub = len(subjlist)
 
 # All ROIS
 roilist = range(1,361)
@@ -61,41 +33,130 @@ roi_R_dat=180 + roi_R_img.get_fdata().ravel().astype(int)
 roi_dat=np.concatenate((roi_L_dat,roi_R_dat))
 
 
-nvox = 59412
-nsub=len(subjlist)
-ntask = len(taskcondictnoneg)
 
-# Initialise a space for the output summary values
-act={}
-for task, taskcon in taskcondictnoneg.items():
-    act[task]=np.zeros((len(taskcon), nvox))
-        
-for sub in subjlist:
-    print(f'Working on subject {sub}')
-    # For each task, download file from HCP S3
-    hcpbucket = 'hcp-openaccess'
 
-    # Main loop over contrast files
-    for task, taskcons in taskcondictnoneg.items():
+taskcondict_selected = {
+        'tfMRI_WM': [8], # 8 2BK
+        'tfMRI_MOTOR': [6],  # 6 AVG
+        'tfMRI_LANGUAGE': [1],     #  STORY
+        'tfMRI_SOCIAL': [1],     # TOM
+        'tfMRI_EMOTION': [1]     # SHAPES
+        }
+
+# Credentials for uploading data to the cusack lab s3
+session = boto3.Session(profile_name='default')
+s3 = session.client('s3')
+
+# Name of ROIs in the DLPFC
+frontalregs_right=[73,67,97,98,26,70,71,87,68,83,85,84,86] # All the ROIs in the right DLPFC regions
+frontalregs_right.sort() #  1-180 is right, 181-360 is left
+frontalregs_left=[x+180 for x in frontalregs_right]
+frontalregs_left.sort()
+DLPFroilist = frontalregs_right + frontalregs_left
+nDLPFroi = len(DLPFroilist)
+nvox = 177
+
+
+
+# CONNECTIVITY # 
+############################################################################################################
+# Produce a file for each sub containing the number of streamlines originating from every ROI in the DLPFC #
+############################################################################################################
+
+
+for sub in range(nsub):
+    print(f'Working on subject {subjlist[sub]}s tractography data')
+    vox_res_right = {}
+    vox_res_left = {}
+    roi_res = np.zeros((nsub,nDLPFroi))
+
+    for hemiind, hemi in enumerate(['R','L']):
+        img=nib.load(f'ff.{hemi}.label.gii') # Load label file 
+        labels=img.labeltable.get_labels_as_dict()
+        dat = img.agg_data('NIFTI_INTENT_LABEL') # dat contains ROI and voxels' coordinates
+        for seed_roi in range(len(frontalregs_right)): # for every ROI in the DLPFC
+            all_seed_values=[]
+            #all_seed_values = np.array(all_seed_values)
+            for target_roi in range(1, 361): # For every target ROI (334 in total)
+                if not target_roi in frontalregs_right:
+                    if not target_roi in frontalregs_left:
+                        if seed_roi < 1:
+                            remotepath = f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{hemi}/seeds_to_ROI.{target_roi}.shape.gii'
+                            #print(f'Downloading file {remotepath}')
+                            s3.download_file('smartontheinside', remotepath, f'/Users/chiara/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')
+                        img_s2t = nib.load(f'/Users/chiara/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')  
+                        dat_s2t = img_s2t.agg_data() # dat_s2t has tractography results
+                        if hemiind == 0:
+                            seed_values=dat_s2t[dat==(frontalregs_right[seed_roi])]
+                        else:
+                            seed_values=dat_s2t[dat==(frontalregs_left[seed_roi])]
+                        all_seed_values.append(seed_values)
+
+                        if file_exists(f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii'):
+                            os.remove(f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')
+            if hemiind == 0:
+                roi_res[sub,seed_roi] = np.mean(all_seed_values)
+            else:
+                roi_res[sub,seed_roi+13] = np.mean(all_seed_values)
+        if hemiind == 0:
+            vox_res_right[seed_roi] = all_seed_values    
+        else:
+            vox_res_left[seed_roi] = all_seed_values
+
+    np.save((f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_right.npy'), vox_res_right)
+    np.save((f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_left.npy'), vox_res_left)
+    np.save((f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy'), roi_res)
+    s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_right.npy', 'smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}_tractography_results_VOXEL_right.npy')
+    s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy', 'smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}ROI.npy')
+    s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_left.npy', 'smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}_tractography_results_VOXEL_left.npy')
+    os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_right.npy')
+    os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_left.npy')
+    os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy')
+
+
+
+
+# ACTIVATION # 
+#################################################################################################
+# Produce a file for each sub containing the activation for each vertex in each ROI of the DLPC #
+#################################################################################################
+
+# Main loop over contrast files
+for task, taskcons in taskcondict_selected.items():
+    print(f'task {task}')
+    act = dict()
+    act = np.zeros((nsub,nDLPFroi,nvox))
+    act = dict.fromkeys(DLPFroilist)
+    act_ROI = np.zeros((nsub,nDLPFroi))
+    for subind, sub in enumerate(subjlist):
+        # Credentials for HCP data
+        session = boto3.Session(profile_name='hcp')
+        s3 = session.client('s3')
+        hcpbucket = 'hcp-openaccess'
+        print(f'Working on subject {sub}s fMRI data ')
+        # For each task, download file from HCP S3
         hcpkey = f'HCP_1200/{sub}/MNINonLinear/Results/{task}/{task}_hp200_s2_level2.feat/{sub}_{task}_level2_hp200_s2.dscalar.nii'
-        #hcpkey = f'HCP_1200/199453/MNINonLinear/Results/tfMRI_WM/tfMRI_WM_hp200_s2_level2.feat/199453_tfMRI_WM_level2_hp200_s2.dscalar.nii'
         s3.download_file(hcpbucket, hcpkey, '/tmp/timeseries.nii')
         task_img = nib.load('/tmp/timeseries.nii')
-        for conind, con in enumerate(taskcons):
-            print(f'task {task} con {con}')
+        for conind, con in enumerate(taskcons):  
             # Pick out only voxels on the cortical surface
             task_dat=task_img.get_fdata()
             task_surfmask=task_img.header.get_axis(1).surface_mask
             task_dat_surf=task_dat[:,task_surfmask]
-            act[task][conind] = task_dat_surf[conind]
+            all_seed_values=[]
+            for roiind, roi in enumerate(DLPFroilist):
+                sel = task_dat_surf[:, roi_dat == roi][con]
+                act[roi] = sel
+                act_ROI[subind,roiind] = np.mean(sel)
+            # Save dict
+            np.save(f'/Users/chiara/{task}_timeseries.npy', act) 
+            np.save(f'/Users/chiara/{task}_timeseries_ROI.npy', act_ROI) 
 
-    # Save dict
-    np.save(f'/Users/chiara/{sub}_timeseries.npy', act) 
+        # Credentials for uploading data to the cusack lab s3
+        session = boto3.Session(profile_name='default')
+        s3 = session.client('s3')
 
-    # Upload to s3
-    #s3.upload_file(f'/Users/chiara/{sub}_timeseries.npy', 'smartontheinside', f'Results/{sub}_timeseries.npy')
-
-
-    # Load
-#read_dictionary = np.load('my_file.npy',allow_pickle='TRUE').item()
-#print(read_dictionary['hello']) # displays "world"
+        # Upload to s3
+        s3.upload_file(f'/Users/chiara/{task}_timeseries.npy', 'smartontheinside', f'Results/{task}_timeseries.npy')
+        s3.upload_file(f'/Users/chiara/{task}_timeseries_ROI.npy', 'smartontheinside', f'Results/{task}_timeseries_ROI.npy')
+        os.remove(f'/Users/chiara/{task}_timeseries_ROI.npy')
