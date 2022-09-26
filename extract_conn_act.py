@@ -113,9 +113,9 @@ for sub in range(nsub):
     s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy', 'smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
     s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy', 'smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}ROI.npy')
 
-
-    os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
+    
     os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_L.npy')
+    os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
     os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy')
 
 
