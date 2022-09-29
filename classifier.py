@@ -75,7 +75,7 @@ for hemiind, hemi in enumerate(['R','L']):
 
         for target_roi in range(1, 361): # For every target ROI (334 in total)
             conn.extend(tract[target_roi, :])
-        print(len(conn))
+            print(len(conn))
         conn_for_classifier[subind,:] = conn
     np.save(f'/Users/chiara/conn_for_classifier_{hemi}.npy', conn_for_classifier)
 
@@ -112,7 +112,9 @@ for task, taskcons in taskcondict_selected.items():
 ####################################
 ############ CLASSIFIER ############
 ####################################
+print(act_for_classifier.shape)
 
+print(conn_for_classifier.shape)
 
 # define model
 model = ElasticNet(alpha=1.0, l1_ratio=0.5)
