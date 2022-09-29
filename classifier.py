@@ -113,7 +113,6 @@ for task, taskcons in taskcondict_selected.items():
 ############ CLASSIFIER ############
 ####################################
 
-# act and conn_right conn_left
 
 # define model
 model = ElasticNet(alpha=1.0, l1_ratio=0.5)
