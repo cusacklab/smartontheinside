@@ -33,7 +33,7 @@ roi_L_dat=roi_L_img.get_fdata().ravel().astype(int)
 roi_R_dat=180 + roi_R_img.get_fdata().ravel().astype(int)
 roi_dat=np.concatenate((roi_L_dat,roi_R_dat))
 
-# Selction of contrasts
+# Selection of contrasts - based on previous analysis
 taskcondict_selected = {
         'tfMRI_WM': [8], # 8 2BK
         'tfMRI_MOTOR': [6],  # 6 AVG
@@ -62,7 +62,7 @@ nvox = 177
 # Produce a file for each sub containing the number of streamlines originating from every ROI in the DLPFC #
 ############################################################################################################
 
-
+'''''''''
 for sub in range(nsub):
     print(f'Working on subject {subjlist[sub]} tractography data')
 
@@ -118,7 +118,7 @@ for sub in range(nsub):
     os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
     os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy')
 
-
+'''''''''
 
 
 # ACTIVATION # 
@@ -138,7 +138,7 @@ for task, taskcons in taskcondict_selected.items():
         session = boto3.Session(profile_name='hcp')
         s3 = session.client('s3')
         hcpbucket = 'hcp-openaccess'
-        print(f'Working on subject {sub}s fMRI data ')
+        print(f'Working on subject {sub} fMRI data, task {task}')
         # For each task, download file from HCP S3
         hcpkey = f'HCP_1200/{sub}/MNINonLinear/Results/{task}/{task}_hp200_s2_level2.feat/{sub}_{task}_level2_hp200_s2.dscalar.nii'
         s3.download_file(hcpbucket, hcpkey, '/tmp/timeseries.nii')
@@ -154,8 +154,8 @@ for task, taskcons in taskcondict_selected.items():
                 act[roi] = sel
                 act_ROI[subind,roiind] = np.mean(sel)
             # Save dict
-            np.save(f'/Users/chiara/{task}_timeseries.npy', act) 
-            np.save(f'/Users/chiara/{task}_timeseries_ROI.npy', act_ROI) 
+            np.save(f'/Users/chiara/{task}_{sub}_timeseries.npy', act) 
+            np.save(f'/Users/chiara/{task}_{sub}_timeseries_ROI.npy', act_ROI) 
 
         # Credentials for uploading data to the cusack lab s3
         session = boto3.Session(profile_name='default')
