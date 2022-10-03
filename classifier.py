@@ -26,6 +26,7 @@ from sklearn.linear_model import ElasticNet
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import RepeatedKFold
 from numpy import absolute
+from sklearn.model_selection import LeaveOneOut
 
 
 
@@ -65,7 +66,6 @@ s3 = session.client('s3')
 for hemiind, hemi in enumerate(['R','L']):
     conn_for_classifier = np.zeros((nsub,786600))
     
-
     for subind, sub in enumerate(subjlist):
         conn = []
         print(f'Working on subject {sub} connectivity data, {hemi} hemisphere')
@@ -101,8 +101,8 @@ for task, taskcons in taskcondict_selected.items():
             #print(len(x[k]))
             #act[kind, :] = x[k]
         act_for_classifier[subind,:] = act
-        print(act_for_classifier.shape)
-        print(act_for_classifier)
+        #print(act_for_classifier.shape)
+        #print(act_for_classifier)
 
     # copia i risulati di ogni soggetto dentro act_for_classifier: ogni riga sara' un soggetto
     np.save(f'/Users/chiara/{task}_for_classifier.npy', act)
@@ -112,19 +112,36 @@ for task, taskcons in taskcondict_selected.items():
 ####################################
 ############ CLASSIFIER ############
 ####################################
-print(act_for_classifier.shape)
 
-print(conn_for_classifier.shape)
 
-# define model
-model = ElasticNet(alpha=1.0, l1_ratio=0.5)
-# define model evaluation method
-cv = RepeatedKFold(n_splits=2, n_repeats=3, random_state=1)
-# evaluate model
-scores = cross_val_score(model, act_for_classifier, conn_for_classifier, scoring='neg_mean_absolute_error', cv=cv, n_jobs=-1)
-# force scores to be positive
-scores = absolute(scores)
-print('Mean MAE: %.3f (%.3f)' % (mean(scores), std(scores)))
+
+
+for hemiind, hemi in enumerate(['R','L']):
+    conn_for_classifier = np.load(f'/Users/chiara/conn_for_classifier_{hemi}.npy', allow_pickle=True)
+
+    X = conn_for_classifier
+    y = act_for_classifier 
+
+    loo = LeaveOneOut()
+    loo.get_n_splits(X)
+    print(loo)
+
+    for train_index, test_index in loo.split(X):
+        print("TRAIN:", train_index, "TEST:", test_index)
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        print(X_train, X_test, y_train, y_test)
+
+
+        # define model
+        model = ElasticNet(alpha=1.0, l1_ratio=0.5)
+        # define model evaluation method
+        cv = RepeatedKFold(n_splits=2, n_repeats=3, random_state=1)
+        # evaluate model
+        scores = cross_val_score(model, y, X, scoring='neg_mean_absolute_error', cv=cv, n_jobs=-1)
+        # force scores to be positive
+        scores = absolute(scores)
+        print('Mean MAE: %.3f (%.3f)' % (mean(scores), std(scores)))
 
 
 '''''

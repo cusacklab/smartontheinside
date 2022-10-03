@@ -5,9 +5,7 @@ Code used to run this analysis is the following.
 
 I - Data was obtained from the HCP S3, using a subset of 1200 subject release, it was downloaded from S3 AWS (REF). Only a selection of contrasts was downloaded, in particular all the negative contrasts were excluded from selection. The full list of contrasts used for this analysis is the following:
 A rdm analysis was performed and the contrasts with the most different pattern of activation were recorded. These contrasts were: Emotion, Language - Story, Motor - Average, contrast Social - TOM, Working Memory - 2-back.
-Code used for this analysis: 
-docker-hcp/roi_extract_one_subject.py
-docker-hcp/hcp_example.py docker-hcp/MeanSTD.py
+Code used for this analysis: docker-hcp/roi_extract_one_subject.py and docker-hcp/hcp_example.py docker-hcp/MeanSTD.py
 
 II - ROI masks were created
 Code used for this analysis: makerois.py
