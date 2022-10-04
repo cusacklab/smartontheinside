@@ -52,7 +52,7 @@ frontalregs_right.sort() #  1-180 is right, 181-360 is left
 frontalregs_left=[x+180 for x in frontalregs_right]
 frontalregs_left.sort()
 DLPFroilist = frontalregs_right + frontalregs_left
-nDLPFroi = len(DLPFroilist)
+nDLPFroi = len(frontalregs_right)
 nvox = 177
 
 
@@ -63,6 +63,7 @@ nvox = 177
 ############################################################################################################
 
 
+'''''''''
 for sub in range(nsub):
     print(f'Working on subject {subjlist[sub]} tractography data')
 
@@ -85,7 +86,13 @@ for sub in range(nsub):
             if not target_roi in frontalregs_right:
                 if not target_roi in frontalregs_left:
                     remotepath = f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{hemi}/seeds_to_ROI.{target_roi}.shape.gii'
+                    # Credentials for uploading data to the cusack lab s3
+                    session = boto3.Session(profile_name='default')
+                    s3 = session.client('s3')
+                    bucket = 'smartontheinside'
+
                     #print(f'Downloading file {remotepath}')
+                    s3.download_file(bucket, remotepath, f'/Users/chiara/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii') 
                     img_s2t = nib.load(f'/Users/chiara/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')  
                     dat_s2t = img_s2t.agg_data() # dat_s2t has tractography results
                     all_seed_values=[]
@@ -123,7 +130,7 @@ for sub in range(nsub):
     os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
     os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy')
 
-
+'''''''''
 
 # ACTIVATION # 
 #################################################################################################
@@ -137,45 +144,65 @@ for sub in range(nsub):
 #wb_command -cifti-separate 996782_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii COLUMN  -metric CORTEX_LEFT m1_L.func.gii           
 #wb_command -cifti-separate 996782_tfMRI_MOTOR_level2_hp200_s2_MSMAll.dscalar.nii COLUMN  -metric CORTEX_RIGHT  m1_R.func.gii   
 
+# Credentials for uploading data to the cusack lab s3
+session = boto3.Session(profile_name='default')
+s3 = session.client('s3')
+bucket = 'smartontheinside'
+
 # Main loop over contrast files
 for task, taskcons in taskcondict_selected.items():
     print(f'task {task}')
-    act = dict()
-    act = np.zeros((nsub,nDLPFroi,nvox))
-    act = dict.fromkeys(DLPFroilist)
-    act_ROI = np.zeros((nsub,nDLPFroi))
-    for subind, sub in enumerate(subjlist):
-        # Credentials for HCP data
-        session = boto3.Session(profile_name='hcp')
-        s3 = session.client('s3')
-        hcpbucket = 'hcp-openaccess'
-        print(f'Working on subject {sub} fMRI data, task {task}')
-        # For each task, download file from HCP S3
-        hcpkey = f'HCP_1200/{sub}/MNINonLinear/Results/{task}/{task}_hp200_s2_level2.feat/{sub}_{task}_level2_hp200_s2.dscalar.nii'
-        s3.download_file(hcpbucket, hcpkey, '/tmp/timeseries.nii')
-        task_img = nib.load('/tmp/timeseries.nii')  # not a time series!
-        for conind, con in enumerate(taskcons):  
-            # Pick out only voxels on the cortical surface
-            task_dat=task_img.get_fdata()
-            task_surfmask=task_img.header.get_axis(1).surface_mask
-            task_dat_surf=task_dat[:,task_surfmask]
-            all_seed_values=[]
-            #print('DLPFC')
-            for roiind, roi in enumerate(DLPFroilist):
-                sel = task_dat_surf[:, roi_dat == roi][con]
-                act[roi] = sel
-                
-                #print(len(sel))
-                act_ROI[subind,roiind] = np.mean(sel)
-            # Save dict
-            np.save(f'/Users/chiara/{task}_{sub}_timeseries.npy', act) 
-            np.save(f'/Users/chiara/{task}_{sub}_timeseries_ROI.npy', act_ROI) 
+    for hemiind, hemi in enumerate(['R','L']):
+        act = dict()
+        act = np.zeros((nsub,nDLPFroi,nvox))
+        act = dict.fromkeys(DLPFroilist)
+        act_ROI = np.zeros((nsub,nDLPFroi))
+        for subind, sub in enumerate(subjlist):
+            # Credentials for HCP data
+            #session = boto3.Session(profile_name='hcp')
+            #s3 = session.client('s3')
+            #hcpbucket = 'hcp-openaccess'
+            #print(f'Working on subject {sub} fMRI data, task {task}')
+            
+            # For each task, download file from HCP S3
+            hcpkey = f'/Results/{sub}_{task}_WM_m1_{hemi}.func.gii'
+            print(hcpkey)
+            s3.download_file(bucket, hcpkey, f'/Users/chiara/{sub}_{task}_WM_m1_{hemi}.func.gii')
+            task_img = nib.load(f'{sub}_{task}_WM_m1_{hemi}.func.gii')
 
-            # Credentials for uploading data to the cusack lab s3
-            session = boto3.Session(profile_name='default')
-            s3 = session.client('s3')
+            for conind, con in enumerate(taskcons):
+                # Pick out only voxels on the cortical surface
+                task_dat=task_img.get_fdata()
+                task_surfmask=task_img.header.get_axis(1).surface_mask
+                task_dat_surf=task_dat[:,task_surfmask]
+                all_seed_values=[]
+
+                # NON HO CAPITO COSA FA QUESTO, COMINCIA DA QUI
+                for seed_roi in range(len(frontalregs_right)): # for every ROI in the DLPFC    
+                    if hemiind == 0:
+                        sel = task_dat_surf[roi_dat == frontalregs_right[seed_roi]][con]
+
+                        seed_values=dat_s2t[dat==(frontalregs_right[seed_roi])]
+                        coord = (dat==(frontalregs_right[seed_roi]))
+                        true_count = sum(coord)       
+                    else:
+                        sel = task_dat_surf[roi_dat == frontalregs_left[seed_roi]][con]
+                    all_seed_values.extend(seed_values)
+
+                # remove this!!!!
+                #for roiind, roi in enumerate(DLPFroilist):
+                #    sel = task_dat_surf[:, roi_dat == roi][con]
+                #    act[roi] = sel
+
+
+                    act_ROI[subind,seed_roi] = np.mean(sel)
+                # Save dict
+                np.save(f'/Users/chiara/{task}_{sub}_{hemi}_tfmri.npy', act) 
+                np.save(f'/Users/chiara/{task}_{sub}_{hemi}_tfmri_ROI.npy', act_ROI) 
+
+
 
             # Upload to s3
-            s3.upload_file(f'/Users/chiara/{task}_{sub}_timeseries.npy', 'smartontheinside', f'Results/{task}_{sub}_timeseries.npy')
-            s3.upload_file(f'/Users/chiara/{task}_{sub}_timeseries_ROI.npy', 'smartontheinside', f'Results/{task}_{sub}_timeseries_ROI.npy')
-            os.remove(f'/Users/chiara/{task}_{sub}_timeseries_ROI.npy')
+            s3.upload_file(f'/Users/chiara/{task}_{sub}_{hemi}tfmri.npy', 'smartontheinside', f'Results/{task}_{sub}_{hemi}tfmri_ROI.npy')
+            s3.upload_file(f'/Users/chiara/{task}_{sub}_{hemi}tfmri_ROI.npy', 'smartontheinside', f'Results/{task}_{sub}_{hemi}tfmri_ROI')
+            os.remove(f'/Users/chiara/{task}_{sub}_{hemi}tfmri_ROI.npy')
