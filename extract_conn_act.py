@@ -164,10 +164,13 @@ for task, taskcons in taskcondict_selected.items():
             #hcpbucket = 'hcp-openaccess'
             #print(f'Working on subject {sub} fMRI data, task {task}')
             
+            session = boto3.Session(profile_name='default')
+            s3 = session.client('s3')
+            bucket = 'smartontheinside'
             # For each task, download file from HCP S3
-            hcpkey = f'/Results/{sub}_{task}_WM_m1_{hemi}.func.gii'
+            hcpkey = f'Results/{sub}_{task}_WM_m1_{hemi}.func.gii'
             print(hcpkey)
-            s3.download_file(bucket, hcpkey, f'/Users/chiara/{sub}_{task}_WM_m1_{hemi}.func.gii')
+            s3.download_file(bucket, f'Results/{sub}_{task}_WM_m1_{hemi}.func.gii', f'/Users/chiara/{sub}_{task}_WM_m1_{hemi}.func.gii')
             task_img = nib.load(f'{sub}_{task}_WM_m1_{hemi}.func.gii')
 
             for conind, con in enumerate(taskcons):
