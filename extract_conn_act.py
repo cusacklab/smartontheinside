@@ -19,10 +19,10 @@ import pandas as pd
 from os.path import exists as file_exists
 
 
-
-subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','114419','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862','654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
-
+subjlist = ['211417']
+#subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862', '654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
 nsub = len(subjlist)
+#'114419', manda perche non ha roi per r
 
 # All ROIS
 roilist = range(1,361)
@@ -63,73 +63,70 @@ nvox = 177
 ############################################################################################################
 
 
-
+'''''''''
 for sub in range(nsub):
-    print(f'Working on subject {subjlist[sub]} tractography data')
-
-    for hemiind, hemi in enumerate(['R','L']):
-        img=nib.load(f'ff.{hemi}.label.gii') # Load label file 
-        labels=img.labeltable.get_labels_as_dict()
-        dat = img.agg_data('NIFTI_INTENT_LABEL') # dat contains ROI and voxels' coordinates
-
-        # Count number of voxels in all of the seeds in this hemi
-        if hemiind ==0:
-            nseedvox = np.sum([np.sum(dat==frontalregs_right[seed_roi]) for seed_roi in range(len(frontalregs_right))])
-        else:
-            nseedvox = np.sum([np.sum(dat==frontalregs_left[seed_roi]) for seed_roi in range(len(frontalregs_left))])
-
-        vox_res = np.zeros((361, nseedvox))
-        roi_res = np.zeros((nsub, 361, nDLPFroi))
-
-        #all_seed_values = np.array(all_seed_values)
-        for target_roi in range(1, 361): # For every target ROI (334 in total)
-            if not target_roi in frontalregs_right:
-                if not target_roi in frontalregs_left:
-                    remotepath = f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{hemi}/seeds_to_ROI.{target_roi}.shape.gii'
-                    # Credentials for uploading data to the cusack lab s3
-                    session = boto3.Session(profile_name='default')
-                    s3 = session.client('s3')
-                    bucket = 'smartontheinside'
-
-                    print(f'Downloading file {remotepath}')
-                    s3.download_file(bucket, remotepath, f'/Users/chiara/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii') 
-                    img_s2t = nib.load(f'/Users/chiara/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')  
-                    dat_s2t = img_s2t.agg_data() # dat_s2t has tractography results
-                    all_seed_values=[]
-                    
-                    for seed_roi in range(len(frontalregs_right)): # for every ROI in the DLPFC    
-                        if hemiind == 0:
-                            seed_values=dat_s2t[dat==(frontalregs_right[seed_roi])]
-                            coord = (dat==(frontalregs_right[seed_roi]))
-                            true_count = sum(coord)
-                            
-                        else:
-                            seed_values=dat_s2t[dat==(frontalregs_left[seed_roi])]
-                        #print(len(seed_values))
-                        all_seed_values.extend(seed_values)
-                    
-
-                        #if file_exists(f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii'):
-                            #os.remove(f'/home/chiaracaldinelli/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')
-                        #if hemiind == 0:
-                            #roi_res[sub, target_roi, seed_roi] = np.mean(seed_values)
-                        #else:
-                            #print('')
-                            #roi_res[sub, target_roi, seed_roi+13] = np.mean(seed_values)
-                    #print(f'hemi is {hemi}')
-                    vox_res[target_roi, :] = all_seed_values    
-
-        np.save((f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_{hemi}.npy'), vox_res)
-    #np.save((f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI{hemi}.npy'), roi_res)
-
-    s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_L.npy', 'smartontheinside', f'Results/{subjlist[sub]}_tractography_results_VOXEL_L.npy')
-    s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy', 'smartontheinside', f'Results/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
-    #s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy', 'smartontheinside', f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{subjlist[sub]}ROI.npy')
-
     
-    os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_L.npy')
-    os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
-    #os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_ROI.npy')
+    # Check if result file already exists
+    session = boto3.Session(profile_name='default')
+    s3 = session.client('s3')
+    bucket='smartontheinside'
+    file_key = f'Results/{subjlist[sub]}_tractography_results_VOXEL_L.npy'
+    result = s3.list_objects_v2(Bucket=bucket, Prefix=file_key)
+
+    if 'Contents' in result:
+        print(f"File for {subjlist[sub]} already exists.")
+    else:
+        print(f'Working on subject {subjlist[sub]} tractography data')
+
+        for hemiind, hemi in enumerate(['R','L']):
+            img=nib.load(f'ff.{hemi}.label.gii') # Load label file 
+            labels=img.labeltable.get_labels_as_dict()
+            dat = img.agg_data('NIFTI_INTENT_LABEL') # dat contains ROI and voxels' coordinates
+
+            # Count number of voxels in all of the seeds in this hemi
+            if hemiind ==0:
+                nseedvox = np.sum([np.sum(dat==frontalregs_right[seed_roi]) for seed_roi in range(len(frontalregs_right))])
+            else:
+                nseedvox = np.sum([np.sum(dat==frontalregs_left[seed_roi]) for seed_roi in range(len(frontalregs_left))])
+
+            vox_res = np.zeros((361, nseedvox))
+            roi_res = np.zeros((nsub, 361, nDLPFroi))
+
+            for target_roi in range(1, 361): # For every target ROI (334 in total)
+                if not target_roi in frontalregs_right:
+                    if not target_roi in frontalregs_left:
+                        remotepath = f'HCP_1200/{subjlist[sub]}/T1w/Diffusion.probtrackx2/{hemi}/seeds_to_ROI.{target_roi}.shape.gii'
+                        # Credentials for uploading data to the cusack lab s3
+                        session = boto3.Session(profile_name='default')
+                        s3 = session.client('s3')
+                        bucket = 'smartontheinside'
+
+                        print(f'Downloading file {remotepath}')
+                        s3.download_file(bucket, remotepath, f'/Users/chiara/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii') 
+                        img_s2t = nib.load(f'/Users/chiara/{subjlist[sub]}_seeds_to_ROI.{target_roi}.shape.gii')  
+                        dat_s2t = img_s2t.agg_data() # dat_s2t has tractography results
+                        all_seed_values=[]
+                        
+                        for seed_roi in range(len(frontalregs_right)): # for every ROI in the DLPFC    
+                            if hemiind == 0:
+                                seed_values=dat_s2t[dat==(frontalregs_right[seed_roi])]
+                                coord = (dat==(frontalregs_right[seed_roi]))
+                                true_count = sum(coord)
+                            
+                            else:
+                                seed_values=dat_s2t[dat==(frontalregs_left[seed_roi])]
+                            all_seed_values.extend(seed_values)
+                        
+                        vox_res[target_roi, :] = all_seed_values    
+
+            np.save((f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_{hemi}.npy'), vox_res)
+
+        s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_L.npy', 'smartontheinside', f'Results/{subjlist[sub]}_tractography_results_VOXEL_L.npy')
+        s3.upload_file(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy', 'smartontheinside', f'Results/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
+        
+        os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_L.npy')
+        os.remove(f'/Users/chiara/{subjlist[sub]}_tractography_results_VOXEL_R.npy')
+
 
 '''''''''
 
@@ -190,4 +187,3 @@ for task, taskcons in taskcondict_selected.items():
             os.remove(f'/Users/chiara/{task}_{sub}_{hemi}_tfmri.npy')
             os.remove(f'/Users/chiara/{task}_{sub}_{hemi}_tfmri_ROI.npy')
 
-'''''''''
