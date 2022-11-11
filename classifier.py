@@ -11,7 +11,8 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import cross_val_score
 
-subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862', '654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
+# subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862', '654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
+subjlist = ['178950','189450','199453','209228']
 nsub = len(subjlist)
 
 
@@ -38,7 +39,7 @@ s3 = session.client('s3')
 
 nseedvox = {'L': 2207, 'R': 2185}
 ntarg = 360
-'''''''''
+
 ################################################
 ############ Load connectivity data ############
 ################################################
@@ -97,7 +98,7 @@ for task, taskcons in taskcondict_selected.items():
     s3.upload_file(f'/Users/chiara/act_for_classifier.npy',
                     'smartontheinside', f'Results/act_for_classifier.npy')
 
-'''''''''
+
 ####################################
 ############ CLASSIFIER ############
 ####################################
@@ -117,7 +118,7 @@ for task, taskcons in taskcondict_selected.items():
     act_for_classifier = np.load(
         f'/Users/chiara/act_for_classifier_{task}.npy', allow_pickle=True).ravel()[0]
 
-    res = []
+    res = {}
 
     for hemiind, hemi in enumerate(['R', 'L']):
 
@@ -130,75 +131,75 @@ for task, taskcons in taskcondict_selected.items():
 
         # Reshape to what it needs:
         # Xarray-like of shape (n_samples, n_features) | yarray-like of shape (n_samples,) or (n_samples, n_outputs), default=None
-        X = X.reshape(175, -1)
+        # X = X.reshape(nsub, -1)
 
         model =  ElasticNet()
 
-        sc = cross_val_score(model, X, y, cv=2, scoring='f1')
+        # sc = cross_val_score(model, X, y, cv=2, scoring='f1')
 
-        score.append(sc)
-        print(sc)
-        print(np.average(score))
-        res[hemi] = score
-
-
-
-        # # Leave one out elastic net
-        # loo = LeaveOneOut()
-        # loo.get_n_splits(X)
-        # print(loo)
-
-        # # Trying 2 splits
-        # # rkf = RepeatedKFold(n_splits=2, n_repeats=2)
-        # # for train_index, test_index in rkf.split(X):
-
-        # for train_index, test_index in loo.split(X):
-        #     print("TRAIN:", train_index, "TEST:", test_index)
-        #     # X.shape=[nsub,nseedvox,ntarg]
-
-        #     X_train, X_test = X[train_index, :, :], X[test_index, :, :]
-        #     y_train, y_test = y[train_index, :], y[test_index, :]
-
-        #     # nsub_train = nsub-1
-        #     # nsub_test = 1
-        #     nsub_train = len(train_index)
-        #     nsub_test = len(test_index)
-
-        #     # Reshape to collapse subject and seed voxel dimensions as rows
-        #     X_train = np.reshape(X_train, [nsub_train * nseedvox[hemi], ntarg])
-        #     X_test = np.reshape(X_test, [nsub_test * nseedvox[hemi], ntarg])
-        #     y_train = np.reshape(y_train, [nsub_train * nseedvox[hemi], 1])
-        #     y_test = np.reshape(y_test, [nsub_test * nseedvox[hemi], 1])
-
-
-        #     # (X_train, y_train) = make_regression(n_features=2, random_state=0)
-        #     # regr = ElasticNet(random_state=0)
-        #     # regr.fit(X_train, y_train)
-        #     # ElasticNet(random_state=0)
-        #     # print(regr.coef_)
-
-        #     # print(regr.intercept_)
-        #     # print(regr.predict([[0, 0]]))
-
-
-        #     # Define model
-        #     model = ElasticNet(alpha=1.0, l1_ratio=0.5, random_state=0)
-
-        #     #Train
-        #     m = model.fit(X_train, y_train)
-        #     m.coef_
-        #     m.intercept_
-
-        #     # Test
-        #     #m.predict(X_train)
-        #     # m.predict(X_test)
-
-        #     # evaluate model
-        #     sc = m.score(X_test, y_test)
-        #     score.append(sc)
-        #     print(sc)
+        # score.append(sc)
+        # print(sc)
         # print(np.average(score))
         # res[hemi] = score
+
+
+
+        # Leave one out elastic net
+        loo = LeaveOneOut()
+        loo.get_n_splits(X)
+        print(loo)
+
+        # Trying 2 splits
+        # rkf = RepeatedKFold(n_splits=2, n_repeats=2)
+        # for train_index, test_index in rkf.split(X):
+
+        for train_index, test_index in loo.split(X):
+            print("TRAIN:", train_index, "TEST:", test_index)
+            # X.shape=[nsub,nseedvox,ntarg]
+
+            X_train, X_test = X[train_index, :, :], X[test_index, :, :]
+            y_train, y_test = y[train_index, :], y[test_index, :]
+
+            # nsub_train = nsub-1
+            # nsub_test = 1
+            nsub_train = len(train_index)
+            nsub_test = len(test_index)
+
+            # Reshape to collapse subject and seed voxel dimensions as rows
+            X_train = np.reshape(X_train, [nsub_train * nseedvox[hemi], ntarg])
+            X_test = np.reshape(X_test, [nsub_test * nseedvox[hemi], ntarg])
+            y_train = np.reshape(y_train, [nsub_train * nseedvox[hemi], 1])
+            y_test = np.reshape(y_test, [nsub_test * nseedvox[hemi], 1])
+
+
+            # (X_train, y_train) = make_regression(n_features=2, random_state=0)
+            # regr = ElasticNet(random_state=0)
+            # regr.fit(X_train, y_train)
+            # ElasticNet(random_state=0)
+            # print(regr.coef_)
+
+            # print(regr.intercept_)
+            # print(regr.predict([[0, 0]]))
+
+
+            # Define model
+            model = ElasticNet(alpha=1.0, l1_ratio=0.5, random_state=0)
+
+            #Train
+            m = model.fit(X_train, y_train)
+            m.coef_
+            m.intercept_
+
+            # Test
+            m.predict(X_train)
+            m.predict(X_test)
+
+            # evaluate model
+            sc = m.score(X_test, y_test)
+            score.append(sc)
+            print(sc)
+        print(np.average(score))        
+        res[hemi] = score
 
 
         # for i in range(2):
