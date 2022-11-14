@@ -3,19 +3,13 @@ import numpy as np
 import msgpack_numpy as m
 from sklearn.model_selection import LeaveOneOut
 from sklearn.linear_model import ElasticNet, LinearRegression
-
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score
 from sklearn.model_selection import cross_val_score
-
 from matplotlib import pyplot as plt
-
 from scipy.stats import pearsonr
-
 import pickle
-
 import scipy
-
 import os
 import sys
 import pandas as pd
@@ -30,13 +24,13 @@ print(f'alpha {alpha} l1_ratio {l1_ratio}')
 subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862', '654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
 
 # Number of subjects to analyse? Put in "None" to use all subjects
-sample_subjlist=4
+sample_subjlist=20
 
 if not sample_subjlist is None:  # select subset of subjects for testing
     subjlist = subjlist[:sample_subjlist]
 nsub = len(subjlist)
 
-analysis_root = '/home/ubuntu'
+analysis_root = '/users/chiara'
 
 # Reload connectivity and activity data again to create summary numpy files? 
 reload_data = False
@@ -136,16 +130,14 @@ if reload_data:
 #s3.download_file('smartontheinside', remotepath_conn, f'/home/ubuntu/conn_for_classifier.npy')
 conn_for_classifier = np.load(
     os.path.join(analysis_root, f'conn_for_classifier_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
-    
 
-# results now a dataframe
+# Create dataframe for results
 res = pd.DataFrame()
 
 for task, taskcons in taskcondict_selected.items():
     # Folder for results of this analysis
     folder = f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
-    os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # make folder if it doesn't already exist
-
+    os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
 
     # Download activations for classifier
     # remotepath_act = (f'Results/act_for_classifier.npy')
@@ -159,7 +151,7 @@ for task, taskcons in taskcondict_selected.items():
         y = act_for_classifier[hemi]
 
         # z score activation
-        y = scipy.stats.zscore(y, axis=1) # across vertices within each subject
+        y = scipy.stats.zscore(y, axis=1) # Across vertices within each subject
 
         score = []
         all_corr = []
@@ -189,15 +181,15 @@ for task, taskcons in taskcondict_selected.items():
             y_train = np.reshape(y_train, [nsub_train * nseedvox[hemi], 1])
             y_test = np.reshape(y_test, [nsub_test * nseedvox[hemi], 1])
 
-
             # Define model
             if alpha==0:
                 model = LinearRegression()
             else:
                 model = ElasticNet(alpha = alpha, l1_ratio=l1_ratio, random_state=42) 
-            #Train
+
+            # Train
             model.fit(X_train, y_train)
-            #Test
+            # Test
             sc = model.score(X_test, y_test)
 
             # Pearson
@@ -222,7 +214,7 @@ for task, taskcons in taskcondict_selected.items():
         print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr)}')
 
 
-    # Use pickle as numpy doesn't support dicts properly    
+    # Save results with pickle   
     with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}.pickle'), 'wb') as f:
         pickle.dump(res, f)
     
