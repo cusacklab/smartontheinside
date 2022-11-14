@@ -1,22 +1,42 @@
 import boto3
 import numpy as np
 import msgpack_numpy as m
-from sklearn.linear_model import ElasticNet
 from sklearn.model_selection import LeaveOneOut
-from sklearn.linear_model import ElasticNet
-from sklearn.model_selection import RepeatedKFold
-from sklearn.datasets import make_regression
+from sklearn.linear_model import ElasticNet, LinearRegression
 
 from sklearn.model_selection import KFold
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score, explained_variance_score
 from sklearn.model_selection import cross_val_score
 
-# subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862', '654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
-subjlist = ['178950','189450','199453','209228']
+from matplotlib import pyplot as plt
+
+from scipy.stats import pearsonr
+
+import pickle
+
+import scipy
+
+import os
+
+import pandas as pd
+
+subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862', '654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
+
+# Number of subjects to analyse? Put in "None" to use all subjects
+sample_subjlist=4
+
+if not sample_subjlist is None:  # select subset of subjects for testing
+    subjlist = subjlist[:sample_subjlist]
 nsub = len(subjlist)
 
+analysis_root = '/home/ubuntu'
 
-s3 = boto3.client('s3')
+# Reload connectivity and activity data again to create summary numpy files? 
+reload_data = False
+
+# Scatter plots of individual fits
+draw_scatter_plots = False
+
 DLPFroilist = ['26', '67', '68', '70', '71', '73', '83', '84', '85', '86', '87', '96', '98',
                '206', '247', '248', '250', '251', '253', '263', '264', '265', '266', '267', '276', '278']
 
@@ -29,196 +49,184 @@ taskcondict_selected = {
     'tfMRI_EMOTION': [1]     # SHAPES
 }
 
-nvox = 59412
 ntask = len(taskcondict_selected)
 nsub = len(subjlist)
 
 # Credentials for uploading data to the cusack lab s3
+s3 = boto3.client('s3')
 session = boto3.Session(profile_name='default')
 s3 = session.client('s3')
 
 nseedvox = {'L': 2207, 'R': 2185}
 ntarg = 360
 
-################################################
-############ Load connectivity data ############
-################################################
+if reload_data:
+    ################################################
+    ############ Load connectivity data ############
+    ################################################
 
-conn_for_classifier = {}
+    conn_for_classifier = {}
 
-for hemiind, hemi in enumerate(['R', 'L']):
-    # right hemi has 786600, but left has 794520
-    conn_for_classifier[hemi] = np.zeros((nsub, nseedvox[hemi], ntarg))
-
-    for subind, sub in enumerate(subjlist):
-        conn = []
-        print(f'Working on subject {sub} tractography data, {hemi} hemisphere')
-
-        remotepath_conn = (
-            f'Results/{sub}_tractography_results_VOXEL_{hemi}.npy')
-        s3.download_file('smartontheinside', remotepath_conn,
-                         f'/Users/chiara/{sub}_tractography_results_VOXEL_{hemi}.npy')
-        tract = np.load(
-            f'/Users/chiara/{sub}_tractography_results_VOXEL_{hemi}.npy', allow_pickle=True)
-
-        for target_roi in range(1, 361):  # For every target ROI (334 in total?)
-            conn_for_classifier[hemi][subind, :,
-                                      target_roi - 1] = tract[target_roi, :]
-
-np.save(f'/Users/chiara/conn_for_classifier.npy', conn_for_classifier)
-s3.upload_file(f'/Users/chiara/conn_for_classifier.npy',
-               'smartontheinside', f'Results/conn_for_classifier.npy')
-
-
-############################################
-############ Load activity data ############
-############################################
-
-
-# for each of the selected tasks
-for task, taskcons in taskcondict_selected.items():
-    act_for_classifier = {}
-
-    # for each hemisphere
     for hemiind, hemi in enumerate(['R', 'L']):
-        act_for_classifier[hemi] = np.zeros((nsub, nseedvox[hemi]))
+        # right hemi has 786600, but left has 794520
+        conn_for_classifier[hemi] = np.zeros((nsub, nseedvox[hemi], ntarg))
 
-        # For each subject
         for subind, sub in enumerate(subjlist):
-            print(
-                f'Working on subject {sub} activation data, {hemi} hemisphere', {task})
-            remotepath_act = (f'Results/{task}_{sub}_{hemi}_tfmri.npy')
-            s3.download_file('smartontheinside', remotepath_act,
-                             f'/Users/chiara/{task}_{sub}_{hemi}_tfmri.npy')
-            data_act = np.load(
-                f'/Users/chiara/{task}_{sub}_{hemi}_tfmri.npy', allow_pickle=True)
-            act_for_classifier[hemi][subind, :] = data_act
+            conn = []
+            print(f'Working on subject {sub} tractography data, {hemi} hemisphere')
 
-    np.save(f'/Users/chiara/act_for_classifier_{task}.npy', act_for_classifier)
-    s3.upload_file(f'/Users/chiara/act_for_classifier.npy',
-                    'smartontheinside', f'Results/act_for_classifier.npy')
+            remotepath_conn = (
+                f'Results/{sub}_tractography_results_VOXEL_{hemi}.npy')
+            s3.download_file('smartontheinside', remotepath_conn,
+                            os.path.join(analysis_root, f'{sub}_tractography_results_VOXEL_{hemi}.npy'))
+            tract = np.load(
+                os.path.join(analysis_root, f'{sub}_tractography_results_VOXEL_{hemi}.npy'), allow_pickle=True)
+
+            for target_roi in range(1, 361):  # For every target ROI (334 in total?)
+                conn_for_classifier[hemi][subind, :,
+                                        target_roi - 1] = tract[target_roi, :]
+
+    np.save(os.path.join(analysis_root, f'conn_for_classifier_N-{nsub}.npy'), conn_for_classifier)
+    s3.upload_file(os.path.join(analysis_root, f'conn_for_classifier_N-{nsub}.npy'),
+                'smartontheinside', f'Results/conn_for_classifier_N-{nsub}.npy')
+
+
+    ############################################
+    ############ Load activity data ############
+    ############################################
+
+
+    # for each of the selected tasks
+    for task, taskcons in taskcondict_selected.items():
+        act_for_classifier = {}
+
+        # for each hemisphere
+        for hemiind, hemi in enumerate(['R', 'L']):
+            act_for_classifier[hemi] = np.zeros((nsub, nseedvox[hemi]))
+
+            # For each subject
+            for subind, sub in enumerate(subjlist):
+                print(
+                    f'Working on subject {sub} activation data, {hemi} hemisphere', {task})
+                remotepath_act = (f'Results/{task}_{sub}_{hemi}_tfmri.npy')
+                s3.download_file('smartontheinside', remotepath_act,
+                                os.path.join(analysis_root, f'{task}_{sub}_{hemi}_tfmri.npy'))
+                data_act = np.load(
+                    os.path.join(analysis_root, f'{task}_{sub}_{hemi}_tfmri.npy'), allow_pickle=True)
+                act_for_classifier[hemi][subind, :] = data_act
+
+        np.save(os.path.join(analysis_root, f'act_for_classifier_{task}_N-{nsub}.npy'), act_for_classifier)
+        s3.upload_file(os.path.join(analysis_root, f'act_for_classifier_{task}_N-{nsub}.npy'),
+                        'smartontheinside', f'Results/act_for_classifier_N-{nsub}.npy')
 
 
 ####################################
 ############ CLASSIFIER ############
 ####################################
 
-# Flatten out the first two dimensions like this
-#xtrain = np.reshape(xtrain, [(nsubj-1)*nseedvox, ntargetroi])
-
+# Download connections for classifier
+# remotepath_conn = (f'Results/conn_for_classifier.npy')
+#s3.download_file('smartontheinside', remotepath_conn, f'/home/ubuntu/conn_for_classifier.npy')
+conn_for_classifier = np.load(
+    os.path.join(analysis_root, f'conn_for_classifier_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
+    
 for task, taskcons in taskcondict_selected.items():
-    # Download and load data for classifier
-    # remotepath_conn = (f'Results/conn_for_classifier.npy')
-    #s3.download_file('smartontheinside', remotepath_conn, f'/Users/chiara/conn_for_classifier.npy')
-    conn_for_classifier = np.load(
-        f'/Users/chiara/conn_for_classifier.npy', allow_pickle=True).ravel()[0]
+    for alpha in np.arange(0,1,0.2):
+        for l1_ratio in np.arange(0,1,0.2):
 
-    # remotepath_act = (f'Results/act_for_classifier.npy')
-    #s3.download_file('smartontheinside', remotepath_act, f'/Users/chiara/conn_for_classifier.npy')
-    act_for_classifier = np.load(
-        f'/Users/chiara/act_for_classifier_{task}.npy', allow_pickle=True).ravel()[0]
+            # Folder for results of this analysis
+            folder = f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
+            os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # make folder if it doesn't already exist
 
-    res = {}
+            # results now a dataframe
+            res = pd.DataFrame()
 
-    for hemiind, hemi in enumerate(['R', 'L']):
-
-        X = conn_for_classifier[hemi]
-        y = act_for_classifier[hemi]
-        score = []
-
-        kf = KFold(n_splits=2)
-        errors = []
-
-        # Reshape to what it needs:
-        # Xarray-like of shape (n_samples, n_features) | yarray-like of shape (n_samples,) or (n_samples, n_outputs), default=None
-        # X = X.reshape(nsub, -1)
-
-        model =  ElasticNet()
-
-        # sc = cross_val_score(model, X, y, cv=2, scoring='f1')
-
-        # score.append(sc)
-        # print(sc)
-        # print(np.average(score))
-        # res[hemi] = score
+            # Download activations for classifier
+            # remotepath_act = (f'Results/act_for_classifier.npy')
+            #s3.download_file('smartontheinside', remotepath_act, f'/home/ubuntu/conn_for_classifier.npy')
+            act_for_classifier = np.load(
+                os.path.join(analysis_root, f'act_for_classifier_{task}_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
 
 
+            for hemiind, hemi in enumerate(['R', 'L']):
+                X = conn_for_classifier[hemi]
+                y = act_for_classifier[hemi]
 
-        # Leave one out elastic net
-        loo = LeaveOneOut()
-        loo.get_n_splits(X)
-        print(loo)
+                # z score activation
+                y = scipy.stats.zscore(y, axis=1) # across vertices within each subject
 
-        # Trying 2 splits
-        # rkf = RepeatedKFold(n_splits=2, n_repeats=2)
-        # for train_index, test_index in rkf.split(X):
+                score = []
+                all_corr = []
 
-        for train_index, test_index in loo.split(X):
-            print("TRAIN:", train_index, "TEST:", test_index)
-            # X.shape=[nsub,nseedvox,ntarg]
+                # print(f'X.shape = {X.shape}')
+                # print(f'y.shape = {y.shape}')
 
-            X_train, X_test = X[train_index, :, :], X[test_index, :, :]
-            y_train, y_test = y[train_index, :], y[test_index, :]
+                # Leave one out elastic net
+                loo = LeaveOneOut()
+                loo.get_n_splits(X)
 
-            # nsub_train = nsub-1
-            # nsub_test = 1
-            nsub_train = len(train_index)
-            nsub_test = len(test_index)
+                for train_index, test_index in loo.split(X):
+                    #print("TRAIN:", train_index, "TEST:", test_index)
+                    # X.shape=[nsub,nseedvox,ntarg]
 
-            # Reshape to collapse subject and seed voxel dimensions as rows
-            X_train = np.reshape(X_train, [nsub_train * nseedvox[hemi], ntarg])
-            X_test = np.reshape(X_test, [nsub_test * nseedvox[hemi], ntarg])
-            y_train = np.reshape(y_train, [nsub_train * nseedvox[hemi], 1])
-            y_test = np.reshape(y_test, [nsub_test * nseedvox[hemi], 1])
+                    X_train, X_test = X[train_index, :, :], X[test_index, :, :]
+                    y_train, y_test = y[train_index, :], y[test_index, :]
 
+                    # nsub_train = nsub-1
+                    # nsub_test = 1
+                    nsub_train = len(train_index)
+                    nsub_test = len(test_index)
 
-            # (X_train, y_train) = make_regression(n_features=2, random_state=0)
-            # regr = ElasticNet(random_state=0)
-            # regr.fit(X_train, y_train)
-            # ElasticNet(random_state=0)
-            # print(regr.coef_)
-
-            # print(regr.intercept_)
-            # print(regr.predict([[0, 0]]))
+                    # Reshape to collapse subject and seed voxel dimensions as rows
+                    X_train = np.reshape(X_train, [nsub_train * nseedvox[hemi], ntarg])
+                    X_test = np.reshape(X_test, [nsub_test * nseedvox[hemi], ntarg])
+                    y_train = np.reshape(y_train, [nsub_train * nseedvox[hemi], 1])
+                    y_test = np.reshape(y_test, [nsub_test * nseedvox[hemi], 1])
 
 
-            # Define model
-            model = ElasticNet(alpha=1.0, l1_ratio=0.5, random_state=0)
+                    # Define model
+                    if alpha==0:
+                        model = LinearRegression()
+                    else:
+                        model = ElasticNet(alpha = alpha, l1_ratio=l1_ratio, random_state=42) 
+                    #Train
+                    model.fit(X_train, y_train)
+                    #Test
+                    sc = model.score(X_test, y_test)
 
-            #Train
-            m = model.fit(X_train, y_train)
-            m.coef_
-            m.intercept_
+                    # Pearson
+                    y_estimate = model.predict(X_test)
+                    c=pearsonr(y_test[:,0], y_estimate)
 
-            # Test
-            m.predict(X_train)
-            m.predict(X_test)
+                    if draw_scatter_plots:
+                        # Draw scatter plot
+                        plt.figure()
+                        plt.scatter(y_test, y_estimate)
+                        plt.title(f'r={c[0]} p={c[1]}')
+                        plt.savefig(f'scatter_{task}_{hemi}_{test_index[0]}.png')
 
-            # evaluate model
-            sc = m.score(X_test, y_test)
-            score.append(sc)
-            print(sc)
-        print(np.average(score))        
-        res[hemi] = score
+                    score.append(sc)
+                    all_corr.append(c[0])
+                    res = pd.concat((res, pd.DataFrame([
+                                {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
+                                'task': task, 'hemi': hemi, 'fold': test_index[0],
+                                'pearson': c[0], 'score':sc}
+                                ])))
 
+                print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr)}')
+      
 
-        # for i in range(2):
-        #     for train_index, test_index in kf.split(X):
-        #         # print("TRAIN:", train_index, "TEST:", test_index)
-        #         # X.shape=[nsub,nseedvox,ntarg]
+            # Use pickle as numpy doesn't support dicts properly    
+            with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}.pickle'), 'wb') as f:
+                pickle.dump(res, f)
+            
+            s3.upload_file(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}.pickle'), 
+                'smartontheinside', 
+                os.path.join('Results', folder, f'{task}_subjectloo_N-{nsub}.pickle'))
 
-        #         ypred = model.predict(X[test_index])
-                
-        #         error = mean_squared_error(y[test],ypred)
-        #         errors.append(error)
-        
-        # mean_err = np.mean(np.array(errors))
-        # std = np.std(np.array(errors))
-        
-        # cv_df_k.loc['mean error',k] = mean_err
-        # cv_df_k.loc['variance',k] = std
-        # print(f'===== \n {k}-fold Cross-Val results: \n mean error = {mean_err} \n standard deviation = {std}')
-
-
-    np.save((f'/Users/chiara/classifier_results_{task}_2groups.npy'), res)
-    s3.upload_file(f'/Users/chiara/classifier_results_{task}_2groups.npy', 'smartontheinside', f'Results/classifier_results_{task}_2groups.npy')
+        # Dump data frame
+        res.to_csv(os.path.join(analysis_root, folder, f'summary_N-{nsub}.csv'))
+        s3.upload_file(os.path.join(analysis_root, folder, f'summary_N-{nsub}.csv'), 
+            'smartontheinside', 
+            os.path.join('Results', folder, f'summary_N-{nsub}.csv'))
+            
