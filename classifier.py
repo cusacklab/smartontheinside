@@ -17,7 +17,7 @@ import pandas as pd
 
 assert len(sys.argv)>=3, 'Need to specify alpha and l1_ratio as parameters'
 alpha = float(sys.argv[1])
-l1_ratio = float(sys.argv[1])
+l1_ratio = float(sys.argv[2])
 
 print(f'alpha {alpha} l1_ratio {l1_ratio}')
 
@@ -30,10 +30,10 @@ if not sample_subjlist is None:  # select subset of subjects for testing
     subjlist = subjlist[:sample_subjlist]
 nsub = len(subjlist)
 
-analysis_root = '/users/chiara'
+analysis_root = '/home/chiaracaldinelli'
 
 # Reload connectivity and activity data again to create summary numpy files? 
-reload_data = False
+reload_data = True
 
 # Scatter plots of individual fits
 draw_scatter_plots = False
@@ -227,4 +227,6 @@ res.to_csv(os.path.join(analysis_root, folder, f'summary_N-{nsub}.csv'))
 s3.upload_file(os.path.join(analysis_root,  folder,f'summary_N-{nsub}.csv'), 
     'smartontheinside', 
     os.path.join('Results', folder, f'summary_N-{nsub}.csv'))
+
+print(f'Finished with alpha {alpha} l1_ratio {l1_ratio}')
         
