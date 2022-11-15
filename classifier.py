@@ -33,10 +33,10 @@ nsub = len(subjlist)
 analysis_root = '/home/chiaracaldinelli'
 
 # Reload connectivity and activity data again to create summary numpy files? 
-reload_data = True
+reload_data = False
 
 # Scatter plots of individual fits
-draw_scatter_plots = False
+draw_scatter_plots = True
 
 DLPFroilist = ['26', '67', '68', '70', '71', '73', '83', '84', '85', '86', '87', '96', '98',
                '206', '247', '248', '250', '251', '253', '263', '264', '265', '266', '267', '276', '278']
