@@ -6,8 +6,11 @@ import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-alpha_values = [0.1, 1.0, 10.0, 100.0]
-l1_ratio_values = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+# alpha_values = [0.1, 1.0, 10.0, 100.0]
+# l1_ratio_values = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+
+alpha_values = [0.1, 1.0]
+l1_ratio_values = [0.0, 0.2]
 
 # Selection of contrasts - based on previous analysis
 tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
@@ -16,13 +19,16 @@ analysis_root = '/home/chiaracaldinelli'
 # code_folder = '/home/chiaracaldinelli/smartontheinside/smartontheinside'
 m = np.zeros(((len(alpha_values)),(len(l1_ratio_values))))
 
-for hemiind, hemi in enumerate(['R', 'L']):
-    # Make composite figures
-    # fig, ax = plt.subplots(ncols=2, nrows=5)
-    fig, ax = plt.subplots(2, 5)
 
-    for alphaind, alpha in enumerate(alpha_values):
-        for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
+for alphaind, alpha in enumerate(alpha_values):
+    for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
+
+        for hemiind, hemi in enumerate(['R', 'L']):
+            # Make composite figures
+            plt.figure()
+            fig,ax=plt.subplots(ncols=2, nrows=5, figsize=(10,8))
+
+
             for taskind, task in enumerate(tasks_selected):
 
                 folder = f'smartontheinside/smartontheinside/results/classifier_tune_parameters'
@@ -64,36 +70,30 @@ for hemiind, hemi in enumerate(['R', 'L']):
             
                 # fig, ax = plt.subplots()
                 # Compose figure
-                im = ax[hemiind][taskind].imshow(m)
+                im = ax[taskind][hemiind].imshow(m)
                 # im = ax.imshow(m)
 
-                # plt.figure()
-                # fig,ax=plt.subplots(ncols=2, nrows=5, figsize=(10,8))
-                # im = ax.imshow(m)
-                # fig=interaction_plot(x=dfR['fold'], trace=dfR['task'], response=dfR['score'], ax=ax[0])
-                # fig=interaction_plot(x=dfR['fold'], trace=dfR['task'], response=dfR['score'], ax=ax[1])
-
-                # Show all ticks and label them with the respective list entries
-                ax[hemiind][taskind].set_xticks(np.arange(len(alpha_values)), labels=alpha_values)
-                ax[hemiind][taskind].set_yticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values)
+                # # Show all ticks and label them with the respective list entries
+                ax[taskind][hemiind].set_xticks(np.arange(len(alpha_values)), labels=alpha_values)
+                ax[taskind][hemiind].set_yticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values)
                 plt.xlabel('l1 ratio')
                 plt.ylabel('alpha')
                 # Rotate the tick labels and set their alignment.
-                plt.setp(ax[hemiind][taskind].get_xticklabels(), rotation=45, ha="right",
+                plt.setp(ax[taskind][hemiind].get_xticklabels(), rotation=45, ha="right",
                         rotation_mode="anchor")
 
                 # create an Axes on the right side of ax. The width of cax will be 5%
                 # of ax and the padding between cax and ax will be fixed at 0.05 inch.
-                divider = make_axes_locatable(ax[hemiind][taskind])
-                cax = divider.append_axes("right", size="5%", pad=0.05)
-                plt.colorbar(im, cax=cax)
-                plt.tight_layout()
+                # divider = make_axes_locatable(ax[hemiind][taskind])
+                # cax = divider.append_axes("right", size="5%", pad=0.05)
+                # plt.colorbar(im, cax=cax)
+                # plt.tight_layout()
 
             
                 plt.show()
 
-                ax[hemiind][taskind].set_title(f"{hemi} Hemisphere - {task}")
+                ax[taskind][hemiind].set_title(f"{hemi} Hemi - {task}")
                 fig.tight_layout()
                 # plt.show()
-# plt.savefig(os.path.join(analysis_root, folder, f'heatmap_{hemi}_{task}'), bbox_inches='tight')
-plt.savefig(os.path.join(analysis_root, folder, f'heatmap.png'), bbox_inches='tight')
+        # plt.savefig(os.path.join(analysis_root, folder, f'heatmap_{hemi}_{task}'), bbox_inches='tight')
+        plt.savefig(os.path.join(analysis_root, folder, f'heatmap_alpha-{alpha}_l1_ratio-{l1_ratio}.png'), bbox_inches='tight')
