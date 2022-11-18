@@ -5,27 +5,40 @@ from statsmodels.graphics.factorplots import interaction_plot
 import numpy as np
 
 
-alpha_values = [0.2, 0.4, 0.6, 0.8, 1.0]
-l1_ratio_values = [0.2, 0.4, 0.6, 0.8, 1.0]
+# alpha_values = [0.2, 0.4, 0.6, 0.8, 1.0]
+# l1_ratio_values = [0.2, 0.4, 0.6, 0.8, 1.0]
+
+alpha_values = [0.2, 0.2]
+l1_ratio_values = [0.2, 0.2]
 
 # Selection of contrasts - based on previous analysis
-tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
+# tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
+tasks_selected = ['tfMRI_WM']
 
-analysis_root = '/home/chiaracaldinelli'
+analysis_root = '/Users/chiara/smartontheinside'
 
-m = np.zeros((len(tasks_selected),len(l1_ratio_values)))
+m = np.zeros(((len(alpha_values)),(len(l1_ratio_values))))
 
-for taskind, task in enumerate(tasks_selected):
-    print(task)
-
-    for hemi in ('L', 'R'):
-
-        for alphaind, alpha in enumerate(alpha_values):
-            for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
+for hemi in ('L', 'R'):
+    for alphaind, alpha in enumerate(alpha_values):
+        for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
+            for taskind, task in enumerate(tasks_selected):
+                print(task)
 
                 df = pd.read_csv(os.path.join(analysis_root, f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}/summary_N-20.csv'), index_col=False)
                 df = df.loc[df['hemi'] == hemi]
                 # print(dfL)
+                print(df)
+                table = pd.pivot_table(df, values=['pearson', 'score'], index=['hemi', 'task'],
+                    aggfunc={'pearson': np.mean,
+                             'score': np.mean})
+                
+                file = open(('classifier_res.txt'),'a') 
+                file.write(f"\n Results for alpha = {alpha} and l1_ratio = {l1_ratio}")
+                file.write(f"\n {table}")
+                file.close()
+
+                print(table)
 
                 # plt.figure()
                 # fig,ax=plt.subplots(nrows=2, figsize=(10,8))
@@ -42,22 +55,14 @@ for taskind, task in enumerate(tasks_selected):
                 # plt.savefig((f'res_alpha_{alpha}_l1_ratio_{l1_ratio}.png'), bbox_inches='tight')
                 # print(f'Figure saved as res_alpha_{alpha}_l1_ratio_{l1_ratio}.png')
 
-            # Calculate average of the 20 folds and summarise it in a matrix
-            y = (df.loc[df['task'] == task])
-            print(y)
-            y = y.loc['score']
+                # Calculate average of the 20 folds and summarise it in a matrix
+                y = (df.loc[df['task'] == task]['score'])
+                # print(y)
+                print(f'taskind {taskind}')
+                print(f'alpha {alphaind}')
+                print(f'l1_ratio {l1_ratioind}')
+                m[alphaind,l1_ratioind] = y.mean()
             
-            print('********************')
-            print(f'taskind {taskind}')
-            print(f'alpha {alphaind}')
-            print(f'l1_ration {l1_ratioind}')
-            m[alphaind,l1_ratioind] = y
-            
-            
-            # print(mL)
-            # print(mR)
-
-            for hemi in ('L', 'R'):
                 fig, ax = plt.subplots()
                 im = ax.imshow(m)
 
@@ -77,5 +82,5 @@ for taskind, task in enumerate(tasks_selected):
 
                 ax.set_title(f"{hemi} Hemisphere")
                 fig.tight_layout()
-                plt.show()
+                # plt.show()
                 plt.savefig(f'heatmap_{hemi}', bbox_inches='tight')
