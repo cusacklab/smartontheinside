@@ -12,7 +12,7 @@ l1_ratio_values = [0.2, 0.4, 0.6, 0.8, 1.0]
 tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
 
 analysis_root = '/home/chiaracaldinelli'
-
+# code_folder = '/home/chiaracaldinelli/smartontheinside/smartontheinside'
 m = np.zeros(((len(alpha_values)),(len(l1_ratio_values))))
 
 for hemi in ('L', 'R'):
@@ -20,7 +20,7 @@ for hemi in ('L', 'R'):
         for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
             for taskind, task in enumerate(tasks_selected):
 
-                folder = f'results/classifier_tune_parameters'
+                folder = f'smartontheinside/smartontheinside/results/classifier_tune_parameters'
                 os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
 
                 df = pd.read_csv(os.path.join(analysis_root, f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}/summary_N-20.csv'), index_col=False)
@@ -31,7 +31,7 @@ for hemi in ('L', 'R'):
                     aggfunc={'pearson': np.mean,
                              'score': np.mean})
                 
-                file = open(os.path.join(analysis_root, f'results/classifier_tune_parameters/classifier_res.txt'),'a')
+                file = open(os.path.join(analysis_root, folder, f'classifier_res.txt'),'a')
                 file.write(f"\n Results for alpha = {alpha} and l1_ratio = {l1_ratio}")
                 file.write(f"\n {table}")
                 file.close()
@@ -55,28 +55,20 @@ for hemi in ('L', 'R'):
 
                 # Calculate average of the 20 folds and summarise it in a matrix
                 y = (df.loc[df['task'] == task]['score'])
-                # print(y)
-                print(f'taskind {taskind}')
-                print(f'alpha {alphaind}')
-                print(f'l1_ratio {l1_ratioind}')
                 m[alphaind,l1_ratioind] = y.mean()
             
                 fig, ax = plt.subplots()
                 im = ax.imshow(m)
 
                 # Show all ticks and label them with the respective list entries
-                # ax.set_xticks(np.arange(len(farmers)), labels=farmers)
-                # ax.set_yticks(np.arange(len(vegetables)), labels=vegetables)
-
+                ax.set_xticks(np.arange(len(alpha_values)), labels=alpha_values)
+                ax.set_yticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values)
+                plt.xlabel('l1 ratio')
+                plt.ylabel('alpha')
                 # Rotate the tick labels and set their alignment.
-                # plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-                #         rotation_mode="anchor")
+                plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                        rotation_mode="anchor")
 
-                # Loop over data dimensions and create text annotations.
-                # for i in range(len(vegetables)):
-                #     for j in range(len(farmers)):
-                #         text = ax.text(j, i, harvest[i, j],
-                #                     ha="center", va="center", color="w")
 
                 ax.set_title(f"{hemi} Hemisphere - {task}")
                 fig.tight_layout()
