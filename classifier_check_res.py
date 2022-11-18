@@ -6,8 +6,8 @@ import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-alpha_values = [0.2, 0.4, 0.6, 0.8, 1.0]
-l1_ratio_values = [0.2, 0.4, 0.6, 0.8, 1.0]
+alpha_values = [0.1, 1.0, 10.0, 100.0]
+l1_ratio_values = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
 # Selection of contrasts - based on previous analysis
 tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
@@ -16,7 +16,11 @@ analysis_root = '/home/chiaracaldinelli'
 # code_folder = '/home/chiaracaldinelli/smartontheinside/smartontheinside'
 m = np.zeros(((len(alpha_values)),(len(l1_ratio_values))))
 
-for hemi in ('L', 'R'):
+for hemiind, hemi in enumerate(['R', 'L']):
+    # Make composite figures
+    # fig, ax = plt.subplots(ncols=2, nrows=5)
+    fig, ax = plt.subplots(3, 2)
+
     for alphaind, alpha in enumerate(alpha_values):
         for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
             for taskind, task in enumerate(tasks_selected):
@@ -32,10 +36,10 @@ for hemi in ('L', 'R'):
                     aggfunc={'pearson': np.mean,
                              'score': np.mean})
                 
-                file = open(os.path.join(analysis_root, folder, f'classifier_res.txt'),'a')
-                file.write(f"\n Results for alpha = {alpha} and l1_ratio = {l1_ratio}")
-                file.write(f"\n {table}")
-                file.close()
+                # file = open(os.path.join(analysis_root, folder, f'classifier_res.txt'),'a')
+                # file.write(f"\n Results for alpha = {alpha} and l1_ratio = {l1_ratio}")
+                # file.write(f"\n {table}")
+                # file.close()
 
                 print(table)
 
@@ -58,12 +62,20 @@ for hemi in ('L', 'R'):
                 y = (df.loc[df['task'] == task]['score'])
                 m[alphaind,l1_ratioind] = y.mean()
             
-                fig, ax = plt.subplots()
-                im = ax.imshow(m)
+                # fig, ax = plt.subplots()
+                # Compose figure
+                im = ax[hemiind][taskind].imshow(m)
+                # im = ax.imshow(m)
+
+                # plt.figure()
+                # fig,ax=plt.subplots(ncols=2, nrows=5, figsize=(10,8))
+                # im = ax.imshow(m)
+                # fig=interaction_plot(x=dfR['fold'], trace=dfR['task'], response=dfR['score'], ax=ax[0])
+                # fig=interaction_plot(x=dfR['fold'], trace=dfR['task'], response=dfR['score'], ax=ax[1])
 
                 # Show all ticks and label them with the respective list entries
-                ax.set_xticks(np.arange(len(alpha_values)), labels=alpha_values)
-                ax.set_yticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values)
+                ax[hemiind][taskind].set_xticks(np.arange(len(alpha_values)), labels=alpha_values)
+                ax[hemiind][taskind].set_yticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values)
                 plt.xlabel('l1 ratio')
                 plt.ylabel('alpha')
                 # Rotate the tick labels and set their alignment.
@@ -76,7 +88,12 @@ for hemi in ('L', 'R'):
                 cax = divider.append_axes("right", size="5%", pad=0.05)
                 plt.colorbar(im, cax=cax)
                 plt.tight_layout()
+
                 
+                
+
+
+            
                 plt.show()
 
                 ax.set_title(f"{hemi} Hemisphere - {task}")
