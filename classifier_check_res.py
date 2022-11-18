@@ -5,17 +5,13 @@ from statsmodels.graphics.factorplots import interaction_plot
 import numpy as np
 
 
-# alpha_values = [0.2, 0.4, 0.6, 0.8, 1.0]
-# l1_ratio_values = [0.2, 0.4, 0.6, 0.8, 1.0]
-
-alpha_values = [0.2, 0.2]
-l1_ratio_values = [0.2, 0.2]
+alpha_values = [0.2, 0.4, 0.6, 0.8, 1.0]
+l1_ratio_values = [0.2, 0.4, 0.6, 0.8, 1.0]
 
 # Selection of contrasts - based on previous analysis
-# tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
-tasks_selected = ['tfMRI_WM']
+tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
 
-analysis_root = '/Users/chiara/smartontheinside'
+analysis_root = '/home/chiaracaldinelli'
 
 m = np.zeros(((len(alpha_values)),(len(l1_ratio_values))))
 
@@ -23,7 +19,9 @@ for hemi in ('L', 'R'):
     for alphaind, alpha in enumerate(alpha_values):
         for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
             for taskind, task in enumerate(tasks_selected):
-                print(task)
+
+                folder = f'results/classifier_tune_parameters'
+                os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
 
                 df = pd.read_csv(os.path.join(analysis_root, f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}/summary_N-20.csv'), index_col=False)
                 df = df.loc[df['hemi'] == hemi]
@@ -33,7 +31,7 @@ for hemi in ('L', 'R'):
                     aggfunc={'pearson': np.mean,
                              'score': np.mean})
                 
-                file = open(('classifier_res.txt'),'a') 
+                file = open(os.path.join(analysis_root, f'results/classifier_tune_parameters/classifier_res.txt'),'a')
                 file.write(f"\n Results for alpha = {alpha} and l1_ratio = {l1_ratio}")
                 file.write(f"\n {table}")
                 file.close()
@@ -80,7 +78,7 @@ for hemi in ('L', 'R'):
                 #         text = ax.text(j, i, harvest[i, j],
                 #                     ha="center", va="center", color="w")
 
-                ax.set_title(f"{hemi} Hemisphere")
+                ax.set_title(f"{hemi} Hemisphere - {task}")
                 fig.tight_layout()
                 # plt.show()
-                plt.savefig(f'heatmap_{hemi}', bbox_inches='tight')
+                plt.savefig(os.path.join(analysis_root, folder, f'heatmap_{hemi}_{task}'), bbox_inches='tight')
