@@ -19,7 +19,7 @@ m = np.zeros(((len(alpha_values)),(len(l1_ratio_values))))
 for hemiind, hemi in enumerate(['R', 'L']):
     # Make composite figures
     # fig, ax = plt.subplots(ncols=2, nrows=5)
-    fig, ax = plt.subplots(3, 2)
+    fig, ax = plt.subplots(2, 5)
 
     for alphaind, alpha in enumerate(alpha_values):
         for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
@@ -79,24 +79,21 @@ for hemiind, hemi in enumerate(['R', 'L']):
                 plt.xlabel('l1 ratio')
                 plt.ylabel('alpha')
                 # Rotate the tick labels and set their alignment.
-                plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+                plt.setp(ax[hemiind][taskind].get_xticklabels(), rotation=45, ha="right",
                         rotation_mode="anchor")
 
                 # create an Axes on the right side of ax. The width of cax will be 5%
                 # of ax and the padding between cax and ax will be fixed at 0.05 inch.
-                divider = make_axes_locatable(ax)
+                divider = make_axes_locatable(ax[hemiind][taskind])
                 cax = divider.append_axes("right", size="5%", pad=0.05)
                 plt.colorbar(im, cax=cax)
                 plt.tight_layout()
 
-                
-                
-
-
             
                 plt.show()
 
-                ax.set_title(f"{hemi} Hemisphere - {task}")
+                ax[hemiind][taskind].set_title(f"{hemi} Hemisphere - {task}")
                 fig.tight_layout()
                 # plt.show()
-                plt.savefig(os.path.join(analysis_root, folder, f'heatmap_{hemi}_{task}'), bbox_inches='tight')
+# plt.savefig(os.path.join(analysis_root, folder, f'heatmap_{hemi}_{task}'), bbox_inches='tight')
+plt.savefig(os.path.join(analysis_root, folder, f'heatmap.png'), bbox_inches='tight')
