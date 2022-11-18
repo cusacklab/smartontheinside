@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 from statsmodels.graphics.factorplots import interaction_plot
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 alpha_values = [0.2, 0.4, 0.6, 0.8, 1.0]
@@ -69,6 +70,14 @@ for hemi in ('L', 'R'):
                 plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
                         rotation_mode="anchor")
 
+                # create an Axes on the right side of ax. The width of cax will be 5%
+                # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+                divider = make_axes_locatable(ax)
+                cax = divider.append_axes("right", size="5%", pad=0.05)
+                plt.colorbar(im, cax=cax)
+                plt.tight_layout()
+                
+                plt.show()
 
                 ax.set_title(f"{hemi} Hemisphere - {task}")
                 fig.tight_layout()
