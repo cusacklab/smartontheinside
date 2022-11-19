@@ -56,8 +56,8 @@ for hemiind, hemi in enumerate(['R', 'L']):
         im = ax[taskind][hemiind].imshow(m)
 
         # # Show all ticks and label them with the respective list entries 
-        ax[taskind][hemiind].set_yticks(np.arange(len(alpha_values)), labels=alpha_values, fontsize=5)
-        ax[taskind][hemiind].set_xticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values, fontsize=5)
+        ax[taskind][hemiind].set_yticks(np.arange(len(alpha_values)), labels=alpha_values, fontsize=4)
+        ax[taskind][hemiind].set_xticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values, fontsize=4)
         plt.xlabel('l1 ratio', fontsize=5)
         plt.ylabel('alpha', fontsize=5)
 
@@ -67,10 +67,10 @@ for hemiind, hemi in enumerate(['R', 'L']):
 
         # create an Axes on the right side of ax. The width of cax will be 5%
         # of ax and the padding between cax and ax will be fixed at 0.05 inch.
-        # divider = make_axes_locatable(ax[taskind][hemiind])
-        # cax = divider.append_axes("right", size="5%", pad=0.05)
-        # plt.colorbar(im, cax=cax)
-        # plt.tight_layout()
+        divider = make_axes_locatable(ax[taskind][hemiind])
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        plt.colorbar(im, cax=cax)
+        plt.tight_layout()
 
         plt.show()
 
@@ -78,7 +78,7 @@ for hemiind, hemi in enumerate(['R', 'L']):
         fig.tight_layout()
         # plt.show()
 
-plt.savefig(os.path.join(analysis_root, folder, f'heatmap_without_colourbar.png'), bbox_inches='tight')
+plt.savefig(os.path.join(analysis_root, folder, f'heatmap.png'), bbox_inches='tight')
 print(f'Figure saved as heatmap.png')
 
 # plt.savefig(os.path.join(analysis_root, folder, f'heatmap_alpha-{alpha}_l1_ratio-{l1_ratio}.png'), bbox_inches='tight')
