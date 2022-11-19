@@ -7,10 +7,11 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 # alpha_values = [0.1, 1.0, 10.0, 100.0]
-# l1_ratio_values = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+alpha_values = [0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4, 12.8, 25.6, 51.2]
+l1_ratio_values = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
 
-alpha_values = [0.1, 1.0]
-l1_ratio_values = [0.0, 0.2]
+# alpha_values = [0.1, 1.0]
+# l1_ratio_values = [0.0, 0.2]
 
 # Selection of contrasts - based on previous analysis
 tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
@@ -23,11 +24,12 @@ m = np.zeros(((len(alpha_values)),(len(l1_ratio_values))))
 for alphaind, alpha in enumerate(alpha_values):
     for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
 
+        plt.figure()
+        fig,ax=plt.subplots(ncols=2, nrows=5, figsize=(10,8))
+
         for hemiind, hemi in enumerate(['R', 'L']):
             # Make composite figures
-            plt.figure()
-            fig,ax=plt.subplots(ncols=2, nrows=5, figsize=(10,8))
-
+            
 
             for taskind, task in enumerate(tasks_selected):
 
