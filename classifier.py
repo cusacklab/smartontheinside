@@ -19,6 +19,16 @@ assert len(sys.argv)>=3, 'Need to specify alpha and l1_ratio as parameters'
 alpha = float(sys.argv[1])
 l1_ratio = float(sys.argv[2])
 
+
+# CHOOSE THESE OPTIONS:
+
+# Subset of subjects for hyperparameter calculation?
+hyperparameter_subjects = False
+# Reload connectivity and activity data again to create summary numpy files? 
+reload_data = True
+# Scatter plots of individual fits
+draw_scatter_plots = False
+
 print(f'alpha {alpha} l1_ratio {l1_ratio}')
 
 subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862', '654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
@@ -26,17 +36,12 @@ subjlist = ['178950','189450','199453','209228','220721','298455','356948','4192
 # Number of subjects to analyse? Put in "None" to use all subjects
 sample_subjlist=20
 
-if not sample_subjlist is None:  # select subset of subjects for testing
-    subjlist = subjlist[:sample_subjlist]
-nsub = len(subjlist)
+if not sample_subjlist is None: 
+    if hyperparameter_subjects: 
+        subjlist = subjlist[:sample_subjlist] # subset of first subjects for hyperparamters 
+    else: subjlist = subjlist[sample_subjlist:] # roll out to rest of subjects for hyperparamters
 
 analysis_root = '/home/chiaracaldinelli'
-
-# Reload connectivity and activity data again to create summary numpy files? 
-reload_data = False
-
-# Scatter plots of individual fits
-draw_scatter_plots = True
 
 DLPFroilist = ['26', '67', '68', '70', '71', '73', '83', '84', '85', '86', '87', '96', '98',
                '206', '247', '248', '250', '251', '253', '263', '264', '265', '266', '267', '276', '278']
@@ -56,7 +61,6 @@ nsub = len(subjlist)
 # Credentials for uploading data to the cusack lab s3
 s3 = boto3.client('s3')
 session = boto3.Session(profile_name='default')
-s3 = session.client('s3')
 
 nseedvox = {'L': 2207, 'R': 2185}
 ntarg = 360
@@ -71,6 +75,7 @@ if reload_data:
     for hemiind, hemi in enumerate(['R', 'L']):
         # right hemi has 786600, but left has 794520
         conn_for_classifier[hemi] = np.zeros((nsub, nseedvox[hemi], ntarg))
+        print(f'Working on tractography data, {hemi} hemisphere')
 
         for subind, sub in enumerate(subjlist):
             conn = []
@@ -127,7 +132,7 @@ if reload_data:
 
 # Download connections for classifier
 # remotepath_conn = (f'Results/conn_for_classifier.npy')
-#s3.download_file('smartontheinside', remotepath_conn, f'/home/ubuntu/conn_for_classifier.npy')
+# s3.download_file('smartontheinside', remotepath_conn, f'/home/ubuntu/conn_for_classifier.npy')
 conn_for_classifier = np.load(
     os.path.join(analysis_root, f'conn_for_classifier_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
 
@@ -135,8 +140,11 @@ conn_for_classifier = np.load(
 res = pd.DataFrame()
 
 for task, taskcons in taskcondict_selected.items():
-    # Folder for results of this analysis
-    folder = f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
+    if hyperparameter_subjects: 
+        folder = f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}' 
+    else: 
+        folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
+
     os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
 
     # Download activations for classifier
