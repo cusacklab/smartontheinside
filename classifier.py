@@ -148,6 +148,9 @@ for task, taskcons in taskcondict_selected.items():
     act_for_classifier[task] = np.load(
         os.path.join(analysis_root, f'act_for_classifier_{task}_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
 
+# Set up lists to store predictions for each task and hemi
+all_pred = {x:{'L':[], 'R':[]} for x in taskcondict_selected.items()}
+
 # Run classification for each task
 for task, taskcons in taskcondict_selected.items():
     if hyperparameter_subjects: 
@@ -167,6 +170,7 @@ for task, taskcons in taskcondict_selected.items():
 
         # dict with lists for each comparison task
         all_corr = {comparison_task:[] for comparison_task in act_for_classifier }
+        
 
         # print(f'X.shape = {X.shape}')
         # print(f'y.shape = {y.shape}')
@@ -208,12 +212,18 @@ for task, taskcons in taskcondict_selected.items():
             y_estimate = model.predict(X_test)
             
             # save predicted values
-            all_pred.append(y_estimate)
+            all_pred[hemi].append(y_estimate)
 
             # correlate predicted activity for this task against true activity for each of the tasks
             for comparison_task in act_for_classifier:
                 c=pearsonr(act_for_classifier[comparison_task][hemi][train_index,0], y_estimate)
                 all_corr[comparison_task].extend(c[0])
+                res = pd.concat((res, pd.DataFrame([
+                    {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
+                    'task': task, 'hemi': hemi, 'fold': test_index[0],
+                    'comparison_task':comparison_task, 
+                    'pearson': c[0], 'score':sc}
+                    ])))
 
             if draw_scatter_plots:
                 # Draw scatter plot
@@ -223,13 +233,12 @@ for task, taskcons in taskcondict_selected.items():
                 plt.savefig(f'scatter_{task}_{hemi}_{test_index[0]}.png')
 
             score.append(sc)
-            res = pd.concat((res, pd.DataFrame([
-                        {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
-                        'task': task, 'hemi': hemi, 'fold': test_index[0],
-                        'pearson': c[0], 'score':sc}
-                        ])))
+
 
         print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr)}')
+        # Save results with pickle   
+        with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}.pickle'), 'wb') as f:
+            pickle.dump(res, f)
 
 
     # Save results with pickle   
@@ -239,6 +248,14 @@ for task, taskcons in taskcondict_selected.items():
     s3.upload_file(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}.pickle'), 
         'smartontheinside', 
         os.path.join('Results', folder, f'{task}_subjectloo_N-{nsub}.pickle'))
+
+# Save predictions
+with open(os.path.join(analysis_root, folder, f'predictions_N-{nsub}.pickle'), 'wb') as f:
+    pickle.dump(all_pred, f)
+
+s3.upload_file(os.path.join(analysis_root, folder, f'predictions_N-{nsub}.pickle'), 
+    'smartontheinside', 
+    os.path.join('Results', folder, f'predictions_N-{nsub}.pickle'))
 
 # Dump data frame
 res.to_csv(os.path.join(analysis_root, folder, f'summary_N-{nsub}.csv'))
