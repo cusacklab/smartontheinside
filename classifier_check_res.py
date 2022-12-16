@@ -30,6 +30,8 @@ s3 = boto3.client('s3')
 session = boto3.Session(profile_name='default')
 
 
+
+
 for hemiind, hemi in enumerate(['R', 'L']):
     print(f'{hemi} hemisphere')
 
@@ -39,8 +41,14 @@ for hemiind, hemi in enumerate(['R', 'L']):
     s3.download_file('smartontheinside', remotepath, os.path.join(analysis_root, f'predictions_N-155.pickle'))
 
 
+    df = pd.read_csv(os.path.join(analysis_root, folder_results_classifier, f'summary_N-155.csv'))
+    print(df)
+    print(df.groupby(['task','comparison_task']).mean())
 
 
+    matrix = df['pearson']
+    matrix= matrix.reshape((5,5))
+    plt.imshow(matrix)
     # Make empty matrix to compare pred to real values
     m = np.zeros((5,5))
 
@@ -75,17 +83,13 @@ for hemiind, hemi in enumerate(['R', 'L']):
         # Calculate mean for true values for each task
         df_pred = df_pred[task]
         df_pred = df_pred[hemi]
-        print(df_pred)
+        print(len(df_pred))
         list_avg_pred = []
         for p in range(0, 154):
             list_avg_pred.append(np.mean(df_pred[p]))
             # Calculate mean for pred values for each task for each hemi
             print(list_avg_pred)
         m[taskind,] = np.mean(list_avg_pred)
-
-
-
-
 
 
     plt.figure()
