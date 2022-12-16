@@ -7,3 +7,4 @@ for alpha in 0.4; do
         sbatch --export=ALL,alpha=$alpha,l1_ratio=$l1_ratio /home/chiaracaldinelli/smartontheinside/smartontheinside/classifier_slurm_2.sh  
     done
 done
+

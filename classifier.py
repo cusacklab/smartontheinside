@@ -20,14 +20,15 @@ alpha = float(sys.argv[1])
 l1_ratio = float(sys.argv[2])
 
 
-# CHOOSE THESE OPTIONS:
+######### CHOOSE THESE OPTIONS:
 
 # Subset of subjects for hyperparameter calculation?
 hyperparameter_subjects = False
 # Reload connectivity and activity data again to create summary numpy files? 
-reload_data = True
+reload_data = False
 # Scatter plots of individual fits
 draw_scatter_plots = False
+
 
 print(f'alpha {alpha} l1_ratio {l1_ratio}')
 
@@ -149,7 +150,12 @@ for task, taskcons in taskcondict_selected.items():
         os.path.join(analysis_root, f'act_for_classifier_{task}_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
 
 # Set up lists to store predictions for each task and hemi
-all_pred = {x:{'L':[], 'R':[]} for x in taskcondict_selected.items()}
+# all_pred = {x:{'L':[], 'R':[]} for x in taskcondict_selected.items()}
+
+# Chiara trying to fix bugs
+pred = {'L':[], 'R':[]}
+all_pred = {x:pred for x in taskcondict_selected}
+
 
 # Run classification for each task
 for task, taskcons in taskcondict_selected.items():
@@ -166,7 +172,7 @@ for task, taskcons in taskcondict_selected.items():
         # z-score activation for target task and hemisphere
         y = scipy.stats.zscore( act_for_classifier[task][hemi], axis=1) # Across vertices within each subject
 
-        score = []
+        score = []  
 
         # dict with lists for each comparison task
         all_corr = {comparison_task:[] for comparison_task in act_for_classifier }
@@ -212,12 +218,14 @@ for task, taskcons in taskcondict_selected.items():
             y_estimate = model.predict(X_test)
             
             # save predicted values
-            all_pred[hemi].append(y_estimate)
-
+            all_pred[task][hemi].append(y_estimate)
+ 
             # correlate predicted activity for this task against true activity for each of the tasks
             for comparison_task in act_for_classifier:
-                c=pearsonr(act_for_classifier[comparison_task][hemi][train_index,0], y_estimate)
-                all_corr[comparison_task].extend(c[0])
+                # print(act_for_classifier[comparison_task][hemi][test_index,:].shape)
+                c = pearsonr(act_for_classifier[comparison_task][hemi][test_index,:].ravel(), y_estimate)
+                c_ext = c[0]
+                all_corr[comparison_task].append(c_ext)
                 res = pd.concat((res, pd.DataFrame([
                     {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
                     'task': task, 'hemi': hemi, 'fold': test_index[0],
@@ -234,8 +242,9 @@ for task, taskcons in taskcondict_selected.items():
 
             score.append(sc)
 
-
-        print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr)}')
+        print(np.mean(score))
+        print(np.mean(all_corr[task]))
+        print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
         # Save results with pickle   
         with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}.pickle'), 'wb') as f:
             pickle.dump(res, f)
