@@ -43,12 +43,45 @@ for hemiind, hemi in enumerate(['R', 'L']):
 
     df = pd.read_csv(os.path.join(analysis_root, folder_results_classifier, f'summary_N-155.csv'))
     print(df)
-    print(df.groupby(['task','comparison_task']).mean())
+    df_mean = (df.groupby(['task','comparison_task']).mean())
+    # df = (df.groupby(['task','comparison_task']).mean())
 
+    matrix = df_mean['pearson']
+    matrix = matrix.to_frame()
 
-    matrix = df['pearson']
-    matrix= matrix.reshape((5,5))
+    matrix = matrix.to_numpy()
+    print(matrix)
+
+    print(matrix.shape)
+    matrix= np.reshape(matrix, (5,5))
     plt.imshow(matrix)
+
+
+    plt.figure()
+    # Show matrix plot
+    ax = plt.gca()
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+            rotation_mode="anchor")
+    # Major ticks
+    ax.set_xticks(np.arange(0, len(tasks_selected), 1))
+    ax.set_yticks(np.arange(0, len(tasks_selected), 1))
+    # Labels for major ticks
+    ax.set_xticklabels(tasks_selected, fontsize=6)
+    ax.set_yticklabels(tasks_selected, fontsize=6)
+   
+#    # create an Axes on the right side of ax. The width of cax will be 5%
+#     # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+#     divider = make_axes_locatable(ax)
+#     cax = divider.append_axes("right", size="5%", pad=0.05)
+
+#     plt.colorbar(ax, cax=cax)
+
+    plt.imshow(matrix)
+
+    plt.colorbar()    
+    plt.savefig(('matrix.png'), bbox_inches='tight')
+    plt.close()
+
     # Make empty matrix to compare pred to real values
     m = np.zeros((5,5))
 
