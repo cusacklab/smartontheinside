@@ -149,10 +149,8 @@ for task, taskcons in taskcondict_selected.items():
     act_for_classifier[task] = np.load(
         os.path.join(analysis_root, f'act_for_classifier_{task}_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
 
-# Set up lists to store predictions for each task and hemi
-# all_pred = {x:{'L':[], 'R':[]} for x in taskcondict_selected.items()}
 
-# Chiara trying to fix bugs
+# Set up lists to store predictions for each task and hemi
 pred = {'L':[], 'R':[]}
 all_pred = {x:pred for x in taskcondict_selected}
 
@@ -178,22 +176,15 @@ for task, taskcons in taskcondict_selected.items():
         all_corr = {comparison_task:[] for comparison_task in act_for_classifier }
         
 
-        # print(f'X.shape = {X.shape}')
-        # print(f'y.shape = {y.shape}')
-
         # Leave one out elastic net
         loo = LeaveOneOut()
         loo.get_n_splits(X)
 
         for train_index, test_index in loo.split(X):
-            #print("TRAIN:", train_index, "TEST:", test_index)
-            # X.shape=[nsub,nseedvox,ntarg]
 
             X_train, X_test = X[train_index, :, :], X[test_index, :, :]
             y_train, y_test = y[train_index, :], y[test_index, :]
 
-            # nsub_train = nsub-1
-            # nsub_test = 1
             nsub_train = len(train_index)
             nsub_test = len(test_index)
 
@@ -213,6 +204,7 @@ for task, taskcons in taskcondict_selected.items():
             model.fit(X_train, y_train)
             # Test
             sc = model.score(X_test, y_test)
+            sp = model.get_params
 
             # Get predicted activity 
             y_estimate = model.predict(X_test)
@@ -222,10 +214,11 @@ for task, taskcons in taskcondict_selected.items():
  
             # correlate predicted activity for this task against true activity for each of the tasks
             for comparison_task in act_for_classifier:
-                # print(act_for_classifier[comparison_task][hemi][test_index,:].shape)
+
                 c = pearsonr(act_for_classifier[comparison_task][hemi][test_index,:].ravel(), y_estimate)
                 c_ext = c[0]
                 all_corr[comparison_task].append(c_ext)
+
                 res = pd.concat((res, pd.DataFrame([
                     {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
                     'task': task, 'hemi': hemi, 'fold': test_index[0],
@@ -242,15 +235,13 @@ for task, taskcons in taskcondict_selected.items():
 
             score.append(sc)
 
-        print(np.mean(score))
-        print(np.mean(all_corr[task]))
         print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
         # Save results with pickle   
         with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}.pickle'), 'wb') as f:
             pickle.dump(res, f)
 
 
-    # Save results with pickle   
+    # Save summary of results with pickle
     with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}.pickle'), 'wb') as f:
         pickle.dump(res, f)
     

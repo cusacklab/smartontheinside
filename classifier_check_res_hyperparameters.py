@@ -4,14 +4,11 @@ import matplotlib.pyplot as plt
 from statsmodels.graphics.factorplots import interaction_plot
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import boto3
 
 
-# alpha_values = [0.1, 1.0, 10.0, 100.0]
 alpha_values = [0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4, 12.8, 25.6, 51.2]
 l1_ratio_values = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-
-# alpha_values = [0.1, 1.0]
-# l1_ratio_values = [0.0, 0.2]
 
 # Selection of contrasts - based on previous analysis
 tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
@@ -19,6 +16,10 @@ tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','t
 analysis_root = '/home/chiaracaldinelli'
 # code_folder = '/home/chiaracaldinelli/smartontheinside/smartontheinside'
 m = np.zeros(((len(alpha_values)),(len(l1_ratio_values))))
+
+# Credentials for downloading data from the cusack lab s3
+s3 = boto3.client('s3')
+session = boto3.Session(profile_name='default')
 
 
 # Make composite figures
@@ -31,10 +32,15 @@ for hemiind, hemi in enumerate(['R', 'L']):
         for alphaind, alpha in enumerate(alpha_values):
             for l1_ratioind, l1_ratio in enumerate(l1_ratio_values):
 
+                # Download results of parameters tuning
+                remotepath_conn = (f'Results/classifier_results_alpha-{alpha_values[alphaind]}_l1ratio-{l1_ratio_values[l1_ratioind]}/summary_N-20.csv')
+
+                s3.download_file('smartontheinside', remotepath_conn, f'/home/chiaracaldinelli/summary_N-20_alpha-{alpha_values[alphaind]}_l1ratio-{l1_ratio_values[l1_ratioind]}.csv')
+
                 folder = f'smartontheinside/smartontheinside/results/classifier_tune_parameters'
                 os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
 
-                df = pd.read_csv(os.path.join(analysis_root, f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}/summary_N-20.csv'), index_col=False)
+                df = pd.read_csv(os.path.join(f'/home/chiaracaldinelli/summary_N-20_alpha-{alpha_values[alphaind]}_l1ratio-{l1_ratio_values[l1_ratioind]}.csv'), index_col=False)
                 df = df.loc[df['hemi'] == hemi]
                 table = pd.pivot_table(df, values=['pearson', 'score'], index=['hemi', 'task'],
                     aggfunc={'pearson': np.mean,
@@ -53,10 +59,9 @@ for hemiind, hemi in enumerate(['R', 'L']):
         
         # Compose figure
         im = ax[taskind][hemiind].imshow(m, cmap='PiYG', vmin=-0.06, vmax=0.06)
-
         # # Show all ticks and label them with the respective list entries 
-        ax[taskind][hemiind].set_yticks(np.arange(len(alpha_values)), labels=alpha_values, fontsize=4)
-        ax[taskind][hemiind].set_xticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values, fontsize=4)
+        ax[taskind][hemiind].set_yticks(np.arange(len(alpha_values)), labels=alpha_values, fontsize=2)
+        ax[taskind][hemiind].set_xticks(np.arange(len(l1_ratio_values)), labels=l1_ratio_values, fontsize=2)
         plt.xlabel('l1 ratio', fontsize=5)
         plt.ylabel('alpha', fontsize=5)
 

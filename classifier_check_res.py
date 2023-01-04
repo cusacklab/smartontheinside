@@ -53,11 +53,94 @@ def draw_bs_reps(data, func, size=1):
 
     return bs_replicates
     
+def bootstrap_compare_two_groups(group1, group2):
 
-    # Using np.empty(), initialize an array called bs_replicates of size size to hold all of the bootstrap replicates.
-    # Write a for loop that ranges over size and computes a replicate using bootstrap_replicate_1d(). Refer to the exercise description above to see the function signature of bootstrap_replicate_1d(). Store the replicate in the appropriate index of bs_replicates.
+    # Compute mean of all groups
+    mean_two_groups = np.mean(np.concatenate((group1,group2), axis=0))
+
+    # Generate shifted arrays
+    within_shifted = within - np.mean(group1) + mean_two_groups
+    across_shifted = across - np.mean(group2) + mean_two_groups 
+
+    # Compute 10,000 bootstrap replicates from shifted arrays
+    bs_replicates_within = draw_bs_reps(within_shifted, np.mean, size=10000)
+    bs_replicates_across = draw_bs_reps(across_shifted, np.mean, size=10000)
+
+    # Get replicates of difference of means: bs_replicates
+    bs_replicates = bs_replicates_within - bs_replicates_across
+
+    # Compute and print p-value: p
+    empirical_diff_means = np.mean(group1) - np.mean(group2)
+    p = np.sum(bs_replicates >= np.mean(empirical_diff_means)) / 10000
+    print('p-value =', p)
+
+    return
 
 
+
+folder = f'smartontheinside/smartontheinside/results/classifier_tune_parameters'
+
+for hemiind, hemi in enumerate(['R', 'L']):
+
+    df = pd.read_csv(os.path.join(analysis_root, f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}/summary_N-155.csv'), index_col=False)
+    print(df)
+
+    for taskind, task in enumerate(tasks_selected): 
+
+        # Bootstrap
+        #convert array to sequence
+        data = df.loc[df['task'] == task]
+        print(data)
+
+        data = df['pearson'] 
+        print(data)
+        data = (data,)
+
+        #calculate 95% bootstrapped confidence interval for median
+        bootstrap_ci = bootstrap(data, np.median, confidence_level=0.99,
+                                random_state=1, method='percentile')
+
+        #view 95% boostrapped confidence interval
+        print(f'task: {task} {bootstrap_ci.confidence_interval}')
+
+
+
+    # Jitter and rain for score
+    f, ax = plt.subplots(figsize=(7, 5))
+    ax = pt.half_violinplot( x = df['task'], y = df['score'], data = df, bw = .2, cut = 0.,
+                            scale = "area", width = .6, inner = None)
+    ax = sns.stripplot( x = df['task'], y = df['score'], data = df, edgecolor = "white",
+                        size = 3, jitter = 1, zorder = 0)
+    plt.ylim(-0.25, 0.30)
+    plt.title(f"{hemi} hemisphere")
+    
+    plt.savefig(os.path.join(analysis_root, f'smartontheinside/smartontheinside/results/classifier_results/summarise_res_classifier_score_{hemi}.png'), bbox_inches='tight')
+    print(f'Figure saved as summarise_res_score_{hemi}.png')
+
+    # Jitter and rain for pearson
+    f, ax = plt.subplots(figsize=(7, 5))
+    ax = pt.half_violinplot( x = df['task'], y = df['pearson'], data = df, bw = .2, cut = 0.,
+                            scale = "area", width = .6, inner = None)
+    ax = sns.stripplot( x = df['task'], y = df['pearson'], data = df, edgecolor = "white",
+                        size = 3, jitter = 1, zorder = 0)
+    plt.title(f"{hemi} hemisphere")
+    # plt.ylim(-0.20, 0.40)
+    x = np.arange(0, 10, 0.1)
+
+    plt.savefig(os.path.join(analysis_root, f'smartontheinside/smartontheinside/results/classifier_results/summarise_res_classifier_pearson_{hemi}.png'), bbox_inches='tight')
+    print(f'Figure saved as summarise_res_pearson_{hemi}.png')
+
+
+    table = pd.pivot_table(df, values=['pearson', 'score'], index=['hemi', 'task'],
+                    aggfunc={'pearson': [np.mean, np.std, min, max],
+                             'score': [np.mean, np.std, min, max]})
+    print(table)
+
+
+
+
+# RESULTS  OF CORRELATION BETWEEN PREDICTED VALUES AND VALUES FROM CLASSIFICATION
+# Check if tasks are different 
 
 for hemiind, hemi in enumerate(['R', 'L']):
     print(f'{hemi} hemisphere')
@@ -97,9 +180,11 @@ for hemiind, hemi in enumerate(['R', 'L']):
 
     # Make empty matrix to compare within to across tasks
     # First column is within, second is across
-    comp = np.zeros((155,2))
+    comp = np.zeros((154,2))
+    comp_same_task = np.zeros((nsubj,len(tasks_selected)))
 
     for subj in range(nsubj-1):
+ 
         df_one_sub = df.loc[df['fold'] == subj]
 
         within = []
@@ -112,10 +197,14 @@ for hemiind, hemi in enumerate(['R', 'L']):
             else:
                 across.append(row['pearson'])
 
+            # Calculate average of the participants for each task correlated to itself
+            for taskind, task in enumerate(tasks_selected):
+                if row['task'] == task and row['comparison_task'] == task:
+
+                    comp_same_task[subj-1,taskind] = row['pearson']
+            
         comp[subj,0] = np.mean(within)
         comp[subj,1] = np.mean(across)
-
-    print(comp)
 
     
 
@@ -133,10 +222,10 @@ for hemiind, hemi in enumerate(['R', 'L']):
     print(np.mean(across))
     print(np.std(across))
 
-    res = mannwhitneyu(within, across, method="exact")
-    print('************************************************************')
-    print('Results Mann Whitney')
-    print(res)
+    # res = mannwhitneyu(within, across, method="exact")
+    # print('************************************************************')
+    # print('Results Mann Whitney')
+    # print(res)
 
     # ************* USE BOOTSTRAP TO CHECK IF THE 2 GROUPS (ACROSS AND WITHIN) ARE DIFFERENT *************
     #  
@@ -147,77 +236,22 @@ for hemiind, hemi in enumerate(['R', 'L']):
     # Compute the bootstrap replicates of the difference of means by subtracting the replicates of the shifted impact force of Frog B from those of Frog A.
     # Compute and print the p-value from your bootstrap replicates.
 
-    # Compute mean of all groups
-    mean_within_across = np.mean(np.concatenate((comp[:,0],comp[:,1]), axis=0))
+    # Compare the diagonal VS all the other tasks
+    print('T test for within and across:')
+    bootstrap_compare_two_groups(within, across)
 
-    # Generate shifted arrays
-    within_shifted = within - np.mean(within) + mean_within_across
-    across_shifted = across - np.mean(across) + mean_within_across 
+    # Compare each task VS ech task
+    for group1 in range(len(tasks_selected)):
+        print(f'Mean and SD for {tasks_selected[group1]}, {hemi} hemisphere:')
+        print(np.mean(comp_same_task[group1,:]))
+        print(np.std(comp_same_task[group1,:]))
 
-    # Compute 10,000 bootstrap replicates from shifted arrays
-    bs_replicates_within = draw_bs_reps(within_shifted, np.mean, size=10000)
-    bs_replicates_across = draw_bs_reps(across_shifted, np.mean, size=10000)
-
-    # Get replicates of difference of means: bs_replicates
-    bs_replicates = bs_replicates_within - bs_replicates_across
-
-    # Compute and print p-value: p
-    empirical_diff_means = np.mean(within) - np.mean(across)
-    p = np.sum(bs_replicates >= np.mean(empirical_diff_means)) / 10000
-    print('p-value =', p)
-
-    # NOW separate bootstrap for each cell on the leading diagonal (5 separate bootstraps) against which we can then test 
-    # individual other comparisons. Some tasks I think will be completely distinguishable from every other task; 
-    # some will be a bit distinct, and WM not at all 
+        for group2 in range(len(tasks_selected)):
+            
+            print(f'T test between {tasks_selected[group1]} and {tasks_selected[group2]}, {hemi} hemisphere:')
+            bootstrap_compare_two_groups(comp_same_task[group1,:], comp_same_task[group2,:])
 
 
 
 
-'''''''''
-    for taskind, task in enumerate(tasks_selected): 
 
-        # # Bootstrap
-        # #convert array to sequence
-        # data = df['pearson'] 
-        # data = (data,)
-
-        # #calculate 95% bootstrapped confidence interval for median
-        # bootstrap_ci = bootstrap(data, np.median, confidence_level=0.99,
-        #                         random_state=1, method='percentile')
-
-        #view 95% boostrapped confidence interval
-        print(f'task: {task} {bootstrap_ci.confidence_interval}')
-
-
-
-    # Jitter and rain for score
-    f, ax = plt.subplots(figsize=(7, 5))
-    ax = pt.half_violinplot( x = df['task'], y = df['score'], data = df, bw = .2, cut = 0.,
-                            scale = "area", width = .6, inner = None)
-    ax = sns.stripplot( x = df['task'], y = df['score'], data = df, edgecolor = "white",
-                        size = 3, jitter = 1, zorder = 0)
-    plt.ylim(-0.25, 0.30)
-    plt.title(f"{hemi} hemisphere")
-    
-    plt.savefig(os.path.join(analysis_root, f'smartontheinside/smartontheinside/results/classifier_results/summarise_res_classifier_score_{hemi}.png'), bbox_inches='tight')
-    print(f'Figure saved as summarise_res_score_{hemi}.png')
-
-    # Jitter and rain for pearson
-    f, ax = plt.subplots(figsize=(7, 5))
-    ax = pt.half_violinplot( x = df['task'], y = df['pearson'], data = df, bw = .2, cut = 0.,
-                            scale = "area", width = .6, inner = None)
-    ax = sns.stripplot( x = df['task'], y = df['pearson'], data = df, edgecolor = "white",
-                        size = 3, jitter = 1, zorder = 0)
-    plt.title(f"{hemi} hemisphere")
-    # plt.ylim(-0.20, 0.40)
-    x = np.arange(0, 10, 0.1)
-
-    plt.savefig(os.path.join(analysis_root, f'smartontheinside/smartontheinside/results/classifier_results/summarise_res_classifier_pearson_{hemi}.png'), bbox_inches='tight')
-    print(f'Figure saved as summarise_res_pearson_{hemi}.png')
-
-
-    table = pd.pivot_table(df, values=['pearson', 'score'], index=['hemi', 'task'],
-                    aggfunc={'pearson': [np.mean, np.std, min, max],
-                             'score': [np.mean, np.std, min, max]})
-    print(table)
-'''''''''
