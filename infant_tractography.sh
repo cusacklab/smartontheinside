@@ -14,7 +14,7 @@
 
 export PATH=/home/chiaracaldinelli/workbench/bin_linux64/:$PATH
 export AWS_SHARED_CREDENTIALS_FILE=/home/chiaracaldinelli/.aws/credentials
-export AWS_CONFIG_FILE=/home/chiaracalindelli/.aws/config
+export AWS_CONFIG_FILE=/home/chiaracaldinelli/.aws/config
 FSLDIR=/usr/local/fsl
 . ${FSLDIR}/etc/fslconf/fsl.sh
 PATH=${FSLDIR}/bin:${PATH}

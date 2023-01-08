@@ -3,15 +3,11 @@
 # From the adults mesh space to the infant
 
 
-# inmesh=/dhcp/dhcp_anat_pipeline/sub-${subjid}/ses-$session/anat/Native/sub-${subjid}_ses-${session}_left_sphere.rot.surf.gii #needs to be a sphere
-inmesh=/dhcp/dhcp_anat_pipeline/sub-CC00221XX07/ses-75000/anat/sub-CC00221XX07_ses-75000_hemi-L_space-T2w_sphere.surf.gii #needs to be a sphere
+# 3- .gii → .nii
+# (1a) Map the Glasser surface parcellation into a volume, in adult MNI space. You can use wb_command --label-to-volume. 
+# As the surface, use the MNI template surface space not individual data, and as a destination volume space, use $FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz
 
-refmesh=/dhcp/rhodri_registration/atlases/dhcp_surface/dHCP.week40.L.sphere.surf.gii
-refdata=/dhcp/rhodri_registration/atlases/dhcp_surface/dHCP.week40.L.sulc.shape.gii
-indata=/dhcp/dhcp_anat_pipeline/sub-CC00221XX07/ses-75000/anat/sub-CC00221XX07_ses-75000_hemi-L_space-T2w_sulc.shape.gii
-outname=/home/chiaracaldinelli/sub-${subjid}_ses-${session}_left_
-
-
-for subjind in CC00221XX07 ; do
-msm --inmesh=${inmesh} --refmesh=${refmesh} --indata=${indata} --refdata=${refdata} --out=${outname} --verbose
+for hemi in L R
+do 
+    wb_command -label-to-volume-mapping /home/chiaracaldinelli/smartontheinside/ROIs/ff.${hemi}.label.gii Q1-Q6_RelatedParcellation210.L.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii $FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz /home/chiaracaldinelli/transformations/glasser_parcellation_surf2vol_${hemi}.nii -nearest-vertex 1
 done
