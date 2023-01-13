@@ -5,29 +5,62 @@
 
  
 
-# for hemi in L R 
-# do
+for hemi in L R 
+do
 
-#     # (1a) Map the Glasser surface parcellation into a volume, in adult MNI space using wb_command
-#     wb_command -label-to-volume-mapping /home/chiaracaldinelli/smartontheinside/smartontheinside/ff.${hemi}.label.gii Q1-Q6_RelatedParcellation210.${hemi}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii $FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_parcellation_surf2vol_${hemi}.nii -nearest-vertex 1
+    # (1a) Map the Glasser surface parcellation into a volume, in adult MNI space using wb_command
+    wb_command -label-to-volume-mapping /home/chiaracaldinelli/smartontheinside/smartontheinside/ff.${hemi}.label.gii Q1-Q6_RelatedParcellation210.${hemi}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii $FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_parcellation_surf2vol_${hemi}.nii -nearest-vertex 1
+
+    # Frontal mask
+    wb_command -label-to-volume-mapping /home/chiaracaldinelli/smartontheinside/smartontheinside/frontal.${hemi}.label.gii Q1-Q6_RelatedParcellation210.${hemi}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii $FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_mask_surf2vol_${hemi}.nii -nearest-vertex 1
 
 
-#     # (1b) Transform the resulting label volume into the infant space using ants
-#     antsApplyTransforms -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_parcellation_surf2vol_${hemi}.nii -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz -t [/dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template0GenericAffine.mat,1] -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template1Warp.nii.gz -o glasser_labels_dhcp_40weeks_${hemi}.nii.gz --interpolation NearestNeighbor
+    # (1b) Transform the resulting label volume into the infant space using ants
+    antsApplyTransforms -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_parcellation_surf2vol_${hemi}.nii -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz -t [ /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template0GenericAffine.mat,1] -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template1InverseWarp.nii.gz -o /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_labels_dhcp_40weeks_${hemi}.nii.gz --interpolation NearestNeighbor
 
-# done
+    # frontal mask
+    antsApplyTransforms -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_mask_surf2vol_${hemi}.nii -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz -t [ /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template0GenericAffine.mat,1] -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template1InverseWarp.nii.gz -o /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_labels_dhcp_40weeks_${hemi}.nii.gz --interpolation NearestNeighbor
+
+done
 
 
 # (2) dhcp template->dhcp individuals
-
 # Applying the transforms using fsl's applywarp to/from the template volume space. So, for example, to transform from glasser_labels_dhcp_40weeks.nii.gz created in stage one to the individual baby. 
 # Nearest neighbour interpolation as it is a label map. Registration between the individual space label map and the DTI data for that baby to be checked
 
-for SUBJ in CC00907XX16; do
-    for SES in 4230; do
-        for hemi in L R ; do
 
-            applywarp -i glasser_labels_dhcp_40weeks_${hemi}.nii.gz -o glasser_labels_dhcp_40weeks_sub${SUBJ}.nii.gz -r /dhcp/dhcp_dmri_pipeline/sub-CC00907XX16/ses-4230/dwi/nodif_brain_mask.nii.gz -w /dhcp/dhcp_dmri_pipeline/sub-${SUBJ}/ses-4230/xfm/sub-${SUBJ}_ses-4230_from-template40wk_to-dwi_mode-image.nii.gz --interp=nn -v
-        done
+for SUBJ in CC00549XX22	CC00576XX16	CC00202XX04	CC00720XX11	CC00122XX07	CC00492BN15	CC00672BN13	CC00407BN11	CC00071XX06	CC00119XX12	CC00207XX09	CC00465XX12	CC00484XX15	CC00590XX14	CC00586XX18	CC00723XX14	CC00467XX14	CC00161XX05	CC00593XX17	CC00344XX15	CC00409XX13	CC00168XX12	CC00907XX16	CC00158XX10	CC00136AN13	CC00613XX11	CC00731XX14	CC00198XX18	CC00063AN06	CC00664XX13	CC00397XX19	CC00270XX07	CC00252XX05	CC00787XX21	CC00223XX09	CC00703XX10	CC00087BN14	CC00367XX13	CC00183XX11	CC00478XX17	CC00540XX13	CC00512XX09	CC00476XX15	CC00120XX05	CC00712XX11	CC00164XX08	CC00562XX10	CC00194XX14	CC00383XX13	CC00440XX12	CC00153XX05	CC00170XX06	CC00595XX19	CC00744XX19	CC00135AN12	CC00398XX20	CC00248XX18	CC00350XX04	CC00547XX20	CC00466BN13	CC00258XX11	CC00203XX05	CC00500XX05	CC00654XX11	CC00754BN12	CC00073XX08	CC00563XX11	CC00115XX08	CC00754AN12	CC00070XX05	CC00422XX10	CC00840XX16	CC00089XX16	CC00411XX07	CC00293AN14	CC00184XX12	CC00205XX07	CC00337XX16	CC00121XX06	CC00313XX08	CC00107XX08	CC00144XX13	CC00804XX12	CC00845BN21	CC00585XX17	CC00138XX15	CC00850XX09	CC00149XX18	CC00193XX13	CC00244XX14	CC00458XX13	CC00237XX15	CC00201XX03	CC00695XX20	CC00650XX07	CC00508XX13	CC00099AN18	CC00218AN12	CC00078XX13	CC00527XX16	CC00150AN02	CC00355XX09	CC00454XX09	CC00341XX12	CC00343XX14	CC00621XX11	CC00445XX17	CC00116XX09	CC00544XX17	CC00450XX05	CC00561XX09	CC00548XX21	CC00801XX09	CC00154XX06	CC00060XX03	CC00447XX19	CC00377XX15	CC00479XX18	CC00629XX19	CC00473XX12	CC00101XX02	CC00186BN14	CC00481XX12	CC00480XX11	CC00502XX07	CC00088XX15	CC00571AN11	CC00572CN12	CC00192AN12	CC00889BN24	CC00518XX15	CC00686XX19	CC00305XX08	CC00766XX16	CC00670XX11	CC00525XX14	CC00366XX12	CC00757XX15	CC00596XX20	CC00284BN13	CC00536XX17	CC00550XX06	CC00221XX07	CC00382XX12	CC00290XX11	CC00178XX14	CC00589XX21	CC00068XX11	CC00334XX13	CC00301XX04	CC00486XX17	CC00326XX13	CC00501XX06	CC00455XX10	CC00529AN18	CC00652XX09	CC00764AN14	CC00135BN12	CC00528XX17	CC00685XX18	CC00649XX23	CC00400XX04	CC00094BN13	CC00556XX12	CC00199XX19	CC00507XX12	CC00362XX08	CC00236XX14	CC00829XX21	CC00858XX17	CC00764BN14	CC00555XX11	CC00129AN14	CC00091XX10	CC00110XX03	CC00227XX13	CC00833XX17	CC00113XX06	CC00558XX14	CC00379XX17	CC00466AN13	CC00788XX22	CC00499XX22	CC00096XX15	CC00172BN08	CC00406XX10	CC00399XX21	CC00206XX08	CC00143AN12	CC00656XX13	CC00129BN14	CC00298XX19	CC00186AN14	CC00376XX14	CC00219XX13	CC00195XX15	CC00483XX14	CC00546XX19	CC00306XX09	CC00363XX09	CC00066XX09	CC00094AN13	CC00583XX15	CC00489XX20	CC00347XX18	CC00254XX07	CC00545XX18	CC00532XX13	CC00352XX06	CC00172AN08	CC00160XX04	CC00124XX09	CC00553XX09	CC00364XX10	CC00189XX17	CC00616XX14	CC00657XX14	CC00097XX16	CC00111XX04	CC00320XX07	CC00402XX06	CC00587XX19	CC00526XX15	CC00421BN09	CC00622XX12	CC00530XX11	CC00474XX13	CC00632XX14	CC00852XX11	CC00245AN15	CC00356XX10	CC00824XX16	CC00791XX17	CC00231XX09	CC00843XX19	CC00127XX12	CC00439XX19	CC00845AN21	CC00760XX10	CC00177XX13	CC00582XX14	CC00693XX18	CC00342XX13	CC00257XX10	CC00594XX18	CC00209XX11	CC00860XX11	CC00272XX09	CC00580XX12	CC00281AN10	CC00130XX07	CC00250XX03	CC00879XX22	CC00069XX12	CC00441XX13	CC00653XX10	CC00534XX15	CC00777XX19	CC00080XX07	CC00238AN16	CC00648XX22	CC00269XX14	CC00517XX14	CC00669XX18	CC00351XX05	CC00216AN10	CC00417XX13	CC00329XX16	CC00338BN17	CC00416XX12	CC00084XX11	CC00171XX07	CC00702AN09	CC00083XX10	CC00408XX12	CC00433XX13	CC00734XX17	CC00316XX11	CC00838XX22	CC00504XX09	CC00805XX13	CC00407AN11	CC00871XX14	CC00410XX06	CC00688XX21	CC00197XX17	CC00245BN15	CC00180XX08	CC00303XX06	CC00542XX15	CC00099BN18	CC00284AN13	CC00768XX18	CC00457XX12	CC00421AN09	CC00647XX21	CC00823XX15	CC00581XX13	CC00639XX21	CC00147XX16	CC00448XX20	CC00114XX07	CC00389XX19	CC00818XX18	CC00314XX09	CC00846XX22	CC00569XX17	CC00735XX18	CC00308XX11	CC00516XX13	CC00412XX08	CC00165XX09	CC00292XX13	CC00217XX11	CC00428XX16	CC00126XX11	CC00260XX05	CC00671XX12	CC00568XX16	CC00415XX11	CC00564XX12	CC00293BN14	CC00667XX16	CC00174XX10	CC00108XX09	CC00106XX07	CC00705XX12	CC00570XX10	CC00552XX08	CC00719XX18	CC00592XX16	CC00143BN12	CC00247XX17	CC00075XX10	CC00497XX20	CC00067XX10	CC00152AN04	CC00268XX13	CC00403XX07	CC00324XX11	CC00086XX13	CC00371XX09	CC00453XX08	CC00853XX12	CC00672AN13	CC00204XX06	CC00074XX09	CC00072XX07	CC00349XX20	CC00181XX09	CC00438XX18	CC00469XX16	CC00413XX09	CC00797XX23	CC00162XX06	CC00799XX25	CC00855XX14	CC00357XX11	CC00792XX18	CC00255XX08	CC00304XX07	CC00309BN12	CC00470XX09	CC00134XX11	CC00150BN02	CC00087AN14	CC00798XX24	CC00117XX10	CC00765XX15	CC00145XX14	CC00418AN14	CC00472XX11	CC00793XX19	CC00810XX10	CC00348XX19	CC00461XX08	CC00434AN14	CC00600XX06	CC00431XX11	CC00577XX17	CC00584XX16	CC00675XX16	CC00620XX10	CC00822XX14	CC00300XX03	CC00607XX13	CC00182XX10	CC00146XX15	CC00771XX13	CC00423XX11	CC00443XX15	CC00451XX06	CC00380XX10	CC00513XX10	CC00418BN14	CC00338AN17	CC00286XX15	CC00661XX10	CC00627XX17	CC00332XX11	CC00102XX03	CC00830XX14	CC00082XX09	CC00492AN15	CC00498XX21	CC00132XX09	CC00815XX15	CC00218BN12	CC00079XX14	CC00307XX10	CC00446XX18	CC00597XX21	CC00179XX15	CC00271XX08	CC00628XX18	CC00200XX02	CC00689XX22	CC00157XX09	CC00289XX18	CC00385XX15	CC00065XX08	CC00265XX10	CC00062XX05	CC00319XX14	CC00520XX09	CC00339XX18	CC00785XX19	CC00747XX22	CC00238BN16	CC00424XX12	CC00361XX07	CC00267XX12	CC00131XX08	CC00176XX12	CC00529BN18	CC00103XX04	CC00384XX14	CC00378XX16	CC00770XX12	CC00395XX17	CC00405XX09	CC00617XX15	CC00191XX11	CC00588XX20	CC00740XX15
+do 
+
+    for hemi in L R ; do
+
+        if [ -f /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${hemi}_sub-${SUBJ}.nii.gz ]; then
+            echo "glasser_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} already created"
+
+        fi
+            echo "running sub-${SUBJ}"
+            applywarp -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_labels_dhcp_40weeks_${hemi}.nii.gz -o /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} -w /dhcp/dhcp_dmri_pipeline/sub-${SUBJ}/ses-*/xfm/sub-${SUBJ}_ses-*_from-template40wk_to-dwi_mode-image.nii.gz -r /dhcp/dhcp_dmri_pipeline/sub-CC00907XX16/ses-*/dwi/nodif_brain_mask.nii.gz --interp=nn
+
+        if [ -f /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_${hemi}_sub-${SUBJ}.nii.gz ]; then
+            echo "frontal_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} already created"
+
+        fi
+            echo "running sub-${SUBJ}"
+            applywarp -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_labels_dhcp_40weeks_${hemi}.nii.gz -o /home/chiaracaldinelli/transformations/frontal_glasser_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} -w /dhcp/dhcp_dmri_pipeline/sub-${SUBJ}/ses-*/xfm/sub-${SUBJ}_ses-*_from-template40wk_to-dwi_mode-image.nii.gz -r /dhcp/dhcp_dmri_pipeline/sub-CC00907XX16/ses-*/dwi/nodif_brain_mask.nii.gz --interp=nn
+
+    # Add the 2 hemispheres together
+    fslmaths /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_L_sub-${SUBJ} -add /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_R_sub-${SUBJ} /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_LR_sub-${SUBJ}
+
+    
     done
 done
+
+
+
+
+
+
+
+
+
+
