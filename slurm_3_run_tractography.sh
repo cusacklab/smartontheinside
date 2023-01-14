@@ -59,7 +59,7 @@ ls ${tmp_dir}
 
 # 4- Tractography
 for hem in L R ; do
-    mkdir -p ${tmp_dir}/probtrackx2_res/${hem}	
+    # mkdir -p ${tmp_dir}/probtrackx2_res/${hem}	
     cmd="probtrackx2_gpu --onewaycondition -P 5000 --forcedir --opd --os2t \
 	    --rseed=1234 -s ${tmp_dir}/Diffusion.bedpostX/merged \
 	    --dir=${tmp_dir}/probtrackx2/${hem} \
@@ -69,6 +69,8 @@ for hem in L R ; do
     echo $cmd
     eval $cmd
     ls ${tmp_dir}/probtrackx2/${hem}
+
+    more ${tmp_dir}/probtrackx2/${hem}/probtrackx.log
 
 done
 
