@@ -90,17 +90,15 @@ do
     for X in $COUNTS
     do
         if [[ $X != "0.000000" ]]; then
-        
+    
             if [[  " $IND " =~ " 0 " || " ${DLPFroilist[*]} " =~ " ${IND} " ]]; then
                 echo " ROI $IND excluded from mask"
             else
-
-
-
                 fslmaths $TOSPLIT -thr $IND -uthr $IND ${TOSPLIT}_${IND}
                 echo ${TOSPLIT}_${IND} >> ${TEXTOUT}
             fi
         fi
+        
         IND=$(($IND+1))
     done
 
