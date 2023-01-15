@@ -89,26 +89,19 @@ do
 
     for X in $COUNTS
     do
-        if [ $X != "0.000000" ]; then    # ONLY INCLUDE REGIONS WITH VOXELS
-            echo "Found ROI $IND with $X voxels"
+        if [[ $X != "0.000000" ]]; then
+        
+            if [[  " $IND " =~ " 0 " || " ${DLPFroilist[*]} " =~ " ${IND} " ]]; then
+                echo " ROI $IND excluded from mask"
+            else
 
-        if [[ " $IND " =~ " 0 " ]]; then
-            echo "Exclude background"
-        fi
 
-        if [[ " ${DLPFroilist[*]} " =~ " ${IND} " ]]; then
-            echo "${IND} part of DLPFC"
-            fslmaths $TOSPLIT -thr $IND -uthr $IND ${TOSPLIT}_${IND}
-            echo ${TOSPLIT}_${IND} >> ${TEXTOUT}
-        fi
 
-        if [[ ! " ${DLPFroilist[*]} " =~ " ${IND} " ]]; then
-            fslmaths $TOSPLIT -thr $IND -uthr $IND ${TOSPLIT}_${IND}
-            echo ${TOSPLIT}_${IND} >> ${TEXTOUT}
+                fslmaths $TOSPLIT -thr $IND -uthr $IND ${TOSPLIT}_${IND}
+                echo ${TOSPLIT}_${IND} >> ${TEXTOUT}
+            fi
         fi
-        fi
-
-    IND=$(($IND+1))
+        IND=$(($IND+1))
     done
 
     more $TEXTOUT
