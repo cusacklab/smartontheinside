@@ -7,19 +7,19 @@
 
 for hemi in L R 
 do
-
+    echo "computing wb_command for $hemi hemispere"
     # (1a) Map the Glasser surface parcellation into a volume, in adult MNI space using wb_command
     wb_command -label-to-volume-mapping /home/chiaracaldinelli/smartontheinside/smartontheinside/ff.${hemi}.label.gii Q1-Q6_RelatedParcellation210.${hemi}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii $FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_parcellation_surf2vol_${hemi}.nii -nearest-vertex 1
 
     # Frontal mask
-    wb_command -label-to-volume-mapping /home/chiaracaldinelli/smartontheinside/smartontheinside/frontal.${hemi}.label.gii Q1-Q6_RelatedParcellation210.${hemi}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii $FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_mask_surf2vol_${hemi}.nii -nearest-vertex 1
+    # wb_command -label-to-volume-mapping /home/chiaracaldinelli/smartontheinside/smartontheinside/frontal.${hemi}.label.gii Q1-Q6_RelatedParcellation210.${hemi}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii $FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_mask_surf2vol_${hemi}.nii -nearest-vertex 1
 
 
     # (1b) Transform the resulting label volume into the infant space using ants
     antsApplyTransforms -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_parcellation_surf2vol_${hemi}.nii -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz -t [ /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template0GenericAffine.mat,1] -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template1InverseWarp.nii.gz -o /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_labels_dhcp_40weeks_${hemi}.nii.gz --interpolation NearestNeighbor
 
     # frontal mask
-    antsApplyTransforms -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_mask_surf2vol_${hemi}.nii -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz -t [ /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template0GenericAffine.mat,1] -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template1InverseWarp.nii.gz -o /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_labels_dhcp_40weeks_${hemi}.nii.gz --interpolation NearestNeighbor
+    # antsApplyTransforms -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_mask_surf2vol_${hemi}.nii -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz -t [ /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template0GenericAffine.mat,1] -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template1InverseWarp.nii.gz -o /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_labels_dhcp_40weeks_${hemi}.nii.gz --interpolation NearestNeighbor
 
 done
 
@@ -35,14 +35,14 @@ do
     for hemi in L R ; do
 
         if [ -f /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${hemi}_sub-${SUBJ}.nii.gz ]; then
-            echo "glasser_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} already created"
+            echo "frontal_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} already created"
 
         fi
             echo "running sub-${SUBJ}"
             applywarp -i /home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/frontal_labels_dhcp_40weeks_${hemi}.nii.gz -o /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} -w /dhcp/dhcp_dmri_pipeline/sub-${SUBJ}/ses-*/xfm/sub-${SUBJ}_ses-*_from-template40wk_to-dwi_mode-image.nii.gz -r /dhcp/dhcp_dmri_pipeline/sub-CC00907XX16/ses-*/dwi/nodif_brain_mask.nii.gz --interp=nn
 
         if [ -f /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_${hemi}_sub-${SUBJ}.nii.gz ]; then
-            echo "frontal_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} already created"
+            echo "glasser_labels_dhcp_40weeks_${hemi}_sub-${SUBJ} already created"
 
         fi
             echo "running sub-${SUBJ}"

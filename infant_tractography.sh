@@ -51,6 +51,7 @@ do
 
 
 
+
     for HEMI in L R ; do
 
         if [ -f /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${HEMI}_${SUBJ}.nii.gz ]; then
@@ -70,9 +71,9 @@ do
         fi
     done
 
+
     # Add the 2 hemispheres together
     fslmaths /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_L_${SUBJ} -add /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_R_${SUBJ} /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_LR_${SUBJ}
-
 
 
 
@@ -80,9 +81,10 @@ do
     ################### 3- Split parcellation into single ROIs ##################
     #############################################################################
 
-    TOSPLIT=/home/chiaracaldinelli/smartontheinside/smartontheinside/results/transformations/glasser_labels_dhcp_40weeks
-    TEXTOUT=${TOSPLIT}_list.txt
-    rm $TEXTOUT
+    TOSPLIT=/home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_LR_${SUBJ}
+    # TEXTOUT=${TOSPLIT}_list.txt
+    TEXTOUT=${tmp_dir}/ROI_target_list.txt
+    # rm $TEXTOUT
     CWD=`pwd`
     COUNTS=`fslstats $TOSPLIT -H 370 0 370` # COUNT VOXELS IN EACH REGION
     IND=0
@@ -95,7 +97,7 @@ do
                 echo " ROI $IND excluded from mask"
             else
                 fslmaths $TOSPLIT -thr $IND -uthr $IND ${TOSPLIT}_${IND}
-                echo ${TOSPLIT}_${IND} >> ${TEXTOUT}
+                echo ${TOSPLIT}_${IND}.nii.gz >> ${TEXTOUT}
             fi
         fi
 
@@ -116,9 +118,8 @@ do
         probtrackx2 --loopcheck --simple --forcedir --opd -V 1 --os2t \
         --samples=${bedpostX_dir}/merged \
         --seed=/home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${HEMI}_${SUBJ}.nii.gz \
-        --targetmasks=${TEXTOUT} \
-        --mask=${bedpostX_dir}/nodif_brain_mask.nii.gz  \
-        -o fdt_paths_dhcp \
+        --targetmasks=$TEXTOUT \
+        --mask=${bedpostX_dir}/nodif_brain_mask.nii.gz \
         --dir=/home/chiaracaldinelli/probtrackx2/${HEMI}
         
 
