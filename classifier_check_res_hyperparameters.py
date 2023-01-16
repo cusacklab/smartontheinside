@@ -78,5 +78,5 @@ plt.show()
 
 
 
-plt.savefig( f'/home/chiaracaldinelli/smartontheinside/smartontheinside/heatmap.png', bbox_inches='tight')
+plt.savefig( f'/home/chiaracaldinelli/smartontheinside/smartontheinside/results/classifier_results/heatmap.png', bbox_inches='tight')
 print(f'Figure saved as heatmap.png')

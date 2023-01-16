@@ -98,7 +98,7 @@ do
                 echo ${TOSPLIT}_${IND} >> ${TEXTOUT}
             fi
         fi
-        
+
         IND=$(($IND+1))
     done
 
@@ -113,18 +113,17 @@ do
     for HEMI in L R ; do
         mkdir -p ${tmp_dir}/probtrackx2/${HEMI}
 
-        probtrackx2 \
-        --nsamples=5000 --rseed=1234 \
+        probtrackx2 --loopcheck --simple --forcedir --opd -V 1 --os2t \
         --samples=${bedpostX_dir}/merged \
         --seed=/home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${HEMI}_${SUBJ}.nii.gz \
         --targetmasks=${TEXTOUT} \
         --mask=${bedpostX_dir}/nodif_brain_mask.nii.gz  \
-        --loopcheck --simple --forcedir --opd -V 1 --os2t \
         -o fdt_paths_dhcp \
         --dir=/home/chiaracaldinelli/probtrackx2/${HEMI}
         
 
         ls ${tmp_dir}/probtrackx2/${HEMI}
+# --nsamples=5000 --rseed=1234 \
 # --dir=${tmp_dir}/probtrackx2/${HEMI} \
     done
 
