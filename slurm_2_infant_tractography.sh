@@ -5,5 +5,5 @@
 #SBATCH --error=/home/chiaracaldinelli/slurm-%j.err
 
 
-echo "Running tractography for SUBJ=$SUBJ"
+echo "Running tractography for SUBJ=${SUBJ} SESS=${SESS}"
 source /home/chiaracaldinelli/smartontheinside/smartontheinside/infant_tractography.sh $SUBJ $SESS
