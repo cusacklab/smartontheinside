@@ -1,7 +1,6 @@
 #!/bin/bash
 
-DWIPTH=/dhcp/dhcp_dmri_pipe
-line
+DWIPTH=/dhcp/dhcp_dmri_pipeline
 
 # DWIPTH=/home/chiaracaldinelli/probtrackx_try_slurm/
 
