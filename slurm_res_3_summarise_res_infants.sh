@@ -19,6 +19,7 @@ roilist=($(seq 1 360 ))
 DLPFroilist=(26 67 68 70 71 73 83 84 85 86 87 96 98 206 247 248 250 251 253 263 264 265 266 267 276 278)
 
 
+
 # 1- Create tmp folder
 tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
 
