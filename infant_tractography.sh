@@ -106,20 +106,30 @@ more $TEXTOUT
 ################### 4- Tractography ###################
 #######################################################
 
-for HEMI in L R ; do
-    mkdir -p ${tmp_dir}/probtrackx2/${HEMI}
+aws s3 cp s3://smartontheinside/infant_tractography/${SUBJ}/Diffusion.probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz ${tmp_dir}/probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz
 
-    probtrackx2 --forcedir --opd --os2t \
-    -s ${bedpostX_dir}/merged \
-    -x /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${HEMI}_${SUBJ}.nii.gz \
-    --targetmasks=$TEXTOUT \
-    -m ${bedpostX_dir}/nodif_brain_mask.nii.gz \
-    --dir=${tmp_dir}/probtrackx2/${HEMI}
-    
-    ls ${tmp_dir}/probtrackx2/${HEMI}
-# --nsamples=5000 --rseed=1234 \
-# --dir=${tmp_dir}/probtrackx2/${HEMI} \
-done
+if [[ -f "${tmp_dir}/probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz" ]]; then
+    echo 'Tractography already done'
+
+else
+
+
+    for HEMI in L R ; do
+        mkdir -p ${tmp_dir}/probtrackx2/${HEMI}
+
+        probtrackx2 --forcedir --opd --os2t \
+        -s ${bedpostX_dir}/merged \
+        -x /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${HEMI}_${SUBJ}.nii.gz \
+        --targetmasks=$TEXTOUT \
+        -m ${bedpostX_dir}/nodif_brain_mask.nii.gz \
+        --dir=${tmp_dir}/probtrackx2/${HEMI}
+        
+        ls ${tmp_dir}/probtrackx2/${HEMI}
+    # --nsamples=5000 --rseed=1234 \
+    # --dir=${tmp_dir}/probtrackx2/${HEMI} \
+    done
+
+fi
 
 
 ################### 5- Push results to S3

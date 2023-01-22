@@ -5,5 +5,5 @@
 #SBATCH --error=/home/chiaracaldinelli/slurm-%j.err
 
 
-echo "Running transformations for SUBJ=${SUBJ}"
-source /home/chiaracaldinelli/smartontheinside/smartontheinside/slurm_res_3_summarise_res_infants.sh $SUBJ
+echo "Extracting connectivity and activation for SUBJ=$sub"
+python /home/chiaracaldinelli/smartontheinside/slurm_res_summarise_res_PANDAS.py.py $sub
