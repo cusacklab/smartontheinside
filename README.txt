@@ -24,3 +24,19 @@ Code used for this analysis: extract_conn_act.py
 
 VII - A matrix containing activation during each of the selected fMRI tasks (nsub * nDLPFCvoxels), and ra matrix results from tractography (nsub * nDLPFCvoxels * ntarget_regions) were created. A classifier model was built using elastic net.
 Code used for this analysis: classifier.py
+
+
+
+******************* INFANT ANALYSIS *******************
+
+VIII - Images from the dHCP diffusion pipeline were registered to the Glasser parcellation in order to run tractography.
+Code used for this analysis: hcp2dhcp.sh
+
+IX - Infant tractography was run using slurm. 
+Code used for this analysis: slurm_1_infant_tractography.sh, slurm_2_infant_tractography.sh, infant_tractography.sh.
+
+X - The results of the tractography analysis were transformed into surface adult space
+Code used for this analysis: slurm_res_1_summarise_results_infants.sh, slurm_res_2_summarise_infants.sh, slurm_res_2_summarise_infants.sh,
+
+XI - The tractography results in adult surface space were then organised in python matrices
+Code used for this analysis: slurm_res_summarise_res_PANDAS_py.py
