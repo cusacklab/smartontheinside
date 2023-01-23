@@ -63,10 +63,10 @@ for hem in L R ; do
                 ls ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_40weeks_${SUBJ}_${roi}.nii.gz
 
 
-
                 # ants: label 40 weeks .nii --> dhcp template40weeks
                 echo "Running antsApplyTransforms for ROI ${roi} for SUBJect ${SUBJ}"
                 antsApplyTransforms -i ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_40weeks_${SUBJ}_${roi}.nii.gz -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template1Warp.nii.gz -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template0GenericAffine.mat -o ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_template_40weeks__${SUBJ}_${roi}.nii.gz
+
 
                 # wb_command: volume to surface
                 echo "Running wb_command volume2surface for ROI ${roi} for SUBJect ${SUBJ}"
