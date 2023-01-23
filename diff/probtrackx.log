@@ -1,3 +1,0 @@
-/usr/local/fsl/bin/probtrackx2 -x /Users/chiara/smartontheinside/frontal.L.nii -l --onewaycondition -c 0.2 -S 2000 --steplength=0.5 -P 5000 --fibthresh=0.01 --distthresh=0.0 --sampvox=0.0 --forcedir --opd -s /Users/chiara/smartontheinside/bedpostx/merged -m /Users/chiara/smartontheinside/bedpostx/nodif_brain_mask --dir=/Users/chiara/smartontheinside/diff 
----------------------------------------------
-
