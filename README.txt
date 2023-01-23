@@ -34,9 +34,14 @@ Code used for this analysis: hcp2dhcp.sh
 
 IX - Infant tractography was run using slurm. 
 Code used for this analysis: slurm_1_infant_tractography.sh, slurm_2_infant_tractography.sh, infant_tractography.sh.
+Output is at s3://smartontheinside/infant_tractography/$SUBJ/Diffusion.probtrackx2/
 
 X - The results of the tractography analysis were transformed into surface adult space
 Code used for this analysis: slurm_res_1_summarise_results_infants.sh, slurm_res_2_summarise_infants.sh, slurm_res_2_summarise_infants.sh,
+Output is at s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/${hemi}
+Output of apply warp (seed2target.nii --> label40weeks.nii): ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_40weeks_${SUBJ}_${roi}.nii.gz
+Output of ants (label 40 weeks .nii --> dhcp template40weeks): ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_template_40weeks__${SUBJ}_${roi}.nii.gz
+Output of wb_command (volume to surface): ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seeds_to_ROI.${roi}.shape.giiOutput of wb_command (volume to surface): 
 
 XI - The tractography results in adult surface space were then organised in python matrices
-Code used for this analysis: slurm_res_summarise_res_PANDAS_py.py
+Code used for this analysis: slurm_res_summarise_res_PANDAS.py.py
