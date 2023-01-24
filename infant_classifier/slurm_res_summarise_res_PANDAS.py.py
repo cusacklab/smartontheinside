@@ -38,7 +38,7 @@ list_subj_with_transformations = []
 
 
 for sub in subjlist:
-    path = f'infant_tractography/{sub}/T1w/Diffusion.probtrackx2/L/seeds_to_ROI.1.shape.gii'
+    path = f'infant_tractography/{sub}/T1w/Diffusion.probtrackx2/L/seeds_to_ROI.360.shape.gii'
     def IsObjectExists(path):
         for object_summary in bucket.objects.filter(Prefix=path):
             return True

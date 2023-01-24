@@ -21,8 +21,10 @@ for SUBJDIR in ${DWIPTH}/sub-CC*; do
                 if [[ -d "$SESSDIR" ]]; then
                     SESS=$(basename -- "$SESSDIR")
                     
-                    aws s3 ls s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/L/seeds_to_ROI.1.shape.gii
+                    # Check if transformation was already computed
+                    aws s3 ls s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/L/seeds_to_ROI.360.shape.gii
                     if [[ $? -ne 0 ]]; then
+
                         # Check for bedpostX outputs
                         if [[ -f "${DWIPTH}/${SUBJ}/${SESS}/dwi.bedpostX/merged_f1samples.nii.gz" ]]; then
                             echo "running infant transformations for $SUBJ $SESS "
