@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# DWIPTH=/dhcp/dhcp_dmri_pipeline
 
 DWIPTH=/home/chiaracaldinelli/test/
 
@@ -13,28 +12,10 @@ preterm_list=( sub-CC00576XX16 sub-CC00492BN15 sub-CC00672BN13 sub-CC00407BN11 s
 for SUBJDIR in ${DWIPTH}/sub-CC*; do
     SUBJ=$(basename -- "$SUBJDIR")
 
-    for preterm in $preterm_list ; do
-        if [ "$SUBJ" == "$preterm" ]; then
-            echo "$SUBJ is preterm"
-        else
-            for SESSDIR in ${SUBJDIR}/ses-*/; do
-                if [[ -d "$SESSDIR" ]]; then
-                    SESS=$(basename -- "$SESSDIR")
-                    
-                    aws s3 ls s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/L/seeds_to_ROI.1.shape.gii
-                    if [[ $? -ne 0 ]]; then
-                        # Check for bedpostX outputs
-                        if [[ -f "${DWIPTH}/${SUBJ}/${SESS}/dwi.bedpostX/merged_f1samples.nii.gz" ]]; then
-                            echo "running infant transformations for $SUBJ $SESS "
-                            export SUBJ=$SUBJ 
-                            export SESS=$SESS 
-                            sbatch --export=ALL, /home/chiaracaldinelli/smartontheinside/smartontheinside/infant_transformations/slurm_res_2_summarise_res_infants.sh	
-                        fi
-                    else
-                        echo "subject $SUBJ transformations were already computed"
-                    fi
-		        fi 	  
-            done
-        fi
-    done
+    if [[ " ${preterm_list[*]} " =~ " ${SUBJ} " ]]; then
+        echo "$SUBJ is preterm"
+    else
+        echo $SUBJ
+    fi
 done
+
