@@ -71,7 +71,10 @@ if [[ $? -ne 0 ]]; then
 
                     # wb_command: volume to surface
                     echo "Running wb_command volume2surface for ROI ${roi} for SUBJect ${SUBJ}"
-                    wb_command -volume-to-surface-mapping ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_template_40weeks__${SUBJ}_${roi}.nii.gz Q1-Q6_RelatedParcellation210.${hem}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii -enclosing ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seeds_to_ROI.${roi}.shape.gii
+                    wb_command -volume-to-surface-mapping ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_template_40weeks__${SUBJ}_${roi}.nii.gz \
+                        /home/chiaracaldinelli/smartontheinside/smartontheinside/parcellations_and_masks/Q1-Q6_RelatedParcellation210.${hem}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii \
+                        -enclosing \
+                        ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seeds_to_ROI.${roi}.shape.gii
             
                 fi
             done
