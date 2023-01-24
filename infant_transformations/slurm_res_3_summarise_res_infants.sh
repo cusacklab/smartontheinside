@@ -57,7 +57,9 @@ if [[ $? -ne 0 ]]; then
                 applywarp -i ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_${roi}.nii.gz \
                             -o ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_40weeks_${SUBJ}_${roi}.nii.gz \
                             -w /dhcp/dhcp_dmri_pipeline/${SUBJ}/${SESS}/xfm/${SUBJ}_${SESS}_from-dwi_to-template40wk_mode-image.nii.gz \
-                            -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz
+                            -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz     
+                # change to 1mm infant template 
+                # change output name
 
                 ls ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_40weeks_${SUBJ}_${roi}.nii.gz
 
@@ -65,11 +67,12 @@ if [[ $? -ne 0 ]]; then
                 # ants: label 40 weeks .nii --> dhcp template40weeks
                 echo "Running antsApplyTransforms for ROI ${roi} for SUBJect ${SUBJ}"
                 antsApplyTransforms -i ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_40weeks_${SUBJ}_${roi}.nii.gz \
-                    -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz \
+                    -r /dhcp/rhodri_registration/atlases/dhcp_volume_40weeks/template_t1.nii.gz \ 
                     -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template1Warp.nii.gz \
                     -t /dhcp/rhodri_registration/analysis_2020-20-29/antsreg_t1_nodura_nocerebllum_in_template0GenericAffine.mat \
                     -o ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_template_40weeks__${SUBJ}_${roi}.nii.gz
-
+                # change -r to MNI 1mm template 
+                # change output name
 
                 # wb_command: volume to surface
                 echo "Running wb_command volume2surface for ROI ${roi} for SUBJect ${SUBJ}"
