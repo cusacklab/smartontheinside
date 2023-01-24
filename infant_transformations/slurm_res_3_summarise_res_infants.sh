@@ -15,7 +15,8 @@ export FSLDIR PATH
 export LD_LIBRARY_PATH=/usr/local/cuda/lib:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64:/opt/amazon/efa/lib:/opt/amazon/openmpi/lib:/usr/local/lib:/usr/lib:
 
 
-roilist=($(seq 1 360 ))
+# roilist=($(seq 1 360 ))
+roilist=($(seq 1 3 ))
 DLPFroilist=(26 67 68 70 71 73 83 84 85 86 87 96 98 206 247 248 250 251 253 263 264 265 266 267 276 278)
 
 

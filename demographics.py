@@ -24,12 +24,6 @@ file.close()
 df = df.loc[df['birth_age'] >= 37]
 print(df)
 
-
-
-# check that only term babies are included 
-term = df['birth_age']
-print(np.amin(term))
-
 df_male = df.loc[df['gender'] == 'Male']
 print('Describe males')
 print(df_male.describe())
