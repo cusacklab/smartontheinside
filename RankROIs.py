@@ -13,26 +13,26 @@ taskname = {'tfMRI_WM', 'tfMRI_GAMBLING', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMR
 # Load allresults
 with open('sub-103818_roi.msgpack-numpy', 'rb') as f:
 #with open(f'sub-{sublist[x]}_roi.msgpack-numpy', 'rb') as f:
-    datallresultsa = msgpack.unpackb(f.read())
+    allresults = msgpack.unpackb(f.read())
 print(allresults)
 
 # For each task
 #Concatenate all subjects and all ROIs
-allsubj={​taskname:np.hstack([subjdata[taskname] for subjname, subjdata in allresults.items()] for taskname, taskdata in subjdata[allresults.keys()[0])}​
-print(allsubj)
+# allsubj={​taskname:np.hstack([subjdata[taskname] for subjname, subjdata in allresults.items()] for taskname, taskdata in subjdata[allresults.keys()[0])}​
+# print(allsubj)
 
 #Get the mean
-mnact = np.mean(allsubj, axis=1)
-#Order them from the biggest (giving you the position, so we have the ROIs’ names)
-sortedregions = np.argsort(mnact)
-np.save(sortedregions, allow_pickle=True)
+# mnact = np.mean(allsubj, axis=1)
+# #Order them from the biggest (giving you the position, so we have the ROIs’ names)
+# sortedregions = np.argsort(mnact)
+# np.save(sortedregions, allow_pickle=True)
 
 
-#DLPF regions
-DLPFrois=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250, 251, 253, 264, 265, 266, 267, 276, 278]
-#Select the right ROIs
-for x in DLPFrois:
+# #DLPF regions
+# DLPFrois=[26, 67, 68, 70, 71, 73, 83, 84, 85, 86, 87, 96, 98, 206, 247, 148, 250, 251, 253, 264, 265, 266, 267, 276, 278]
+# #Select the right ROIs
+# for x in DLPFrois:
     
-#Order them from the biggest (giving you the position, so we have the ROIs’ names)
-sortedregionsDLPF = np.argsort(mnact)
-np.save(sortedregions, allow_pickle=True)
+# #Order them from the biggest (giving you the position, so we have the ROIs’ names)
+# sortedregionsDLPF = np.argsort(mnact)
+# np.save(sortedregions, allow_pickle=True)

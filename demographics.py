@@ -20,6 +20,23 @@ for baby in codes_preterm:
 file.close()
 
 
+
+# Select preterm babies and save the codes in a txt file
+df_term = df.loc[df['birth_age'] >= 37]
+print(df_term.describe())
+
+# Write the codes of brabies born preterm into a list and then save it in a txt file
+codes_term = df_term['pparticipant_id']
+codes_term = codes_term.tolist()
+print(codes_term)
+
+file = open('dhcp_list_no_preterm.txt','w')
+for baby in codes_term:
+	file.write(baby+"\n")
+file.close()
+
+
+
 # Select only term babies
 df = df.loc[df['birth_age'] >= 37]
 print(df)
