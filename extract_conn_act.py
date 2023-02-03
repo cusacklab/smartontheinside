@@ -63,7 +63,7 @@ nvox = 177
 ############################################################################################################
 
 
-'''''''''
+
 for sub in range(nsub):
     
     # Check if result file already exists
@@ -187,3 +187,4 @@ for task, taskcons in taskcondict_selected.items():
             os.remove(f'/Users/chiara/{task}_{sub}_{hemi}_tfmri.npy')
             os.remove(f'/Users/chiara/{task}_{sub}_{hemi}_tfmri_ROI.npy')
 
+'''''''''

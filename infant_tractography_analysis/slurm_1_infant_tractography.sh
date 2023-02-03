@@ -1,8 +1,8 @@
 #!/bin/bash
 
-DWIPTH=/dhcp/dhcp_dmri_pipeline
+# DWIPTH=/dhcp/dhcp_dmri_pipeline
 
-# DWIPTH=/home/chiaracaldinelli/probtrackx_try_slurm/
+DWIPTH=/home/chiaracaldinelli/rerun_roi97
 
 # All subjects and sessions
 for SUBJDIR in ${DWIPTH}/sub-CC*; do
@@ -19,7 +19,7 @@ for SUBJDIR in ${DWIPTH}/sub-CC*; do
 					echo "running first code for $SUBJ $SESS "
 					export SUBJ=$SUBJ 
 					export SESS=$SESS 
-					sbatch --export=ALL, /home/chiaracaldinelli/smartontheinside/smartontheinside/slurm_2_infant_tractography.sh 
+					sbatch --export=ALL, /home/chiaracaldinelli/smartontheinside/smartontheinside/infant_tractography_analysis/slurm_2_infant_tractography.sh 
 				fi		
 			fi
 				

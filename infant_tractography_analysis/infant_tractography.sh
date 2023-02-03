@@ -23,7 +23,11 @@ export LD_LIBRARY_PATH=/usr/local/cuda/lib:/usr/local/cuda/lib64:/usr/local/cuda
 
 
 ################## 1- Create tmp folder ##################
-tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
+# tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
+tmp_dir=/home/chiaracaldinelli/rerun_roi97
+SUBJ=sub-CC00306XX09
+SESS=ses-98700 
+
 # See what we've made
 echo "Looking in temp directory"
 echo ${tmp_dir}
@@ -37,13 +41,15 @@ ls ${tmp_dir}
 bedpostX_dir=/dhcp/dhcp_dmri_pipeline/$SUBJ/$SESS/dwi.bedpostX
 dir_anat=/dhcp/dhcp_anat_pipeline/$SUBJ/*/anat/*_T1w_biasfield.nii.gz
 
+
 # Create a list for DLPFC regions and one for all the other regions
 roilist=( $(seq 1 360 ) )
-DLPFroilist=(26 67 68 70 71 73 83 84 85 86 87 96 98 206 247 248 250 251 253 263 264 265 266 267 276 278)
+DLPFroilist=(26 67 68 70 71 73 83 84 85 86 87 97 98 206 247 248 250 251 253 263 264 265 266 267 277 278)
 
 for DLPFCroi in DLPFroilist; do 
     unset roilist[DLPFCroi]
 done
+
 
 
 for HEMI in L R ; do
@@ -76,9 +82,8 @@ fslmaths /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_L_${
 #############################################################################
 
 TOSPLIT=/home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_LR_${SUBJ}
-# TEXTOUT=${TOSPLIT}_list.txt
 TEXTOUT=${tmp_dir}/ROI_target_list.txt
-# rm $TEXTOUT
+rm $TEXTOUT
 CWD=`pwd`
 COUNTS=`fslstats $TOSPLIT -H 370 0 370` # COUNT VOXELS IN EACH REGION
 IND=0
@@ -106,31 +111,33 @@ more $TEXTOUT
 ################### 4- Tractography ###################
 #######################################################
 
-aws s3 cp s3://smartontheinside/infant_tractography/${SUBJ}/Diffusion.probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz ${tmp_dir}/probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz
+# aws s3 cp s3://smartontheinside/infant_tractography/${SUBJ}/Diffusion.probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz ${tmp_dir}/probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz
 
-if [[ -f "${tmp_dir}/probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz" ]]; then
-    echo 'Tractography already done'
-
-else
+# # if [[ -f "${tmp_dir}/probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_99.nii.gz" ]]; then
+# #     echo 'Tractography already done'
 
 
-    for HEMI in L R ; do
-        mkdir -p ${tmp_dir}/probtrackx2/${HEMI}
+# if [[ -f "${tmp_dir}/probtrackx2/${HEMI}/seeds_to_glasser_labels_dhcp_40weeks_LR_${SUBJ}_96.nii.gz" ]]; then
+#     echo 'Tractography already done'
 
-        probtrackx2 --forcedir --opd --os2t \
-        -s ${bedpostX_dir}/merged \
-        -x /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${HEMI}_${SUBJ}.nii.gz \
-        --targetmasks=$TEXTOUT \
-        -m ${bedpostX_dir}/nodif_brain_mask.nii.gz \
-        --dir=${tmp_dir}/probtrackx2/${HEMI}
-        
-        ls ${tmp_dir}/probtrackx2/${HEMI}
-    # --nsamples=5000 --rseed=1234 \
-    # --dir=${tmp_dir}/probtrackx2/${HEMI} \
-    done
+# else
 
-fi
+for HEMI in L R ; do
+    mkdir -p ${tmp_dir}/probtrackx2/${HEMI}
+
+    probtrackx2 --forcedir --opd --os2t \
+    -s ${bedpostX_dir}/merged \
+    -x /home/chiaracaldinelli/transformations/frontal_labels_dhcp_40weeks_${HEMI}_${SUBJ}.nii.gz \
+    --targetmasks=$TEXTOUT \
+    -m ${bedpostX_dir}/nodif_brain_mask.nii.gz \
+    --dir=${tmp_dir}/probtrackx2/${HEMI}
+    ls ${tmp_dir}/probtrackx2/${HEMI}
+# --nsamples=5000 --rseed=1234 \
+# --dir=${tmp_dir}/probtrackx2/${HEMI} \
+done
+
+# fi
 
 
 ################### 5- Push results to S3
-aws s3 sync ${tmp_dir}/probtrackx2/ s3://smartontheinside/infant_tractography/$SUBJ/Diffusion.probtrackx2/
+# aws s3 sync ${tmp_dir}/probtrackx2/ s3://smartontheinside/infant_tractography/$SUBJ/Diffusion.probtrackx2/
