@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH -J CC
+#SBATCH -J CC-transformations
 #SBATCH --cpus-per-task=8
 #SBATCH --output=/home/chiaracaldinelli/slurm-%j.out
 #SBATCH --error=/home/chiaracaldinelli/slurm-%j.err
-
+#SBATCH --mem=3500
 
 echo "Running transformations for SUBJ=${SUBJ} SESS=${SESS}"
 source /home/chiaracaldinelli/smartontheinside/smartontheinside/infant_transformations/slurm_res_3_summarise_res_infants.sh $SUBJ $SESS

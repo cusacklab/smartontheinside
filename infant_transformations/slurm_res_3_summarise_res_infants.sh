@@ -21,15 +21,15 @@ DLPFroilist=(26 67 68 70 71 73 83 84 85 86 87 97 98 206 247 248 250 251 253 263 
 
 
 # 1- Create tmp folder
-# tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
-tmp_dir=/home/chiaracaldinelli/rerun_roi97
+tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
+
 
 
 # 2- Do transformations
     
 for hem in L R ; do
 
-    # aws s3 sync s3://smartontheinside/infant_tractography/${SUBJ}/Diffusion.probtrackx2/${hem}/ ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/
+    aws s3 sync s3://smartontheinside/infant_tractography/${SUBJ}/Diffusion.probtrackx2/${hem}/ ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/
       
 
     for roi in "${roilist[@]}"; do
@@ -74,5 +74,5 @@ done
 
 
 # 4- Push results to S3
-# aws s3 sync ${tmp_dir}/T1w/Diffusion.probtrackx2/L/ s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/L/
-# aws s3 sync ${tmp_dir}/T1w/Diffusion.probtrackx2/R/ s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/R/
+aws s3 sync ${tmp_dir}/T1w/Diffusion.probtrackx2/L/ s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/L/
+aws s3 sync ${tmp_dir}/T1w/Diffusion.probtrackx2/R/ s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/R/

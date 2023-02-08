@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DWIPTH=/dhcp/dhcp_dmri_pipeline
-
+# DWIPTH=/home/chiaracaldinelli/rerun_roi97
 
 # All subjects and sessions
 for SUBJDIR in ${DWIPTH}/sub-CC*; do
@@ -12,18 +12,10 @@ for SUBJDIR in ${DWIPTH}/sub-CC*; do
 			# Check for bedpostX outputs
 			if [[ -f "${DWIPTH}/${SUBJ}/${SESS}/dwi.bedpostX/merged_f1samples.nii.gz" ]]; then
 				echo "With bedpostX output ${SUBJ}_${SESS}"
-				if [[ -f "${DWIPTH}/${SUBJ}/${SESS}/probtrackx2/done_run_probtrackx2" ]]; then
-					echo "Already ran probtrackx2"
-				else
-					echo "running first code for $SUBJ $SESS "
-					export SUBJ=$SUBJ 
-					export SESS=$SESS 
-					sbatch --export=ALL, /home/chiaracaldinelli/smartontheinside/smartontheinside/infant_tractography_analysis/slurm_2_infant_tractography.sh 
-				fi		
-			fi
-				
+				aws s3 mv s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/R/ s3://smartontheinside/infant_tractography/old_results_roi96/${SUBJ}/T1w/Diffusion.probtrackx2/ --recursive
+
+			fi	
 		fi 	    
    done
 
 done
-

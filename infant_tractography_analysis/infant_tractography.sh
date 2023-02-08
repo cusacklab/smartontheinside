@@ -23,10 +23,8 @@ export LD_LIBRARY_PATH=/usr/local/cuda/lib:/usr/local/cuda/lib64:/usr/local/cuda
 
 
 ################## 1- Create tmp folder ##################
-# tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
-tmp_dir=/home/chiaracaldinelli/rerun_roi97
-SUBJ=sub-CC00306XX09
-SESS=ses-98700 
+tmp_dir=$(mktemp -d -t chiara-$(date +%Y-%m-%d-%H-%M-%S)-XXXXXXXXXX)
+
 
 # See what we've made
 echo "Looking in temp directory"
@@ -83,7 +81,7 @@ fslmaths /home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_L_${
 
 TOSPLIT=/home/chiaracaldinelli/transformations/glasser_labels_dhcp_40weeks_LR_${SUBJ}
 TEXTOUT=${tmp_dir}/ROI_target_list.txt
-rm $TEXTOUT
+
 CWD=`pwd`
 COUNTS=`fslstats $TOSPLIT -H 370 0 370` # COUNT VOXELS IN EACH REGION
 IND=0
@@ -132,12 +130,11 @@ for HEMI in L R ; do
     -m ${bedpostX_dir}/nodif_brain_mask.nii.gz \
     --dir=${tmp_dir}/probtrackx2/${HEMI}
     ls ${tmp_dir}/probtrackx2/${HEMI}
-# --nsamples=5000 --rseed=1234 \
-# --dir=${tmp_dir}/probtrackx2/${HEMI} \
+
 done
 
 # fi
 
 
 ################### 5- Push results to S3
-# aws s3 sync ${tmp_dir}/probtrackx2/ s3://smartontheinside/infant_tractography/$SUBJ/Diffusion.probtrackx2/
+aws s3 sync ${tmp_dir}/probtrackx2/ s3://smartontheinside/infant_tractography/$SUBJ/Diffusion.probtrackx2/
