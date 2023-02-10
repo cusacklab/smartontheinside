@@ -66,7 +66,7 @@ for hem in L R ; do
             wb_command -volume-to-surface-mapping ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seed2target_to_MNI_template_${SUBJ}_${roi}.nii.gz \
                 /home/chiaracaldinelli/smartontheinside/smartontheinside/parcellations_and_masks/Q1-Q6_RelatedParcellation210.${hem}.midthickness_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.surf.gii \
                 -enclosing \
-                ${tmp_dir}//T1w/Diffusion.probtrackx2/${hem}/seeds_to_ROI_MNI_template.${roi}.shape.gii
+                ${tmp_dir}/T1w/Diffusion.probtrackx2/${hem}/seeds_to_ROI_MNI_template.${roi}.shape.gii
         
         fi
     done
@@ -76,3 +76,4 @@ done
 # 4- Push results to S3
 aws s3 sync ${tmp_dir}/T1w/Diffusion.probtrackx2/L/ s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/L/
 aws s3 sync ${tmp_dir}/T1w/Diffusion.probtrackx2/R/ s3://smartontheinside/infant_tractography/${SUBJ}/T1w/Diffusion.probtrackx2/R/
+                             
