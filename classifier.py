@@ -339,6 +339,10 @@ if infants == 0:
 else:
     print('Running classifier for infants')
     
+    #     (1) Train the model on all of the adults (move before leave one out loop)
+    #     (2) Predict activity on each individual infant, by feeding connectivity into predict(
+    #     3) Test in existing way using adult contrast maps (as everything here is in the adult space)
+    
     conn_for_classifier_infants = np.load(
                 os.path.join(analysis_root, f'results/conn_for_classifier_N-{nsub}_infants.npy'), allow_pickle=True).ravel()[0]
     conn_for_classifier = np.load(
@@ -403,14 +407,16 @@ else:
                 # Train
                 model.fit(X_adult, y_adult)
                 
+                y_adult_mean=np.mean(y_adult, axis=0)
+                
                 # Leave one out elastic net
                 loo = LeaveOneOut()
                 loo.get_n_splits(X_infant)
                 
-                y_adult_mean=np.mean(y_adult, axis=0)
-                
-                for train_index, test_index in loo.split(X_infant):
-                    X_test = X_infant[test_index, :]
+
+                for one_infant in range(nsub_infants):
+                    X_test = X_infant[one_infant, :]
+                    
                     # Test
                     sc = model.score(X_test, y_adult_mean)
                     sp = model.get_params
