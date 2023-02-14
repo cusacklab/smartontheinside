@@ -364,115 +364,112 @@ else:
         act_for_classifier[task] = np.load(
             os.path.join(analysis_root, f'act_for_classifier_{task}_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
 
-        # Set up lists to store predictions for each task and hemi
-        pred = {'L':[], 'R':[]}
-        all_pred = {x:pred for x in taskcondict_selected}
+    # Set up lists to store predictions for each task and hemi
+    pred = {'L':[], 'R':[]}
+    all_pred = {x:pred for x in taskcondict_selected}
 
-        # Run classification for each task
-        for task, taskcons in taskcondict_selected.items():
-            if hyperparameter_subjects: 
-                folder = f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}' 
-            else: 
-                if infants == 1:
-                    folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
-                else:
-                    folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
-                    
-            os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
-
-            for hemiind, hemi in enumerate(['R', 'L']):
-                X_adult = conn_for_classifier[hemi]
-                X_infant = conn_for_classifier_infants[hemi]
-
-                # z-score activation for target task and hemisphere
-                y_adult = scipy.stats.zscore( act_for_classifier[task][hemi], axis=1) # Across vertices within each subject
-
-                score = []  
-
-                # dict with lists for each comparison task
-                all_corr = {comparison_task:[] for comparison_task in act_for_classifier }
+    # Run classification for each task
+    for task, taskcons in taskcondict_selected.items():
+        if hyperparameter_subjects: 
+            folder = f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}' 
+        else: 
+            if infants == 1:
+                folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
+            else:
+                folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
                 
-                
-                # Define model
-                if alpha==0:
-                    model = LinearRegression()
-                else:
-                    model = ElasticNet(alpha = alpha, l1_ratio=l1_ratio, random_state=42) 
-                
-                # Reshape to collapse subject and seed voxel dimensions as rows
-                X_adult = np.reshape(X_adult, [nsub * nseedvox[hemi], ntarg])
-                y_adult = np.reshape(y_adult, [nsub * nseedvox[hemi], 1])
-                
-                
-                # Train
-                model.fit(X_adult, y_adult)
-                
-                y_adult_mean=np.mean(y_adult, axis=0)
-                # y_adult_mean.reshape(1, -1)
-                
-                # Leave one out elastic net
-                loo = LeaveOneOut()
-                loo.get_n_splits(X_infant)
-                
+        os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
 
-                for one_infant in range(nsub_infants):
-                    X_test = (X_infant[one_infant,:,:])
-                    # X_infant = np.reshape(X_infant, [nsub_infants * nseedvox[hemi], ntarg])
-                    # X_test = X_infant[one_infant, :].reshape(1,-1)
-                    
-                    # Test
-                    sc = model.score(X_test, y_adult_mean)
-                    sp = model.get_params
-                
-                    # Get predicted activity
-                    y_estimate = model.predict(X_test)
-                    
-                    # save predicted values
-                    all_pred[task][hemi].append(y_estimate)
-        
-                    # correlate predicted activity for this task against true activity for each of the tasks
-                    for comparison_task in act_for_classifier:
+        for hemiind, hemi in enumerate(['R', 'L']):
+            X_adult = conn_for_classifier[hemi]
+            X_infant = conn_for_classifier_infants[hemi]
 
-                        c = pearsonr(act_for_classifier[comparison_task][hemi][one_infant,:].ravel(), y_estimate)
-                        c_ext = c[0]
-                        all_corr[comparison_task].append(c_ext)
+            # z-score activation for target task and hemisphere
+            y = scipy.stats.zscore( act_for_classifier[task][hemi], axis=1 ) # Across vertices within each subject
 
-                        res = pd.concat((res, pd.DataFrame([
-                            {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
-                            'task': task, 'hemi': hemi, 'fold': X_infant[one_infant],
-                            'comparison_task':comparison_task, 
-                            'pearson': c[0], 'score':sc}
-                            ])))
+            score = []  
 
-                    score.append(sc)
-
-                print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
-                # Save results with pickle   
-                with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}_infants.pickle'), 'wb') as f:
-                    pickle.dump(res, f)
-
-
-            # Save summary of results with pickle
-            with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}_infants.pickle'), 'wb') as f:
-                pickle.dump(res, f)
+            # dict with lists for each comparison task
+            all_corr = {comparison_task:[] for comparison_task in act_for_classifier }
             
-            s3.upload_file(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub}_infants.pickle'), 
-                'smartontheinside', 
-                os.path.join('Results', folder, f'{task}_subjectloo_N-{nsub_infants}.pickle'))
+            
+            # Define model
+            if alpha==0:
+                model = LinearRegression()
+            else:
+                model = ElasticNet(alpha = alpha, l1_ratio=l1_ratio, random_state=42) 
+            
+            # Reshape to collapse subject and seed voxel dimensions as rows
+            X_adult = np.reshape(X_adult, [nsub * nseedvox[hemi], ntarg])
+            y_adult = np.reshape(y, [nsub * nseedvox[hemi], 1])
+            # X_infant = np.reshape(X_infant, [nsub_infants * nseedvox[hemi], ntarg])
+            
+            
+            # Train
+            model.fit(X_adult, y_adult)
+            
+            y_adult_mean=np.mean(y, axis=0)
+            # y_adult_mean.reshape(1, -1)
+            
 
-        # Save predictions
-        with open(os.path.join(analysis_root, folder, f'predictions_N-{nsub}_infants.pickle'), 'wb') as f:
-            pickle.dump(all_pred, f)
+            for one_infant in range(nsub_infants):
+                X_test = (X_infant[one_infant,:,:])
+                # X_infant = np.reshape(X_infant, [nsub_infants * nseedvox[hemi], ntarg])
+                # X_test = X_infant[one_infant, :, :].reshape(1,-1)
+                
+                # Test
+                sc = model.score(X_test, y_adult_mean)
+                sp = model.get_params
+            
+                # Get predicted activity
+                y_estimate = model.predict(X_test)
+                
+                # save predicted values
+                all_pred[task][hemi].append(y_estimate)
+    
+                # correlate predicted activity for this task against true activity for each of the tasks
+                for comparison_task in act_for_classifier:
 
-        s3.upload_file(os.path.join(analysis_root, folder, f'predictions_N-{nsub}_infants.pickle'), 
-            'smartontheinside', 
-            os.path.join('Results', folder, f'predictions_N-{nsub}.pickle'))
+                    c = pearsonr(y_adult_mean, y_estimate)
+                    c_ext = c[0]
+                    all_corr[comparison_task].append(c_ext)
 
-        # Dump data frame
-        res.to_csv(os.path.join(analysis_root, folder, f'summary_N-{nsub}_infants.csv'))
-        s3.upload_file(os.path.join(analysis_root,  folder,f'summary_N-{nsub}_infants.csv'), 
-            'smartontheinside', 
-            os.path.join('Results', folder, f'summary_N-{nsub}_infants.csv'))
+                    res = pd.concat((res, pd.DataFrame([
+                        {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
+                        'task': task, 'hemi': hemi, 'fold': X_infant[one_infant],
+                        'comparison_task':comparison_task, 
+                        'pearson': c[0], 'score':sc}
+                        ])))
 
-        print(f'Finished with alpha {alpha} l1_ratio {l1_ratio} for infant classifier')
+                score.append(sc)
+
+            print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
+            # Save results with pickle   
+            with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+                pickle.dump(res, f)
+
+
+        # Save summary of results with pickle
+        with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+            pickle.dump(res, f)
         
+        s3.upload_file(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub_infants}_infants.pickle'), 
+            'smartontheinside', 
+            os.path.join('Results', folder, f'{task}_subjectloo_N-{nsub_infants}.pickle'))
+
+    # Save predictions
+    with open(os.path.join(analysis_root, folder, f'predictions_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+        pickle.dump(all_pred, f)
+
+    s3.upload_file(os.path.join(analysis_root, folder, f'predictions_N-{nsub_infants}_infants.pickle'), 
+        'smartontheinside', 
+        os.path.join('Results', folder, f'predictions_N-{nsub_infants}.pickle'))
+
+    # Dump data frame
+    res.to_csv(os.path.join(analysis_root, folder, f'summary_N-{nsub_infants}_infants.csv'))
+    s3.upload_file(os.path.join(analysis_root,  folder,f'summary_N-{nsub_infants}_infants.csv'), 
+        'smartontheinside', 
+        os.path.join('Results', folder, f'summary_N-{nsub_infants}_infants.csv'))
+
+    print(f'Finished with alpha {alpha} l1_ratio {l1_ratio} for infant classifier')
+    
