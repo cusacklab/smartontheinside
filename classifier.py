@@ -341,7 +341,7 @@ else:
     
     #     (1) Train the model on all of the adults (move before leave one out loop)
     #     (2) Predict activity on each individual infant, by feeding connectivity into predict(
-    #     3) Test in existing way using adult contrast maps (as everything here is in the adult space)
+    #     (3) Test in existing way using adult contrast maps (as everything here is in the adult space)
     
     conn_for_classifier_infants = np.load(
                 os.path.join(analysis_root, f'results/conn_for_classifier_N-{nsub}_infants.npy'), allow_pickle=True).ravel()[0]
@@ -402,12 +402,13 @@ else:
                 # Reshape to collapse subject and seed voxel dimensions as rows
                 X_adult = np.reshape(X_adult, [nsub * nseedvox[hemi], ntarg])
                 y_adult = np.reshape(y_adult, [nsub * nseedvox[hemi], 1])
-                X_infant = np.reshape(X_infant, [nsub_infants * nseedvox[hemi], ntarg])
+                
                 
                 # Train
                 model.fit(X_adult, y_adult)
                 
                 y_adult_mean=np.mean(y_adult, axis=0)
+                # y_adult_mean.reshape(1, -1)
                 
                 # Leave one out elastic net
                 loo = LeaveOneOut()
@@ -415,7 +416,9 @@ else:
                 
 
                 for one_infant in range(nsub_infants):
-                    X_test = X_infant[one_infant, :]
+                    X_test = (X_infant[one_infant,:,:])
+                    # X_infant = np.reshape(X_infant, [nsub_infants * nseedvox[hemi], ntarg])
+                    # X_test = X_infant[one_infant, :].reshape(1,-1)
                     
                     # Test
                     sc = model.score(X_test, y_adult_mean)
@@ -430,23 +433,16 @@ else:
                     # correlate predicted activity for this task against true activity for each of the tasks
                     for comparison_task in act_for_classifier:
 
-                        c = pearsonr(act_for_classifier[comparison_task][hemi][test_index,:].ravel(), y_estimate)
+                        c = pearsonr(act_for_classifier[comparison_task][hemi][one_infant,:].ravel(), y_estimate)
                         c_ext = c[0]
                         all_corr[comparison_task].append(c_ext)
 
                         res = pd.concat((res, pd.DataFrame([
                             {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
-                            'task': task, 'hemi': hemi, 'fold': test_index[0],
+                            'task': task, 'hemi': hemi, 'fold': X_infant[one_infant],
                             'comparison_task':comparison_task, 
                             'pearson': c[0], 'score':sc}
                             ])))
-
-                    if draw_scatter_plots:
-                        # Draw scatter plot
-                        plt.figure()
-                        plt.scatter(y_test, y_estimate)
-                        plt.title(f'r={c[0]} p={c[1]}')
-                        plt.savefig(f'scatter_{task}_{hemi}_{test_index[0]}.png')
 
                     score.append(sc)
 
