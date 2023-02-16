@@ -15,9 +15,11 @@ import sys
 import pandas as pd
 
 
-assert len(sys.argv)>=3, 'Need to specify alpha and l1_ratio as parameters'
-alpha = float(sys.argv[1])
-l1_ratio = float(sys.argv[2])
+# assert len(sys.argv)>=3, 'Need to specify alpha and l1_ratio as parameters'
+# alpha = float(sys.argv[1])
+# l1_ratio = float(sys.argv[2])
+alpha = 0.4
+l1_ratio = 0.6
 
 # 1 for infant analysis, 0 for adult analysis
 infants = 1
@@ -445,17 +447,17 @@ else:
 
             print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
             # Save results with pickle   
-            with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+            with open(os.path.join(analysis_root, folder, f'{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
                 pickle.dump(res, f)
 
 
         # Save summary of results with pickle
-        with open(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+        with open(os.path.join(analysis_root, folder, f'{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
             pickle.dump(res, f)
         
-        s3.upload_file(os.path.join(analysis_root, folder, f'{task}_subject_loo_N-{nsub_infants}_infants.pickle'), 
+        s3.upload_file(os.path.join(analysis_root, folder, f'{task}_subject_N-{nsub_infants}_infants.pickle'), 
             'smartontheinside', 
-            os.path.join('Results', folder, f'{task}_subjectloo_N-{nsub_infants}.pickle'))
+            os.path.join('Results', folder, f'{task}_subject_N-{nsub_infants}.pickle'))
 
     # Save predictions
     with open(os.path.join(analysis_root, folder, f'predictions_N-{nsub_infants}_infants.pickle'), 'wb') as f:
