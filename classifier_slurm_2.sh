@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -J CC
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=50G
+#SBATCH --mem=30G
 #SBATCH --output=/home/chiaracaldinelli/slurm-%j.out
 #SBATCH --error=/home/chiaracaldinelli/slurm-%j.err
 

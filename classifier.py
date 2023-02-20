@@ -369,31 +369,24 @@ else:
     # Set up lists to store predictions for each task and hemi
     pred = {'L':[], 'R':[]}
     all_pred = {x:pred for x in taskcondict_selected}
+    
+    folder = f'/foundcog/chiara/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'     
+    os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
+
 
     # Run classification for each task
     for task, taskcons in taskcondict_selected.items():
-        if hyperparameter_subjects: 
-            folder = f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}' 
-        else: 
-            if infants == 1:
-                folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
-            else:
-                folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
-                
-        os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
-
+        
         for hemiind, hemi in enumerate(['R', 'L']):
             X_adult = conn_for_classifier[hemi]
             X_infant = conn_for_classifier_infants[hemi]
 
             # z-score activation for target task and hemisphere
             y = scipy.stats.zscore( act_for_classifier[task][hemi], axis=1 ) # Across vertices within each subject
-
             score = []  
 
             # dict with lists for each comparison task
             all_corr = {comparison_task:[] for comparison_task in act_for_classifier }
-            
             
             # Define model
             if alpha==0:
@@ -410,7 +403,7 @@ else:
             # Train
             model.fit(X_adult, y_adult)
             
-            y_adult_mean=np.mean(y, axis=0)
+            y_adult_mean = np.mean(y, axis=0)
             # y_adult_mean.reshape(1, -1)
             
 
@@ -431,6 +424,10 @@ else:
     
                 # correlate predicted activity for this task against true activity for each of the tasks
                 for comparison_task in act_for_classifier:
+                    
+                    y_comparison = scipy.stats.zscore( act_for_classifier[comparison_task][hemi], axis=1 ) # Across vertices within each subject
+                    y_comparison_mean = np.mean(y, axis=0)
+                    c = pearsonr(y_comparison_mean, y_estimate)
 
                     c = pearsonr(y_adult_mean, y_estimate)
                     c_ext = c[0]
@@ -438,7 +435,7 @@ else:
 
                     res = pd.concat((res, pd.DataFrame([
                         {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
-                        'task': task, 'hemi': hemi, 'fold': X_infant[one_infant],
+                        'task': task, 'hemi': hemi, 'fold': one_infant,
                         'comparison_task':comparison_task, 
                         'pearson': c[0], 'score':sc}
                         ])))
@@ -447,31 +444,31 @@ else:
 
             print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
             # Save results with pickle   
-            with open(os.path.join(analysis_root, folder, f'{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+            with open((f'/foundcog/chiara/{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
                 pickle.dump(res, f)
 
 
         # Save summary of results with pickle
-        with open(os.path.join(analysis_root, folder, f'{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+        with open(f'/foundcog/chiara/{task}_subject_N-{nsub_infants}_infants.pickle', 'wb') as f:
             pickle.dump(res, f)
         
-        s3.upload_file(os.path.join(analysis_root, folder, f'{task}_subject_N-{nsub_infants}_infants.pickle'), 
+        s3.upload_file(f'/foundcog/chiara/{task}_subject_N-{nsub_infants}_infants.pickle', 
             'smartontheinside', 
-            os.path.join('Results', folder, f'{task}_subject_N-{nsub_infants}.pickle'))
+            f'{task}_subject_N-{nsub_infants}.pickle')
 
     # Save predictions
-    with open(os.path.join(analysis_root, folder, f'predictions_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+    with open(f'/foundcog/chiara/predictions_N-{nsub_infants}_infants.pickle', 'wb') as f:
         pickle.dump(all_pred, f)
 
-    s3.upload_file(os.path.join(analysis_root, folder, f'predictions_N-{nsub_infants}_infants.pickle'), 
+    s3.upload_file(f'/foundcog/chiara/predictions_N-{nsub_infants}_infants.pickle', 
         'smartontheinside', 
-        os.path.join('Results', folder, f'predictions_N-{nsub_infants}.pickle'))
+        f'/foundcog/chiara/predictions_N-{nsub_infants}.pickle')
 
     # Dump data frame
-    res.to_csv(os.path.join(analysis_root, folder, f'summary_N-{nsub_infants}_infants.csv'))
-    s3.upload_file(os.path.join(analysis_root,  folder,f'summary_N-{nsub_infants}_infants.csv'), 
+    res.to_csv(f'/foundcog/chiara/summary_N-{nsub_infants}.csv')
+    s3.upload_file(f'/foundcog/chiara/summary_N-{nsub_infants}.csv', 
         'smartontheinside', 
-        os.path.join('Results', folder, f'summary_N-{nsub_infants}_infants.csv'))
+        f'/foundcog/chiara/summary_N-{nsub_infants}.csv')
 
     print(f'Finished with alpha {alpha} l1_ratio {l1_ratio} for infant classifier')
     
