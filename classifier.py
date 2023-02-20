@@ -428,11 +428,9 @@ else:
                     y_comparison = scipy.stats.zscore( act_for_classifier[comparison_task][hemi], axis=1 ) # Across vertices within each subject
                     y_comparison_mean = np.mean(y, axis=0)
                     c = pearsonr(y_comparison_mean, y_estimate)
-
-                    c = pearsonr(y_adult_mean, y_estimate)
+                    
                     c_ext = c[0]
                     all_corr[comparison_task].append(c_ext)
-
                     res = pd.concat((res, pd.DataFrame([
                         {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
                         'task': task, 'hemi': hemi, 'fold': one_infant,
