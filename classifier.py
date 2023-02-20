@@ -219,7 +219,7 @@ if infants == 0:
             folder = f'classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}' 
         else: 
             if infants == 1:
-                folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
+                folder = f'/home/chiaracaldinelli/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
             else:
                 folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
                 
@@ -426,7 +426,7 @@ else:
                 for comparison_task in act_for_classifier:
                     
                     y_comparison = scipy.stats.zscore( act_for_classifier[comparison_task][hemi], axis=1 ) # Across vertices within each subject
-                    y_comparison_mean = np.mean(y, axis=0)
+                    y_comparison_mean = np.mean(y_comparison, axis=0)
                     c = pearsonr(y_comparison_mean, y_estimate)
                     
                     c_ext = c[0]
@@ -434,7 +434,7 @@ else:
                     res = pd.concat((res, pd.DataFrame([
                         {'algorithm': 'ElasticNet', 'alpha': alpha, 'l1_ratio': l1_ratio,
                         'task': task, 'hemi': hemi, 'fold': one_infant,
-                        'comparison_task':comparison_task, 
+                        'comparison_task': comparison_task, 
                         'pearson': c[0], 'score':sc}
                         ])))
 
