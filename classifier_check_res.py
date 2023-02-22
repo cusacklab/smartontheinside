@@ -13,6 +13,7 @@ from scipy.stats import bootstrap
 import numpy as np
 import boto3
 from scipy.stats import mannwhitneyu
+import scipy
 
 infants  = 1 # 1 is infants, 0 is adults
 alpha = 0.4
@@ -81,7 +82,7 @@ def bootstrap_compare_two_groups(group1, group2):
 
 if infants == 1:
     nsub = 183
-    folder = f'/home/chiaracaldinelli/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
+    folder = f'/home/{os.getlogin()}/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
     folder_results_classifier = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
     os.makedirs(os.path.join(folder, folder_results_classifier), exist_ok=True) # Make folder if it doesn't already exist
 
@@ -97,41 +98,36 @@ for hemiind, hemi in enumerate(['R', 'L']):
     df = pd.read_csv(os.path.join(folder, f'summary_N-{nsub}.csv'), index_col=False)
     print(df)
 
-    for taskind, task in enumerate(tasks_selected): 
+    # for taskind, task in enumerate(tasks_selected): 
 
-        # Bootstrap
-        #convert array to sequence
-        data = df.loc[df['task'] == task]
-        print(data)
+    #     # Bootstrap
+    #     #convert array to sequence
+    #     data = df.loc[df['task'] == task & df['comparison_task'] == task]
+    #     #calculate 95% bootstrapped confidence interval for median
+    #     bootstrap_ci = bootstrap((data['pearson'],), np.median, confidence_level=0.99,
+    #                             random_state=1, method='percentile')
 
-        data = df['pearson'] 
-        print(data)
-        data = (data,)
-
-        #calculate 95% bootstrapped confidence interval for median
-        bootstrap_ci = bootstrap(data, np.median, confidence_level=0.99,
-                                random_state=1, method='percentile')
-
-        #view 95% boostrapped confidence interval
-        print(f'task: {task} {bootstrap_ci.confidence_interval}')
+    #     #view 95% boostrapped confidence interval
+    #     print(f'task: {task} {bootstrap_ci.confidence_interval}')
 
 
 
-    # Jitter and rain for score
-    f, ax = plt.subplots(figsize=(7, 5))
-    ax = pt.half_violinplot( x = df['task'], y = df['score'], data = df, bw = .2, cut = 0.,
-                            scale = "area", width = .6, inner = None)
-    ax = sns.stripplot( x = df['task'], y = df['score'], data = df, edgecolor = "white",
-                        size = 3, jitter = 1, zorder = 0)
-    plt.ylim(-0.25, 0.30)
-    plt.title(f"{hemi} hemisphere")
-    plt.savefig(os.path.join(folder, f'summarise_res_classifier_score_{hemi}.png'), bbox_inches='tight')
-    print(f'Figure saved as summarise_res_score_{hemi}.png')
+    # # Jitter and rain for score
+    # f, ax = plt.subplots(figsize=(7, 5))
+    # ax = pt.half_violinplot( x = df['task'], y = df['score'], data = df, bw = .2, cut = 0.,
+    #                         scale = "area", width = .6, inner = None)
+    # ax = sns.stripplot( x = df['task'], y = df['score'], data = df, edgecolor = "white",
+    #                     size = 3, jitter = 1, zorder = 0)
+    # plt.ylim(-0.25, 0.30)
+    # plt.title(f"{hemi} hemisphere")
+    # plt.savefig(os.path.join(folder, f'summarise_res_classifier_score_{hemi}.png'), bbox_inches='tight')
+    # print(f'Figure saved as summarise_res_score_{hemi}.png')
     
 
     # Jitter and rain for pearson
     f, ax = plt.subplots(figsize=(7, 5))
-    ax = pt.half_violinplot( x = df['task'], y = df['pearson'], data = df, bw = .2, cut = 0.,
+
+    ax = pt.half_violinplot( x = df['task'], y =df['pearson'], bw = .2, cut = 0.,
                             scale = "area", width = .6, inner = None)
     ax = sns.stripplot( x = df['task'], y = df['pearson'], data = df, edgecolor = "white",
                         size = 3, jitter = 1, zorder = 0)
@@ -160,35 +156,36 @@ for hemiind, hemi in enumerate(['R', 'L']):
     # Load values
     df = pd.read_csv(os.path.join(folder, f'summary_N-{nsub}.csv'))
     df = df.loc[df['hemi'] == hemi]
-    print(df)
+    
 
     ######### PLOT MATRIX WITH PREDICTED AND TRUE VALUES #########
     
     df_mean = (df.groupby(['task','comparison_task']).mean())
-    matrix = df_mean['pearson']
-    matrix = matrix.to_frame()
-    matrix = matrix.to_numpy()
-    matrix= np.reshape(matrix, (5,5))
-
-    plt.imshow(matrix)
-
+    df_mean = df_mean.reset_index()
+    df_mean = pd.pivot(df_mean,index='task',columns='comparison_task', values='pearson')
+    print(df_mean)
+    
     plt.figure()
     # Show matrix plot
     ax = plt.gca()
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
             rotation_mode="anchor")
-    # Major ticks
-    ax.set_xticks(np.arange(0, len(tasks_selected), 1))
-    ax.set_yticks(np.arange(0, len(tasks_selected), 1))
-    # Labels for major ticks
-    ax.set_xticklabels(tasks_selected, fontsize=6)
-    ax.set_yticklabels(tasks_selected, fontsize=6)
 
-    plt.imshow(matrix)
+    dftasklist = df_mean.columns
+
+    # Major ticks
+    ax.set_xticks(np.arange(0, len(dftasklist), 1))
+    ax.set_yticks(np.arange(0, len(dftasklist), 1))
+    ax.set_xlabel('Comparison task')
+    ax.set_ylabel('Predicted task')
+    # Labels for major ticks
+    ax.set_xticklabels(dftasklist, fontsize=6)
+    ax.set_yticklabels(dftasklist, fontsize=6)
+
+    plt.imshow(df_mean)
 
     plt.colorbar()    
-    plt.savefig((f'matrix_{hemi}_hemisphere.png'), bbox_inches='tight')
-    plt.close()
+
 
     # Make empty matrix to compare within to across tasks
     # First column is within, second is across
@@ -224,10 +221,10 @@ for hemiind, hemi in enumerate(['R', 'L']):
 
     
 
-    # take mean for within and across
-    # (1) for each subject calculate two values - the within task (average of leading diagonal) and the across tasks (average of values off the leading diagonal). We can then do bootstrapping of the difference to see if they're different
-    # for within, pick rows where task == comparison taks, then groupby subject and take mean. For across tasks, pick rows where task ~= comparison task, group by subject and mean
-    # Then get one difference value per subject and bootstrap them using the bootstrap command
+    # # take mean for within and across
+    # # (1) for each subject calculate two values - the within task (average of leading diagonal) and the across tasks (average of values off the leading diagonal). We can then do bootstrapping of the difference to see if they're different
+    # # for within, pick rows where task == comparison taks, then groupby subject and take mean. For across tasks, pick rows where task ~= comparison task, group by subject and mean
+    # # Then get one difference value per subject and bootstrap them using the bootstrap command
 
     within = comp[:,0] 
     across = comp[:,1]
@@ -243,31 +240,48 @@ for hemiind, hemi in enumerate(['R', 'L']):
     # print('Results Mann Whitney')
     # print(res)
 
-    # ************* USE BOOTSTRAP TO CHECK IF THE 2 GROUPS (ACROSS AND WITHIN) ARE DIFFERENT *************
-    #  
-    # 
-    # Compute the mean of all forces (from forces_concat) using np.mean().
-    # Generate shifted data sets for both force_a and force_b such that the mean of each is the mean of the concatenated array of impact forces.
-    # Generate 10,000 bootstrap replicates of the mean each for the two shifted arrays.
-    # Compute the bootstrap replicates of the difference of means by subtracting the replicates of the shifted impact force of Frog B from those of Frog A.
-    # Compute and print the p-value from your bootstrap replicates.
+    # # ************* USE BOOTSTRAP TO CHECK IF THE 2 GROUPS (ACROSS AND WITHIN) ARE DIFFERENT *************
+    # #  
+    # # 
+    # # Compute the mean of all forces (from forces_concat) using np.mean().
+    # # Generate shifted data sets for both force_a and force_b such that the mean of each is the mean of the concatenated array of impact forces.
+    # # Generate 10,000 bootstrap replicates of the mean each for the two shifted arrays.
+    # # Compute the bootstrap replicates of the difference of means by subtracting the replicates of the shifted impact force of Frog B from those of Frog A.
+    # # Compute and print the p-value from your bootstrap replicates.
 
-    # Compare the diagonal VS all the other tasks
-    print('T test for within and across:')
-    bootstrap_compare_two_groups(within, across)
+    # # Compare the diagonal VS all the other tasks
+    print('Bootstrap test for within and across:')
+#    bootstrap_compare_two_groups(within, across)
+    # Do paired comparison
+    print(f'Difference is {np.mean(within-across)}')
+    res = scipy.stats.bootstrap((within-across,), np.mean)
+    print(res)
+    # # Compare each task VS ech task
+    for yc, task in enumerate(dftasklist):
+        df_task_with_self = df[(df['task']==task) & (df['comparison_task']==task)]
+        for xc, comparison_task in enumerate(dftasklist):
+            df_task_with_comparison = df[(df['task']==task) & (df['comparison_task']==comparison_task)]
+            diff = df_task_with_self['pearson'].to_numpy()- df_task_with_comparison['pearson'].to_numpy()
+            res = scipy.stats.ttest_1samp(diff,0)
+#            res = scipy.stats.bootstrap((diff,), np.mean)
+            print(f'Task {task} with self compared with {comparison_task} diff {np.mean(diff)} stats {res}')
 
-    # Compare each task VS ech task
-    for group1 in range(len(tasks_selected)):
-        print(f'Mean and SD for {tasks_selected[group1]}, {hemi} hemisphere:')
-        print(np.mean(comp_same_task[group1,:]))
-        print(np.std(comp_same_task[group1,:]))
+            # Bonferroni corrected by row
+            p=res.pvalue*(len(dftasklist)-1)
+            if p<0.001:
+                pstr='***'
+            elif p<0.01:
+                pstr='**'
+            elif p<0.05:
+                pstr='*'
+            else:
+                pstr=''
 
-        for group2 in range(len(tasks_selected)):
-            
-            print(f'T test between {tasks_selected[group1]} and {tasks_selected[group2]}, {hemi} hemisphere:')
-            bootstrap_compare_two_groups(comp_same_task[group1,:], comp_same_task[group2,:])
+            if np.mean(diff)<0:
+                pstr=''
+            plt.annotate(pstr,(xc,yc), ha='center')
 
-
-
+    plt.savefig((f'matrix_{hemi}_hemisphere.png'), bbox_inches='tight')
+    plt.close()
 
 

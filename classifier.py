@@ -54,7 +54,7 @@ if not sample_subjlist is None:
         subjlist = subjlist[:sample_subjlist] # subset of first subjects for hyperparamters 
     else: subjlist = subjlist[sample_subjlist:] # roll out to rest of subjects for hyperparamters
 
-analysis_root = '/home/chiaracaldinelli'
+analysis_root = f'/home/{os.getlogin()}'
 
 DLPFroilist = ['26', '67', '68', '70', '71', '73', '83', '84', '85', '86', '87', '97', '98',
                '206', '247', '248', '250', '251', '253', '263', '264', '265', '266', '267', '277', '278']
@@ -102,7 +102,7 @@ if reload_data:
                 remotepath_conn = (
                     f'Results/{sub}_infants_tractography_results_VOXEL_{hemi}.npy')
                 s3.download_file('smartontheinside', remotepath_conn,
-                                os.path.join(analysis_root, f'/home/chiaracaldinelli/{sub}_infants_tractography_results_VOXEL_{hemi}.npy'))
+                                os.path.join(analysis_root, f'/home/{os.getlogin()}/{sub}_infants_tractography_results_VOXEL_{hemi}.npy'))
                 tract = np.load(
                     os.path.join(analysis_root, f'{sub}_infants_tractography_results_VOXEL_{hemi}.npy'), allow_pickle=True)
                 print(tract)
@@ -346,7 +346,7 @@ else:
     #     (3) Test in existing way using adult contrast maps (as everything here is in the adult space)
     
     conn_for_classifier_infants = np.load(
-                os.path.join(analysis_root, f'results/conn_for_classifier_N-{nsub}_infants.npy'), allow_pickle=True).ravel()[0]
+                os.path.join(analysis_root, f'results/conn_for_classifier_N-{nsub_infants}_infants.npy'), allow_pickle=True).ravel()[0]
     conn_for_classifier = np.load(
                 os.path.join(analysis_root, f'conn_for_classifier_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
     
@@ -370,7 +370,10 @@ else:
     pred = {'L':[], 'R':[]}
     all_pred = {x:pred for x in taskcondict_selected}
     
-    folder = f'/foundcog/chiara/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'     
+    if os.getlogin()=='ubuntu':
+        folder = f'/home/ubuntu/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'             
+    else:
+        folder = f'/home/{os.getlogin()}/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'     
     os.makedirs(os.path.join(analysis_root, folder), exist_ok=True) # Make folder if it doesn't already exist
 
 
@@ -442,31 +445,32 @@ else:
 
             print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
             # Save results with pickle   
-            with open((f'/foundcog/chiara/{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+
+            with open((f'/home/{os.getlogin()}/{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
                 pickle.dump(res, f)
 
 
         # Save summary of results with pickle
-        with open(f'/foundcog/chiara/{task}_subject_N-{nsub_infants}_infants.pickle', 'wb') as f:
+        with open(f'/home/{os.getlogin()}/{task}_subject_N-{nsub_infants}_infants.pickle', 'wb') as f:
             pickle.dump(res, f)
         
-        s3.upload_file(f'/foundcog/chiara/{task}_subject_N-{nsub_infants}_infants.pickle', 
+        s3.upload_file(f'/home/{os.getlogin()}/{task}_subject_N-{nsub_infants}_infants.pickle', 
             'smartontheinside', 
             f'{task}_subject_N-{nsub_infants}.pickle')
 
     # Save predictions
-    with open(f'/foundcog/chiara/predictions_N-{nsub_infants}_infants.pickle', 'wb') as f:
+    with open(f'/home/{os.getlogin()}/predictions_N-{nsub_infants}_infants.pickle', 'wb') as f:
         pickle.dump(all_pred, f)
 
-    s3.upload_file(f'/foundcog/chiara/predictions_N-{nsub_infants}_infants.pickle', 
+    s3.upload_file(f'/home/{os.getlogin()}/predictions_N-{nsub_infants}_infants.pickle', 
         'smartontheinside', 
-        f'/foundcog/chiara/predictions_N-{nsub_infants}.pickle')
+        f'/home/{os.getlogin()}/predictions_N-{nsub_infants}.pickle')
 
     # Dump data frame
-    res.to_csv(f'/foundcog/chiara/summary_N-{nsub_infants}.csv')
-    s3.upload_file(f'/foundcog/chiara/summary_N-{nsub_infants}.csv', 
+    res.to_csv(f'/home/{os.getlogin()}/summary_N-{nsub_infants}.csv')
+    s3.upload_file(f'/home/{os.getlogin()}/summary_N-{nsub_infants}.csv', 
         'smartontheinside', 
-        f'/foundcog/chiara/summary_N-{nsub_infants}.csv')
+        f'/home/{os.getlogin()}/summary_N-{nsub_infants}.csv')
 
     print(f'Finished with alpha {alpha} l1_ratio {l1_ratio} for infant classifier')
     
