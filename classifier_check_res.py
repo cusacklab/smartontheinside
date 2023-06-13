@@ -83,12 +83,13 @@ def bootstrap_compare_two_groups(group1, group2):
 if infants == 1:
     nsub = 183
     folder = f'/home/{os.getlogin()}/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
+    print(f'this is folder ******************************** {folder}')
     folder_results_classifier = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}_infants'
     os.makedirs(os.path.join(folder, folder_results_classifier), exist_ok=True) # Make folder if it doesn't already exist
 
 else:
     nsub = 155
-    folder = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
+    folder = f'/home/chiaracaldinelli/final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
     folder_results_classifier = f'final_parameters_classifier_results_alpha-{alpha}_l1ratio-{l1_ratio}'
     os.makedirs(os.path.join(folder, folder_results_classifier), exist_ok=True) # Make folder if it doesn't already exist
 
@@ -135,8 +136,13 @@ for hemiind, hemi in enumerate(['R', 'L']):
     # plt.ylim(-0.20, 0.40)
     x = np.arange(0, 10, 0.1)
 
-    plt.savefig(os.path.join(folder, f'summarise_res_classifier_pearson_{hemi}.png'), bbox_inches='tight')
-    print(f'Figure saved as summarise_res_pearson_{hemi}.png')
+    if infants == 1:
+        
+        plt.savefig(os.path.join(folder, f'summarise_res_classifier_infants_pearson_{hemi}.png'), bbox_inches='tight')
+        print(f'Figure saved as summarise_res_infants_pearson_{hemi}.png')
+    else:
+        plt.savefig(os.path.join(folder, f'summarise_res_classifier_pearson_{hemi}.png'), bbox_inches='tight')
+        print(f'Figure saved as summarise_res_pearson_{hemi}.png')
 
 
     table = pd.pivot_table(df, values=['pearson', 'score'], index=['hemi', 'task'],
@@ -280,8 +286,11 @@ for hemiind, hemi in enumerate(['R', 'L']):
             if np.mean(diff)<0:
                 pstr=''
             plt.annotate(pstr,(xc,yc), ha='center')
-
-    plt.savefig((f'matrix_{hemi}_hemisphere.png'), bbox_inches='tight')
+    if infants == 1:
+        plt.savefig((f'/home/chiaracaldinelli/smartontheinside/smartontheinside/matrix_{hemi}_hemisphere_infants.png'), bbox_inches='tight')
+    else:
+        plt.savefig((f'/home/chiaracaldinelli/smartontheinside/smartontheinside/matrix_{hemi}_hemisphere.png'), bbox_inches='tight')
+    
     plt.close()
 
 

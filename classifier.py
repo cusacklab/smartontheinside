@@ -22,7 +22,7 @@ alpha = 0.4
 l1_ratio = 0.6
 
 # 1 for infant analysis, 0 for adult analysis
-infants = 1
+infants = 0
 
 ######### CHOOSE THESE OPTIONS:
 
