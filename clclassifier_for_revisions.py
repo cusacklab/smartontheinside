@@ -191,7 +191,7 @@ print('Running classifier for revisions')
 #     (3) Test in existing way using adult contrast maps (as everything here is in the adult space)
 
 conn_for_classifier_infants = np.load(
-            os.path.join(analysis_root, f'results/conn_for_classifier_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
+            os.path.join(analysis_root, f'/home/chiaracaldinelli/conn_for_classifier_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
 conn_for_classifier = np.load(
             os.path.join(analysis_root, f'conn_for_classifier_N-{nsub}.npy'), allow_pickle=True).ravel()[0]
 
@@ -255,7 +255,7 @@ for task, taskcons in taskcondict_selected.items():
         # y_adult_mean.reshape(1, -1)
 
 
-        for one_infant in range(nsub_infants):
+        for one_infant in range(nsub):
             X_test = (X_infant[one_infant,:,:])
             # X_infant = np.reshape(X_infant, [nsub_infants * nseedvox[hemi], ntarg])
             # X_test = X_infant[one_infant, :, :].reshape(1,-1)
@@ -291,30 +291,30 @@ for task, taskcons in taskcondict_selected.items():
         print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
         # Save results with pickle   
 
-        with open((f'/home/{os.getlogin()}/{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
+        with open((f'/home/{os.getlogin()}/{task}_subject_N-{nsub}_infants.pickle'), 'wb') as f:
             pickle.dump(res, f)
 
 
     # Save summary of results with pickle
-    with open(f'/home/{os.getlogin()}/{task}_subject_N-{nsub_infants}_infants.pickle', 'wb') as f:
+    with open(f'/home/{os.getlogin()}/{task}_subject_N-{nsub}_revisions.pickle', 'wb') as f:
         pickle.dump(res, f)
 
-    s3.upload_file(f'/home/{os.getlogin()}/{task}_subject_N-{nsub_infants}_infants.pickle', 
+    s3.upload_file(f'/home/{os.getlogin()}/{task}_subject_N-{nsub}_revisions.pickle', 
         'smartontheinside', 
-        f'{task}_subject_N-{nsub_infants}.pickle')
+        f'{task}_subject_N-{nsub}_revisions.pickle')
 
 # Save predictions
-with open(f'/home/{os.getlogin()}/predictions_N-{nsub_infants}_infants.pickle', 'wb') as f:
+with open(f'/home/{os.getlogin()}/predictions_N-{nsub}_revisions.pickle', 'wb') as f:
     pickle.dump(all_pred, f)
 
-s3.upload_file(f'/home/{os.getlogin()}/predictions_N-{nsub_infants}_infants.pickle', 
+s3.upload_file(f'/home/{os.getlogin()}/predictions_N-{nsub}_revisions.pickle', 
     'smartontheinside', 
-    f'/home/{os.getlogin()}/predictions_N-{nsub_infants}.pickle')
+    f'/home/{os.getlogin()}/predictions_N-{nsub}_revisions.pickle')
 
 # Dump data frame
-res.to_csv(f'/home/{os.getlogin()}/summary_N-{nsub_infants}.csv')
-s3.upload_file(f'/home/{os.getlogin()}/summary_N-{nsub_infants}.csv', 
+res.to_csv(f'/home/{os.getlogin()}/summary_N-{nsub}_revisions.csv')
+s3.upload_file(f'/home/{os.getlogin()}/summary_N-{nsub}_revisions.csv', 
     'smartontheinside', 
-    f'/home/{os.getlogin()}/summary_N-{nsub_infants}.csv')
+    f'/home/{os.getlogin()}/summary_N-{nsub}_revisions.csv')
 
 print(f'Finished with alpha {alpha} l1_ratio {l1_ratio} for infant classifier')
