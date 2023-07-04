@@ -15,7 +15,7 @@ import boto3
 from scipy.stats import mannwhitneyu
 import scipy
 
-infants  = 1 # 1 is infants, 0 is adults
+infants  = 0 # 1 is infants, 0 is adults
 alpha = 0.4
 l1_ratio = 0.6
 
