@@ -15,18 +15,17 @@ import boto3
 from scipy.stats import mannwhitneyu
 import scipy
 
-infants  = 0 # 1 is infants, 0 is adults
+infants  = 1 # 1 is infants, 0 is adults
 alpha = 0.4
 l1_ratio = 0.6
 
 subjlist = ['178950','189450','199453','209228','220721','298455','356948','419239','499566','561444','618952','680452','757764','841349','908860','103818','113922','121618','130619','137229','151829','158035','171633','179346','190031','200008','210112','221319','299154','361234', '424939','500222','570243','622236','687163','769064','845458','911849','104416','114217','122317','130720','137532','151930','159744', '172029','180230','191235','200614','211316','228434','300618','361941','432332','513130','571144','623844','692964','773257','857263', '926862','105014','122822','130821','137633','152427','160123','172938','180432','192035','200917','211417','239944','303119', '365343','436239','513736','579665','638049','702133','774663','865363','930449','106521','114823','123521','130922','137936','152831', '160729','173334','180533','192136','201111','211619','249947','305830','366042','436845','516742','580650','645450','715041','782561', '871762','942658','106824','117021','123925','131823','138332','153025','162026','173536','180735','192439','201414','211821','251833', '310621','371843','445543','519950','580751','647858','720337','800941','871964','955465','107018','117122','125222','132017','138837', '153227','162329','173637','180937','193239','201818','211922','257542','314225','378857','454140','523032','585862', '654350','725751', '803240','872562','959574','107422','117324','125424','133827','142828','153631','164030','173940','182739','194140','202719','212015', '257845','316633','381543','459453','525541','586460','654754','727553','812746','873968','966975']
 
-subjlist_infants =['sub-CC00549XX22', 'sub-CC00202XX04', 'sub-CC00720XX11', 'sub-CC00122XX07', 'sub-CC00071XX06', 'sub-CC00119XX12', 'sub-CC00207XX09', 'sub-CC00484XX15', 'sub-CC00590XX14', 'sub-CC00586XX18', 'sub-CC00467XX14', 'sub-CC00593XX17', 'sub-CC00344XX15', 'sub-CC00409XX13', 'sub-CC00168XX12', 'sub-CC00158XX10', 'sub-CC00613XX11', 'sub-CC00731XX14', 'sub-CC00198XX18', 'sub-CC00664XX13', 'sub-CC00397XX19', 'sub-CC00270XX07', 'sub-CC00252XX05', 'sub-CC00787XX21', 'sub-CC00223XX09', 'sub-CC00367XX13', 'sub-CC00183XX11', 'sub-CC00478XX17', 'sub-CC00540XX13', 'sub-CC00512XX09', 'sub-CC00476XX15', 'sub-CC00120XX05', 'sub-CC00164XX08', 'sub-CC00562XX10', 'sub-CC00194XX14', 'sub-CC00383XX13', 'sub-CC00440XX12', 'sub-CC00153XX05', 'sub-CC00170XX06', 'sub-CC00595XX19', 'sub-CC00744XX19', 'sub-CC00398XX20', 'sub-CC00547XX20','sub-CC00466BN13', 'sub-CC00258XX11', 'sub-CC00203XX05', 'sub-CC00500XX05', 'sub-CC00654XX11', 'sub-CC00073XX08', 'sub-CC00115XX08', 'sub-CC00070XX05', 'sub-CC00840XX16', 'sub-CC00089XX16', 'sub-CC00411XX07', 'sub-CC00184XX12', 'sub-CC00205XX07', 'sub-CC00337XX16', 'sub-CC00313XX08', 'sub-CC00107XX08', 'sub-CC00144XX13', 'sub-CC00585XX17', 'sub-CC00138XX15', 'sub-CC00850XX09', 'sub-CC00149XX18', 'sub-CC00193XX13', 'sub-CC00458XX13', 'sub-CC00201XX03', 'sub-CC00650XX07', 'sub-CC00508XX13', 'sub-CC00099AN18', 'sub-CC00078XX13', 'sub-CC00527XX16', 'sub-CC00150AN02', 'sub-CC00355XX09', 'sub-CC00454XX09', 'sub-CC00341XX12', 'sub-CC00343XX14', 'sub-CC00445XX17', 'sub-CC00116XX09', 'sub-CC00544XX17', 'sub-CC00450XX05', 'sub-CC00561XX09', 'sub-CC00548XX21', 'sub-CC00801XX09', 'sub-CC00060XX03', 'sub-CC00447XX19', 'sub-CC00377XX15', 'sub-CC00479XX18', 'sub-CC00473XX12', 'sub-CC00101XX02', 'sub-CC00481XX12', 'sub-CC00480XX11', 'sub-CC00502XX07', 'sub-CC00088XX15', 'sub-CC00766XX16', 'sub-CC00366XX12', 'sub-CC00757XX15', 'sub-CC00596XX20', 'sub-CC00536XX17', 'sub-CC00550XX06', 'sub-CC00221XX07', 'sub-CC00382XX12', 'sub-CC00178XX14', 'sub-CC00589XX21', 'sub-CC00068XX11', 'sub-CC00334XX13', 'sub-CC00486XX17', 'sub-CC00501XX06', 'sub-CC00455XX10', 'sub-CC00652XX09', 'sub-CC00528XX17', 'sub-CC00685XX18', 'sub-CC00649XX23', 'sub-CC00400XX04', 'sub-CC00094BN13', 'sub-CC00556XX12', 'sub-CC00199XX19', 
-'sub-CC00507XX12', 'sub-CC00362XX08', 'sub-CC00236XX14', 'sub-CC00858XX17', 'sub-CC00555XX11', 'sub-CC00091XX10', 'sub-CC00110XX03', 'sub-CC00113XX06', 'sub-CC00558XX14', 'sub-CC00379XX17', 'sub-CC00466AN13', 'sub-CC00499XX22', 'sub-CC00096XX15', 'sub-CC00172BN08', 'sub-CC00399XX21', 'sub-CC00206XX08', 'sub-CC00143AN12', 'sub-CC00656XX13', 'sub-CC00298XX19', 'sub-CC00376XX14', 'sub-CC00219XX13', 'sub-CC00195XX15', 'sub-CC00483XX14', 'sub-CC00546XX19', 'sub-CC00306XX09']
+subjlist_infants =['sub-CC00549XX22', 'sub-CC00202XX04', 'sub-CC00720XX11', 'sub-CC00122XX07', 'sub-CC00071XX06', 'sub-CC00119XX12', 'sub-CC00207XX09', 'sub-CC00484XX15', 'sub-CC00590XX14', 'sub-CC00586XX18', 'sub-CC00467XX14', 'sub-CC00593XX17', 'sub-CC00344XX15', 'sub-CC00409XX13', 'sub-CC00168XX12', 'sub-CC00158XX10', 'sub-CC00613XX11', 'sub-CC00731XX14', 'sub-CC00198XX18', 'sub-CC00664XX13', 'sub-CC00397XX19', 'sub-CC00270XX07', 'sub-CC00252XX05', 'sub-CC00787XX21', 'sub-CC00223XX09', 'sub-CC00367XX13', 'sub-CC00183XX11', 'sub-CC00478XX17', 'sub-CC00540XX13', 'sub-CC00512XX09', 'sub-CC00476XX15', 'sub-CC00120XX05', 'sub-CC00164XX08', 'sub-CC00562XX10', 'sub-CC00194XX14', 'sub-CC00383XX13', 'sub-CC00440XX12', 'sub-CC00153XX05', 'sub-CC00170XX06', 'sub-CC00595XX19', 'sub-CC00744XX19', 'sub-CC00398XX20', 'sub-CC00547XX20','sub-CC00466BN13', 'sub-CC00258XX11', 'sub-CC00203XX05', 'sub-CC00500XX05', 'sub-CC00654XX11', 'sub-CC00073XX08', 'sub-CC00115XX08', 'sub-CC00070XX05', 'sub-CC00840XX16', 'sub-CC00089XX16', 'sub-CC00411XX07', 'sub-CC00184XX12', 'sub-CC00205XX07', 'sub-CC00337XX16', 'sub-CC00313XX08', 'sub-CC00107XX08', 'sub-CC00144XX13', 'sub-CC00585XX17', 'sub-CC00138XX15', 'sub-CC00850XX09', 'sub-CC00149XX18', 'sub-CC00193XX13', 'sub-CC00458XX13', 'sub-CC00201XX03', 'sub-CC00650XX07', 'sub-CC00508XX13', 'sub-CC00099AN18', 'sub-CC00078XX13', 'sub-CC00527XX16', 'sub-CC00150AN02', 'sub-CC00355XX09', 'sub-CC00454XX09', 'sub-CC00341XX12', 'sub-CC00343XX14', 'sub-CC00445XX17', 'sub-CC00116XX09', 'sub-CC00544XX17', 'sub-CC00450XX05', 'sub-CC00561XX09', 'sub-CC00548XX21', 'sub-CC00801XX09', 'sub-CC00060XX03', 'sub-CC00447XX19', 'sub-CC00377XX15', 'sub-CC00479XX18', 'sub-CC00473XX12', 'sub-CC00101XX02', 'sub-CC00481XX12', 'sub-CC00480XX11', 'sub-CC00502XX07', 'sub-CC00088XX15', 'sub-CC00766XX16', 'sub-CC00366XX12', 'sub-CC00757XX15', 'sub-CC00596XX20', 'sub-CC00536XX17', 'sub-CC00550XX06', 'sub-CC00221XX07', 'sub-CC00382XX12', 'sub-CC00178XX14', 'sub-CC00589XX21', 'sub-CC00068XX11', 'sub-CC00334XX13', 'sub-CC00486XX17', 'sub-CC00501XX06', 'sub-CC00455XX10', 'sub-CC00652XX09', 'sub-CC00528XX17', 'sub-CC00685XX18', 'sub-CC00649XX23', 'sub-CC00400XX04', 'sub-CC00094BN13', 'sub-CC00556XX12', 'sub-CC00199XX19', 'sub-CC00507XX12', 'sub-CC00362XX08', 'sub-CC00236XX14', 'sub-CC00858XX17', 'sub-CC00555XX11', 'sub-CC00091XX10', 'sub-CC00110XX03', 'sub-CC00113XX06', 'sub-CC00558XX14', 'sub-CC00379XX17', 'sub-CC00466AN13', 'sub-CC00499XX22', 'sub-CC00096XX15', 'sub-CC00172BN08', 'sub-CC00399XX21', 'sub-CC00206XX08', 'sub-CC00143AN12', 'sub-CC00656XX13', 'sub-CC00298XX19', 'sub-CC00376XX14', 'sub-CC00219XX13', 'sub-CC00195XX15', 'sub-CC00483XX14', 'sub-CC00546XX19', 'sub-CC00306XX09']
 
 
 # Selection of contrasts - based on previous analysis
-tasks_selected = ['tfMRI_WM', 'tfMRI_MOTOR', 'tfMRI_LANGUAGE', 'tfMRI_SOCIAL','tfMRI_EMOTION']
+tasks_selected = ['WM', 'MOTOR', 'LANGUAGE', 'SOCIAL','EMOTION']
 
 analysis_root = '/home/chiaracaldinelli'
 
@@ -125,19 +124,45 @@ for hemiind, hemi in enumerate(['R', 'L']):
     # print(f'Figure saved as summarise_res_score_{hemi}.png')
     
 
-    # Jitter and rain for pearson
-    f, ax = plt.subplots(figsize=(7, 5))
+    # # Jitter and rain for pearson
+    # f, ax = plt.subplots(figsize=(7, 5))
 
-    ax = pt.half_violinplot( x = df['task'], y =df['pearson'], bw = .2, cut = 0.,
-                            scale = "area", width = .6, inner = None)
-    ax = sns.stripplot( x = df['task'], y = df['pearson'], data = df, edgecolor = "white",
-                        size = 3, jitter = 1, zorder = 0)
+    # ax = pt.half_violinplot( x = df['task'], y =df['pearson'], bw = .2, cut = 0.,
+    #                         scale = "area", width = .6, inner = None)
+    # ax = sns.stripplot( x = df['task'], y = df['pearson'], data = df, edgecolor = "white",
+    #                     size = 3, jitter = 1, zorder = 0)
+    # plt.title(f"{hemi} hemisphere")
+    # # plt.ylim(-0.20, 0.40)
+    # x = np.arange(0, 10, 0.1)
+    
+    
+    
+    # Jitter and rain for pearson
+    f, ax = plt.subplots(figsize=(5, 7))  # Swapped dimensions to better fit horizontal layout
+
+    ax = pt.half_violinplot(x=df['pearson'], y=df['task'], bw=.2, cut=0.,
+                        scale="area", width=.6, inner=None, orient='h')
+    ax = sns.stripplot(x=df['pearson'], y=df['task'], data=df, edgecolor="white",
+                    size=3, jitter=1, zorder=0, marker='o')
     plt.title(f"{hemi} hemisphere")
-    # plt.ylim(-0.20, 0.40)
-    x = np.arange(0, 10, 0.1)
+    # Change y-axis labels
+    new_labels = ['WORKING MEMORY', 'MOTOR', 'LANGUAGE', 'SOCIAL', 'EMOTION']
+    ax.set_yticklabels(new_labels)
+    # Add a vertical dotted red line at x=0
+    ax.axvline(x=0, color='red', linestyle=':', linewidth=1.5)
+    # plt.xlim(-0.20, 0.40)  # Changed from ylim to xlim since axes are swapped
+    
+    # Add asterisks for each violin
+    num_tasks = len(new_labels)
+    for i in range(num_tasks):
+        x_pos = ax.get_xlim()[1] * 0.85
+        y_pos = i
+        ax.text(x_pos, y_pos, '*', fontsize=14, ha='center', va='center')
+
+
+
 
     if infants == 1:
-        
         plt.savefig(os.path.join(folder, f'summarise_res_classifier_infants_pearson_{hemi}.png'), bbox_inches='tight')
         print(f'Figure saved as summarise_res_infants_pearson_{hemi}.png')
     else:
@@ -169,7 +194,7 @@ for hemiind, hemi in enumerate(['R', 'L']):
     df_mean = (df.groupby(['task','comparison_task']).mean())
     df_mean = df_mean.reset_index()
     df_mean = pd.pivot(df_mean,index='task',columns='comparison_task', values='pearson')
-    print(df_mean)
+
     
     plt.figure()
     # Show matrix plot
@@ -234,12 +259,12 @@ for hemiind, hemi in enumerate(['R', 'L']):
 
     within = comp[:,0] 
     across = comp[:,1]
-    print(f'Mean and SD for within, {hemi} hemisphere:')
-    print(np.mean(within))
-    print(np.std(within))
-    print(f'Mean and SD for across, {hemi} hemisphere:')
-    print(np.mean(across))
-    print(np.std(across))
+    # print(f'Mean and SD for within, {hemi} hemisphere:')
+    # print(np.mean(within))
+    # print(np.std(within))
+    # print(f'Mean and SD for across, {hemi} hemisphere:')
+    # print(np.mean(across))
+    # print(np.std(across))
 
     # res = mannwhitneyu(within, across, method="exact")
     # print('************************************************************')

@@ -22,7 +22,7 @@ alpha = 0.4
 l1_ratio = 0.6
 
 # 1 for infant analysis, 0 for adult analysis
-infants = 0
+infants = 1
 
 ######### CHOOSE THESE OPTIONS:
 
@@ -31,7 +31,7 @@ hyperparameter_subjects = False
 # Reload connectivity and activity data again to create summary numpy files? 
 reload_data = False
 # Scatter plots of individual fits
-draw_scatter_plots = False
+draw_scatter_plots = True
 
 
 print(f'alpha {alpha} l1_ratio {l1_ratio}')
@@ -383,6 +383,7 @@ else:
         for hemiind, hemi in enumerate(['R', 'L']):
             X_adult = conn_for_classifier[hemi]
             X_infant = conn_for_classifier_infants[hemi]
+            print(X_infant)
 
             # z-score activation for target task and hemisphere
             y = scipy.stats.zscore( act_for_classifier[task][hemi], axis=1 ) # Across vertices within each subject
@@ -444,11 +445,10 @@ else:
                 score.append(sc)
 
             print(f'Folder {folder} task {task} hemi {hemi} score {np.mean(score)} pearson {np.mean(all_corr[task])}')
+            
             # Save results with pickle   
-
             with open((f'/home/{os.getlogin()}/{task}_subject_N-{nsub_infants}_infants.pickle'), 'wb') as f:
                 pickle.dump(res, f)
-
 
         # Save summary of results with pickle
         with open(f'/home/{os.getlogin()}/{task}_subject_N-{nsub_infants}_infants.pickle', 'wb') as f:
@@ -471,6 +471,6 @@ else:
     s3.upload_file(f'/home/{os.getlogin()}/summary_N-{nsub_infants}.csv', 
         'smartontheinside', 
         f'/home/{os.getlogin()}/summary_N-{nsub_infants}.csv')
-
+ 
     print(f'Finished with alpha {alpha} l1_ratio {l1_ratio} for infant classifier')
     
