@@ -17,7 +17,7 @@ Sections 1, 3, 4, 7 and 8 each need an author call; 7 and 8 carry two apiece.
 | 3 | Reconcile the SI's contrast count (31 used, 22 stated) and document the rescaling the five-cluster result depends on | 4 |
 | 4 | Promote the neonatal-vs-adult figure to the main text and move Fig. 4 to the SI | 7 |
 | 5 | Qualify "most of the adult structure is present at birth" — it holds for emotion and working memory, less so for language and motor | 7 |
-| 6 | Decide how to report the age effect, given age at scan and age at birth cannot be separated in a term-only cohort | 8 |
+| 6 | ~~How to report the age effect~~ — **settled**: report in the SI as exploratory, one optional Discussion sentence; do not frame as a maturational trajectory | 8 |
 | 7 | ~~Derive a motion summary, or drop the covariate~~ — **resolved**: recovered from the dHCP QC reports, which are generated from eddy | 8 |
 
 ---

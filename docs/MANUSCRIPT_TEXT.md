@@ -141,3 +141,49 @@ of the adult, functionally relevant connectivity structure is present at birth".
 > connectivity maturity directly, and is bounded by the accuracy achievable in
 > adults (r = 0.28–0.51 for the group-average map); measurement noise
 > contributes to both terms.
+
+---
+
+## Decision 6 — reporting the age effect
+
+Settled: report it, but do not lean on it. The association is real and worth
+recording; what the design cannot support is attributing it to postnatal
+maturation specifically.
+
+### SI — replaces the `[TBD]` in *SI Methods*, "Scan-age analysis"
+
+> Prediction accuracy from neonatal connectivity, averaged across the five
+> contrasts and both hemispheres, was regressed on postmenstrual age at scan,
+> gestational age at birth, and mean relative (volume-to-volume) motion from the
+> diffusion preprocessing (n = 325). Accuracy increased with age at scan
+> (β = 0.0024 per week, p = 0.040) and with gestational age at birth
+> (β = 0.0043 per week, p = 0.007), and decreased with motion
+> (β = −0.0037 per mm, p = 0.014); R² = 0.123. Of the five contrasts, only
+> language showed an independent association with age at scan after correction
+> (β = 0.0044 per week, p_FDR = 0.0065).
+>
+> Two limits should be borne in mind. Age at scan and gestational age at birth
+> are correlated in a term-born cohort (r = 0.71), so their contributions cannot
+> be separated: the data show that accuracy rises with age, not which age. And
+> the effect is small — 0.017 in r across the full 7.3-week range of scan ages,
+> against a between-infant spread in accuracy of 0.28 to 0.42. We therefore
+> report these associations as exploratory.
+
+### Main text — one sentence, in the Discussion
+
+Use this only if the Discussion has room; the SI passage above is sufficient on
+its own.
+
+> Prediction accuracy rose modestly with age across the neonatal period
+> (*SI Appendix*, Fig. S9), but the narrow age range of a term-born cohort, and
+> the correlation between age at scan and age at birth within it, preclude
+> attributing this to postnatal maturation specifically; a preterm or
+> longitudinal sample would be needed to separate the two.
+
+### What not to write
+
+Avoid framing this as a developmental trajectory, and avoid reporting age at
+scan alone as significant without the accompanying birth-age term — it is
+significant at p = 0.040 only with motion controlled, and was p = 0.056 without.
+Crossing a conventional threshold in that way is not a robust distinction and
+should not carry weight in the argument.
