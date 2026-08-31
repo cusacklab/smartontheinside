@@ -63,6 +63,27 @@ sti scan-age      --results data/results/neonatal.csv \
 
 All write tidy CSVs with one row per (task, comparison_task, hemisphere, subject).
 
+### On the cluster
+
+The adult leave-one-out analyses are 1,550 model fits (155 folds x 5 contrasts x
+2 hemispheres), about three hours in one process. Each (contrast, hemisphere)
+pair is independent, so they shard cleanly:
+
+```bash
+sbatch pipelines/06_classification/slurm_adult_average.sh     # 10-task array, ~20 min
+sti merge --inputs 'data/results/shards/adult_average_*.csv' \
+          -o data/results/adult_average_N155.csv
+```
+
+`--tasks` and `--hemi` select a shard. Restricting a shard's model tasks does
+**not** restrict what those models are compared against, so each shard still
+emits a complete row of the specificity matrix. `sti merge` de-duplicates and
+warns if any (hemisphere, task) cell is missing, so a failed array task is caught
+rather than silently producing a short table.
+
+Compute nodes need no setup: `/home` and `/opt/fsl` are NFS-exported, so they
+share this checkout, the editable install and the data.
+
 ## Before you rerun anything
 
 Read **[docs/FINDINGS.md](docs/FINDINGS.md)**. Two issues affect what the numbers

@@ -68,11 +68,13 @@ def fdr_bh(pvals: np.ndarray) -> np.ndarray:
 
 def specificity_tests(
     results: pd.DataFrame, *, n_boot: int = 10_000, seed: int = 0, correct: bool = True,
-    axis: str = "row",
+    axis: str = "column",
 ) -> pd.DataFrame:
     """Test each off-diagonal cell against its diagonal, per task and hemisphere.
 
-    ``axis="row"`` (the manuscript's comparison) asks: does a model trained on
+    Defaults to ``axis="column"``, the analysis that isolates specificity.
+
+    ``axis="row"`` (the manuscript's original comparison) asks: does a model trained on
     task T predict T better than it predicts some other task's map? This is
     confounded by how predictable each target map is. A model whose own target is
     intrinsically hard -- as the motor contrast is here -- will predict easier

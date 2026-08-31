@@ -115,7 +115,8 @@ exceeded between-task prediction"). Recommendation: report the column test as th
 primary specificity analysis and keep the row test as a secondary one, noting
 explicitly that the motor contrast is poorly predicted by every model.
 
-`sti.stats.specificity_tests(..., axis="column")`; `sti figures` writes both.
+`sti.stats.specificity_tests()` now defaults to `axis="column"`; `sti figures`
+writes both tables and puts the column-test stars on the figure.
 
 ## 5. "Visually chosen" hyperparameters — defensible, but restate it
 

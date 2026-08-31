@@ -1,0 +1,2 @@
+host=high-memory-dy-r6a-4xlarge-1 array_id=3 task=tfMRI_MOTOR hemi=R threads=4
+started 2026-08-31T11:32:43+00:00
