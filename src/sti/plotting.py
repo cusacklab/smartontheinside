@@ -523,3 +523,72 @@ def plot_parcel_profiles(profiles, parcel_labels, *, title: str = ""):
         fig.suptitle(title, fontsize=10, color=INK)
     fig.tight_layout()
     return fig
+
+
+def plot_maturity_panel(comparison: pd.DataFrame, *, title: str = "",
+                        label_a: str = "neonatal", label_b: str = "adult"):
+    """How close neonatal prediction comes to adult prediction, per contrast.
+
+    (A) absolute accuracy for both, as a dumbbell -- the quantity of interest is
+    the gap, and a connecting segment shows a gap where two bars make the reader
+    subtract. (B) the same as a proportion of adult accuracy, which is the claim
+    in its own units: how mature is the neonatal connectivity. The interval on
+    (B) is bootstrapped rather than derived from the two point estimates, which
+    rest on different sample sizes.
+    """
+    plt = _mpl()
+    col_a = next(c for c in comparison.columns if c.startswith("mean_") and label_a in c)
+    col_b = next(c for c in comparison.columns if c.startswith("mean_") and c != col_a)
+    hemis = sorted(comparison.hemi.unique())
+
+    # one row order everywhere, most mature at the top
+    order = comparison.groupby("task")["pct_of_b"].mean().sort_values().index.tolist()
+
+    fig, axs = plt.subplots(2, len(hemis), figsize=(3.9 * len(hemis), 6.4))
+    axs = np.atleast_2d(axs)
+
+    for j, hemi in enumerate(hemis):
+        d = (comparison[comparison.hemi == hemi]
+             .set_index("task").reindex(order).reset_index())
+        y = np.arange(len(d))
+
+        ax = axs[0][j]
+        for yi, (_, r) in zip(y, d.iterrows()):
+            ax.plot([r[col_a], r[col_b]], [yi, yi], color=GRID, lw=3,
+                    solid_capstyle="round", zorder=1)
+        ax.scatter(d[col_b], y, s=42, color=PALETTE[3], zorder=3, label=label_b, marker="D")
+        ax.scatter(d[col_a], y, s=42, color=PALETTE[0], zorder=3, label=label_a, marker="o")
+        for yi, (_, r) in zip(y, d.iterrows()):
+            star = r.get("stars", "")
+            star = "" if (star is None or (isinstance(star, float) and np.isnan(star))) else str(star)
+            if star:
+                ax.text(max(r[col_a], r[col_b]) + 0.012, yi, star, va="center",
+                        fontsize=8, color=INK)
+        ax.set_xlabel("prediction accuracy (r)", fontsize=9, color=INK)
+        ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
+
+        ax = axs[1][j]
+        ax.axvline(100, color=MUTED, lw=0.9, ls=":", zorder=1)
+        ax.hlines(y, d.pct_ci_low, d.pct_ci_high, color=PALETTE[0], lw=2.2, zorder=2)
+        ax.scatter(d.pct_of_b, y, s=42, color=PALETTE[0], zorder=3)
+        for yi, (_, r) in zip(y, d.iterrows()):
+            ax.text(r.pct_ci_high + 1.6, yi, f"{r.pct_of_b:.0f}%", va="center",
+                    fontsize=7.5, color=INK)
+        ax.set_xlabel(f"% of {label_b} accuracy", fontsize=9, color=INK)
+
+        for ax in (axs[0][j], axs[1][j]):
+            ax.set_yticks(y)
+            ax.set_yticklabels([t.replace("tfMRI_", "") for t in d.task] if j == 0 else [])
+            ax.xaxis.grid(True, color=GRID, lw=0.6)
+            ax.set_ylim(-0.6, len(d) - 0.4)
+            _style(ax)
+
+    for row in axs:
+        lo = min(ax.get_xlim()[0] for ax in row); hi = max(ax.get_xlim()[1] for ax in row)
+        for ax in row:
+            ax.set_xlim(lo, hi)
+    axs[0][-1].legend(fontsize=8, frameon=False, loc="lower right")
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig

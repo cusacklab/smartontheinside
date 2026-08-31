@@ -24,7 +24,7 @@ produce.
 | Fig. S4 | Hierarchical clustering | `sti contrasts --figures` | `manuscript/S4_dendrogram.png` |
 | Fig. S5 | DLPFC parcel activation profiles | `sti contrasts --figures` | `manuscript/S5_parcel_profiles.png` |
 | Fig. S6 | Hyperparameter grid | `sti hyperparams` → `plot_hyperparameter_grid` | `manuscript/S6_hyperparameter_grid.png` |
-| Fig. S7 | Neonatal vs adult accuracy | `sti compare` → `plot_protocol_comparison` | `manuscript/S7_neonate_vs_adult.png` |
+| Fig. S7 | Neonatal vs adult accuracy, + % of adult | `sti compare --figures` | `manuscript/S7_neonate_vs_adult.png` — **proposed for main text**, see docs/MANUSCRIPT_CHANGES.md |
 | Fig. S8 | Spatial null | `sti spatial-null --figures` | `manuscript/S8_spatial_null_*.png` (10) |
 | Fig. S9 | Accuracy vs age at scan | `sti scan-age --figures` | `manuscript/S9_scan_age.png` |
 | Table S1 | The 26 DLPFC parcels | `pipelines/02_rois/make_table_s1.py` | `data/results/table_S1_*.tsv` |

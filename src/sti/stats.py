@@ -161,6 +161,10 @@ def compare_protocols(
                 (np.sum(diff - diff.mean() >= observed) + 1) / (n_boot + 1),
                 (np.sum(diff - diff.mean() <= observed) + 1) / (n_boot + 1),
             )
+            # accuracy as a proportion of the comparison protocol's, with its own
+            # interval: the ratio of two point estimates hides that they rest on
+            # very different sample sizes
+            ratio = bx / np.where(by == 0, np.nan, by)
             rows.append({
                 "hemi": hemi, "task": task,
                 f"mean_{label_a}": float(x.mean()), f"mean_{label_b}": float(y.mean()),
@@ -169,6 +173,9 @@ def compare_protocols(
                 "ci_low": float(np.percentile(diff, 2.5)),
                 "ci_high": float(np.percentile(diff, 97.5)),
                 "p_bootstrap": float(min(p, 1.0)),
+                "pct_of_b": float(100 * x.mean() / y.mean()) if y.mean() else np.nan,
+                "pct_ci_low": float(np.nanpercentile(100 * ratio, 2.5)),
+                "pct_ci_high": float(np.nanpercentile(100 * ratio, 97.5)),
             })
     df = pd.DataFrame(rows)
     if not df.empty:

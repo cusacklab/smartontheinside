@@ -154,6 +154,51 @@ property of the contrast rather than of neonatal data.
 
 ## 7. Figure S7 — neonatal vs adult accuracy **[NEW]** **[DECISION]**
 
+**Recommendation: promote this to the main text, and move Fig. 4 to the SI.**
+
+Fig. 4's own caption states its purpose — "for comparison with the neonatal
+predictions in Fig. 3". This figure *is* that comparison, made explicitly and
+with statistics, and it shows both sets of means, so nothing Fig. 4 conveys is
+lost. A standalone panel that asks the reader to hold Fig. 3 in mind and
+subtract is strictly weaker than the subtraction drawn for them.
+
+**Fig. 2 should stay.** It is the only analysis that predicts each adult's *own*
+map rather than a group average, which is the more stringent claim and the one a
+reviewer will look for: without it the paper only ever predicts a smooth
+group-average target. It also supports its own Results section, which would
+otherwise be left without a figure. Fig. 2 and Fig. 4 are not redundant with each
+other -- Fig. 2 is individual-level validation, Fig. 4 is a baseline that exists
+only for the neonatal comparison. It is Fig. 4 that this figure replaces.
+
+That keeps four main-text figures with a cleaner arc: the method works in adults
+(2), it works from neonatal connectivity (3), and it works nearly as well as in
+adults (this one).
+
+### The maturity framing
+
+The figure now has a second panel giving neonatal accuracy as a percentage of
+adult, with a bootstrapped interval:
+
+| | Left | Right |
+|---|---|---|
+| Emotion | 95% | **99%** |
+| Working memory | 91% | **98%** |
+| Social | 90% | 92% |
+| Language | 74% | 84% |
+| Motor | 71% | **57%** |
+
+Median 90%. For right emotion and right working memory the interval spans 100%,
+so neonatal prediction is statistically indistinguishable from adult.
+
+**Caveat to state.** This is a ratio of two prediction accuracies, not a direct
+measure of connectivity maturity, and it is bounded by the adult ceiling: adult
+group-average prediction is itself only r ~ 0.28-0.51, so "90% of adult" is 90%
+of a modest ceiling, and both numerator and denominator carry measurement noise.
+The claim it supports is that neonatal connectivity carries most of the
+*functionally relevant, measurable* structure -- not that it is 90% mature.
+
+
+
 Fills a `[TBD]`. Unpaired bootstrap of the difference in means, FDR-corrected.
 
 | | Left | Right |

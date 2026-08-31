@@ -247,12 +247,21 @@ def cmd_scan_age(args) -> int:
 def cmd_compare(args) -> int:
     from sti.stats import compare_protocols
 
+    cfg = Config()
     a, b = pd.read_csv(args.a), pd.read_csv(args.b)
-    out = compare_protocols(a, b)
-    print(out.round(4).to_string(index=False))
+    out = compare_protocols(a, b, n_boot=args.n_boot)
+    cols = ["hemi", "task", "difference", "p_fdr", "stars", "pct_of_b",
+            "pct_ci_low", "pct_ci_high"]
+    print(out[[c for c in cols if c in out.columns]].round(3).to_string(index=False))
+    print(f"\nneonatal accuracy as % of adult: median {out.pct_of_b.median():.0f}%, "
+          f"range {out.pct_of_b.min():.0f}-{out.pct_of_b.max():.0f}%")
     if args.output:
         out.to_csv(_out(args.output), index=False)
-        print(f"\nwrote {args.output}")
+        print(f"wrote {args.output}")
+    if args.figures:
+        from sti import plotting as P
+        fig = P.plot_maturity_panel(out, title=args.title)
+        print(f"wrote {P.save(fig, args.prefix, cfg)}")
     return 0
 
 
@@ -511,6 +520,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--a", required=True)
     s.add_argument("--b", required=True)
     s.add_argument("-o", "--output", default=None)
+    s.add_argument("--n-boot", type=int, default=10000)
+    s.add_argument("--figures", action="store_true")
+    s.add_argument("--prefix", default="S7_neonate_vs_adult")
+    s.add_argument("--title", default="")
     s.set_defaults(func=cmd_compare)
 
     s = sub.add_parser("build-connectivity",
