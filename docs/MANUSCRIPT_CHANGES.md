@@ -6,6 +6,20 @@ Generated 2026-08-31 from the restructured pipeline. Numbers below come from
 Status key: **[NUMBERS CHANGE]** existing claim needs new values · **[NEW]** fills
 a `[TBD]` · **[DECISION]** needs an author call · **[PENDING]** analysis still to run.
 
+## The seven decisions
+
+Sections 1, 3, 4, 7 and 8 each need an author call; 7 and 8 carry two apiece.
+
+| # | Decision | Section |
+|---|---|---|
+| 1 | State in Methods that 20 adults were held out for hyperparameter selection, which is what explains 175 → 155 | 1 |
+| 2 | Make the column test the primary specificity analysis, and retire the matrix figure rather than relegating it | 3 |
+| 3 | Reconcile the SI's contrast count (31 used, 22 stated) and document the rescaling the five-cluster result depends on | 4 |
+| 4 | Promote the neonatal-vs-adult figure to the main text and move Fig. 4 to the SI | 7 |
+| 5 | Qualify "most of the adult structure is present at birth" — it holds for emotion and working memory, less so for language and motor | 7 |
+| 6 | Decide how to report the age effect, given age at scan and age at birth cannot be separated in a term-only cohort | 8 |
+| 7 | Derive a motion summary from the raw data, or drop the covariate from the SI text | 8 |
+
 ---
 
 ## 1. Sample sizes **[NUMBERS CHANGE]** **[DECISION]**
