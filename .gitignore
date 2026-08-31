@@ -1,1 +1,25 @@
+# ---- secrets ----
 .env
+
+# ---- data (S3-backed; see docs/DATA.md for provenance and keys) ----
+data/
+
+# ---- run artefacts ----
+logs/
+*.pickle
+scratch/
+
+# ---- python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ---- editors / os ----
+.DS_Store
+.~lock.*#
