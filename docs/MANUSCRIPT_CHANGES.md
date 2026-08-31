@@ -176,17 +176,47 @@ so for language and motor. That language shows the largest neonatal shortfall is
 interesting in its own right and worth a sentence in the Discussion rather than
 being left implicit.
 
-## 8. Still to run **[PENDING]**
+## 8. Figure S9 — accuracy and age at scan **[NEW]** **[DECISION]**
 
-| Item | Status |
+Fills a `[TBD]`. `scan_age` was recovered from the per-subject `sessions.tsv`
+files in `/dhcp/dhcp_dmri_pipeline` and joined to the release `participants.tsv`
+(`pipelines/00_cohorts/build_covariates.py`). All 325 analysed neonates have
+complete data, and none has more than one session.
+
+**Considered separately**, both ages relate to prediction accuracy:
+
+| Predictor | Simple correlation with accuracy |
 |---|---|
-| Fig. S9, scan-age analysis | **Blocked on data** — see below |
+| Postmenstrual age at scan | r = +0.292, p < 0.0001 |
+| Gestational age at birth | r = +0.311, p < 0.0001 |
 
-**Fig. S9 is blocked.** `config/participants.tsv` supplies `birth_age` only. The
-model needs `scan_age` (postmenstrual age at scan, in the dHCP `sessions.tsv`)
-and `mean_fd` (derived from the dHCP motion/QC outputs). Neither is in this
-repository or either S3 bucket. The analysis runs as soon as they are supplied
-(`sti scan-age --extra <file.tsv>`).
+**Considered jointly**, they cannot be separated. The two correlate at r = 0.71
+in a term-only cohort, and in the joint model gestational age at birth absorbs
+most of the shared variance:
+
+| Term | β (per week) | p |
+|---|---|---|
+| Age at scan | 0.0022 | 0.056 |
+| Gestational age at birth | 0.0045 | **0.006** |
+
+Model R² = 0.107, n = 325, variance inflation 2.02 for both terms. Per contrast,
+only language shows an independent effect of age at scan
+(β = 0.0044, p_FDR = 0.0095).
+
+**Decision needed.** The SI plans to regress accuracy on age at scan *controlling
+for* gestational age at birth. That control absorbs most of the effect, so the
+honest statement is that accuracy increases with age across the neonatal period
+but that a term-only cohort cannot attribute it specifically to age at scan
+rather than to age at birth. The effect is also small: 0.016 r across the whole
+7-week scan-age range, against a cohort accuracy range of 0.28–0.42.
+
+**Motion could not be included.** The manuscript specifies mean framewise
+displacement as a covariate. The dHCP diffusion release does not publish one:
+the pipeline JSON records `MotionCompensation: 1`, a flag that correction was
+applied rather than a metric, and eddy's movement-RMS outputs are not
+distributed. Of the session-level nuisance variables that *are* released,
+sedation has almost no variance here (5 of 325 infants). Either derive a motion
+summary from the raw data or drop the covariate from the SI text.
 
 ## 9. Also worth a line in the Methods
 

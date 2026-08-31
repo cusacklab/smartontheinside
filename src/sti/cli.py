@@ -210,17 +210,37 @@ def cmd_spatial_null(args) -> int:
 def cmd_scan_age(args) -> int:
     from sti.scan_age import load_covariates, per_task_scan_age, scan_age_regression
 
+    from sti.scan_age import CORE_COVARIATES
+
     cfg = Config()
     res = pd.read_csv(args.results)
-    cov = load_covariates(cfg, extra=Path(args.extra) if args.extra else None)
-    table, model = scan_age_regression(res, cov)
-    print(f"n = {table.attrs['n']}, R2 = {table.attrs['r_squared']:.3f}\n")
+    predictors = tuple(p.strip() for p in args.predictors.split(",")) if args.predictors \
+        else CORE_COVARIATES
+    cov = load_covariates(cfg, path=Path(args.covariates) if args.covariates else None,
+                          extra=Path(args.extra) if args.extra else None,
+                          require=predictors)
+    table, model = scan_age_regression(res, cov, predictors=predictors)
+    print(f"n = {table.attrs['n']}, R2 = {table.attrs['r_squared']:.3f}, "
+          f"predictors = {', '.join(predictors)}\n")
     print(table.round(4).to_string(index=False))
+    vif = table.attrs.get("vif") or {}
+    if vif:
+        print("\nvariance inflation: " +
+              ", ".join(f"{k}={v:.2f}" for k, v in vif.items()) +
+              ("   (>5 indicates the predictors are hard to separate)"
+               if max(vif.values()) > 5 else ""))
     print("\nper task:")
-    print(per_task_scan_age(res, cov).round(4).to_string(index=False))
+    print(per_task_scan_age(res, cov, predictors=predictors).round(4).to_string(index=False))
     if args.output:
         table.to_csv(_out(args.output), index=False)
         print(f"\nwrote {args.output}")
+    if args.figures:
+        from sti import plotting as P
+        from sti.scan_age import subject_accuracy
+
+        acc = subject_accuracy(res).groupby("subject", as_index=False)["accuracy"].mean()
+        fig = P.plot_scan_age(acc, cov, title="Prediction accuracy vs age at scan (n=325)")
+        print(f"wrote {P.save(fig, 'scan_age_N325', cfg)}")
     return 0
 
 
@@ -401,7 +421,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("scan-age", help="accuracy vs postmenstrual age at scan (Fig. S9)")
     s.add_argument("--results", required=True)
-    s.add_argument("--extra", default=None, help="TSV supplying scan_age and mean_fd")
+    s.add_argument("--covariates", default=None,
+                   help="covariate table (default: config/participants.tsv); build one "
+                        "with pipelines/00_cohorts/build_covariates.py")
+    s.add_argument("--extra", default=None, help="second table merged on subject ID")
+    s.add_argument("--predictors", default=None,
+                   help="comma-separated predictors (default: scan_age,birth_age)")
+    s.add_argument("--figures", action="store_true")
     s.add_argument("-o", "--output", default=None)
     s.set_defaults(func=cmd_scan_age)
 

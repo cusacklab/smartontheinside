@@ -29,8 +29,17 @@ import pandas as pd
 from sti.cohorts import bare_id
 from sti.config import Config, DEFAULT_CONFIG
 
-#: Covariates the Fig. S9 model needs, beyond the accuracy itself.
-REQUIRED_COVARIATES = ("scan_age", "birth_age", "mean_fd")
+#: Covariates the Fig. S9 model needs and the dHCP release actually provides.
+CORE_COVARIATES = ("scan_age", "birth_age")
+
+#: Motion. NOT distributed with the dHCP diffusion release: the pipeline JSON
+#: records ``MotionCompensation: 1``, a flag that correction was applied rather
+#: than a metric, and eddy's movement-RMS outputs are not published. Include it
+#: only if you can derive it; the model runs without it.
+MOTION_COVARIATE = "mean_fd"
+
+#: What the manuscript specifies. `mean_fd` is optional in practice -- see above.
+REQUIRED_COVARIATES = CORE_COVARIATES + (MOTION_COVARIATE,)
 
 _ID_COLUMNS = ("participant_id", "pparticipant_id", "subject", "subject_id", "id")
 
@@ -44,12 +53,15 @@ def load_covariates(
     *,
     path: Path | None = None,
     extra: Path | None = None,
-    require: bool = True,
+    require=CORE_COVARIATES,
 ) -> pd.DataFrame:
     """Load the neonatal covariate table, indexed by bare subject ID.
 
     ``extra`` is an optional second TSV/CSV merged on subject ID, for supplying
-    ``scan_age`` and ``mean_fd`` without editing the participants file.
+    session-level variables without editing the participants file.
+
+    ``require`` is the set of columns that must be present; pass ``False`` or an
+    empty sequence to load whatever is there.
     """
     path = path or (config.config_dir / "participants.tsv")
     df = pd.read_csv(path, sep="\t")
@@ -74,15 +86,16 @@ def load_covariates(
 
     df = df.set_index("subject")
     if require:
-        missing = [c for c in REQUIRED_COVARIATES if c not in df.columns]
+        missing = [c for c in require if c not in df.columns]
         if missing:
             raise MissingCovariatesError(
                 f"Missing covariate column(s) {missing} in {path}"
                 + (f" (+ {extra})" if extra else "")
                 + ".\n"
-                "  scan_age : postmenstrual age at scan (weeks); dHCP sessions.tsv\n"
-                "  mean_fd  : mean framewise displacement; derive from dHCP motion/QC outputs\n"
-                "  birth_age: gestational age at birth (weeks); already in participants.tsv\n"
+                "  scan_age : postmenstrual age at scan (weeks); per-subject sessions.tsv\n"
+                "             build with pipelines/00_cohorts/build_covariates.py\n"
+                "  birth_age: gestational age at birth (weeks); release participants.tsv\n"
+                "  mean_fd  : not distributed with the dHCP diffusion release\n"
                 "Pass require=False to inspect what is available."
             )
     return df
@@ -111,7 +124,7 @@ def scan_age_regression(
     *,
     hemi: str | None = None,
     tasks: list[str] | None = None,
-    predictors: tuple[str, ...] = REQUIRED_COVARIATES,
+    predictors: tuple[str, ...] = CORE_COVARIATES,
 ) -> tuple[pd.DataFrame, object]:
     """Regress prediction accuracy on scan age, controlling for the covariates.
 
@@ -153,6 +166,17 @@ def scan_age_regression(
     })
     table.attrs["n"] = int(model.nobs)
     table.attrs["r_squared"] = float(model.rsquared)
+    table.attrs["predictors"] = list(predictors)
+    # collinearity between the predictors is the main threat to interpreting these
+    try:
+        from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+        table.attrs["vif"] = {
+            c: float(variance_inflation_factor(X.to_numpy(), i))
+            for i, c in enumerate(X.columns) if c != "const"
+        }
+    except Exception:  # noqa: BLE001 - diagnostics only
+        table.attrs["vif"] = {}
     return table, model
 
 

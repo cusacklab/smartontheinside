@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sti.scan_age import (MissingCovariatesError, load_covariates, per_task_scan_age,
-                          scan_age_regression, subject_accuracy)
+from sti.scan_age import (CORE_COVARIATES, MOTION_COVARIATE, MissingCovariatesError,
+                          load_covariates, per_task_scan_age, scan_age_regression,
+                          subject_accuracy)
 
 
 @pytest.fixture
@@ -27,12 +28,18 @@ def data():
     return pd.DataFrame(recs), cov
 
 
-def test_real_participants_file_reports_exactly_what_is_missing():
+def test_release_participants_file_lacks_scan_age():
+    """participants.tsv alone is not enough: scan_age lives in the sessions files."""
     with pytest.raises(MissingCovariatesError) as e:
         load_covariates()
-    msg = str(e.value)
-    assert "scan_age" in msg and "mean_fd" in msg
-    assert "birth_age" not in msg.split("Missing covariate column(s)")[1].split(".")[0]
+    assert "scan_age" in str(e.value)
+
+
+def test_motion_is_not_a_required_covariate():
+    """The dHCP diffusion release publishes no motion summary, so the model must
+    run without one rather than refusing."""
+    assert MOTION_COVARIATE not in CORE_COVARIATES
+    assert CORE_COVARIATES == ("scan_age", "birth_age")
 
 
 def test_available_columns_load_without_require():
@@ -49,11 +56,25 @@ def test_subject_accuracy_uses_only_the_diagonal(data):
 
 def test_regression_recovers_known_coefficients(data):
     res, cov = data
-    table, model = scan_age_regression(res, cov)
+    table, model = scan_age_regression(res, cov, predictors=("scan_age", "birth_age", "mean_fd"))
     beta = dict(zip(table.term, table.beta))
     assert beta["scan_age"] == pytest.approx(0.02, abs=0.004)
     assert beta["mean_fd"] == pytest.approx(-0.30, abs=0.05)
     assert table.attrs["n"] == 100
+
+
+def test_regression_runs_without_motion(data):
+    res, cov = data
+    table, _ = scan_age_regression(res, cov.drop(columns=["mean_fd"]))
+    assert "mean_fd" not in set(table.term)
+    assert dict(zip(table.term, table.beta))["scan_age"] > 0
+
+
+def test_collinearity_is_reported(data):
+    res, cov = data
+    table, _ = scan_age_regression(res, cov)
+    assert set(table.attrs["vif"]) == set(CORE_COVARIATES)
+    assert all(v >= 1.0 for v in table.attrs["vif"].values())
 
 
 def test_per_task_followup(data):
@@ -63,7 +84,27 @@ def test_per_task_followup(data):
     assert (out.beta > 0).all() and (out.p_fdr < 0.05).all()
 
 
-def test_missing_covariate_column_raises(data):
+def test_missing_requested_predictor_raises(data):
     res, cov = data
     with pytest.raises(MissingCovariatesError, match="mean_fd"):
-        scan_age_regression(res, cov.drop(columns=["mean_fd"]))
+        scan_age_regression(res, cov.drop(columns=["mean_fd"]),
+                            predictors=("scan_age", "mean_fd"))
+
+
+def test_built_covariate_table_covers_the_analysed_cohort():
+    """The table built from the dHCP release must cover every analysed neonate."""
+    from pathlib import Path
+
+    cov_path = Path("config/neonatal_covariates.tsv")
+    subs_path = Path("data/derivatives/conn_for_classifier_N-325_infants.subjects.txt")
+    if not (cov_path.exists() and subs_path.exists()):
+        pytest.skip("built covariates or cohort sidecar not present")
+
+    cov = pd.read_csv(cov_path, sep="\t").set_index("participant_id")
+    subs = [l.strip() for l in subs_path.read_text().splitlines() if l.strip()]
+    missing = [s for s in subs if s not in cov.index]
+    assert not missing, f"no covariates for {len(missing)} subjects: {missing[:5]}"
+    assert cov.loc[subs, "scan_age"].notna().all()
+    assert cov.loc[subs, "birth_age"].notna().all()
+    # one session per infant, as the manuscript states
+    assert (cov.loc[subs, "n_sessions"] == 1).all()
