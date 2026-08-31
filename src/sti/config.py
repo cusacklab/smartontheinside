@@ -30,11 +30,17 @@ TASKS: dict[Task, int] = {
 #: Number of DLPFC seed vertices per hemisphere.
 N_SEED_VERTICES: dict[Hemisphere, int] = {"L": 2207, "R": 2185}
 
-#: Number of non-DLPFC target parcels in the Glasser parcellation.
+#: Number of non-DLPFC target parcels -- the number the manuscript reports.
 N_TARGETS: int = 334
 
-#: Total parcels in the Glasser parcellation (targets are the 334 non-DLPFC ones,
-#: but the stored tractography arrays are indexed over all 360).
+#: Target dimension of the stored connectivity arrays.
+#:
+#: The arrays carry all 360 parcels, not 334. The 26 DLPFC parcels were correctly
+#: excluded from tractography (verified: those 26 columns are identically zero in
+#: every array), so they are structural padding that the elastic net assigns zero
+#: weight. The SI's claim that the DLPFC was excluded as a target is accurate --
+#: do not "fix" the arrays down to 334, and do not read the extra columns as
+#: DLPFC-to-DLPFC self-connectivity.
 N_PARCELS: int = 360
 
 #: The 26 DLPFC parcels (13 per hemisphere) of the Glasser parcellation:

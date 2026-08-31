@@ -23,7 +23,8 @@ from pathlib import Path
 import numpy as np
 
 from sti import s3io
-from sti.config import Config, DEFAULT_CONFIG, HEMISPHERES, Hemisphere, N_SEED_VERTICES, Task
+from sti.config import (Config, DEFAULT_CONFIG, HEMISPHERES, Hemisphere, N_PARCELS,
+                        N_SEED_VERTICES, Task)
 
 log = logging.getLogger(__name__)
 
@@ -212,4 +213,67 @@ def load_all_activations(
             "sti.datasets.adult_activation_key). Regenerate them with "
             "pipelines/02_adult_activation/extract_conn_act.py."
         )
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Building the aggregated arrays from per-subject tractography
+# --------------------------------------------------------------------------- #
+
+def neonatal_tractography_key(subject: str, hemi: Hemisphere) -> str:
+    """Per-subject neonatal seed-to-target array on S3."""
+    from sti.cohorts import dhcp_id
+
+    return f"Results/{dhcp_id(subject)}_infants_tractography_results_VOXEL_{hemi}.npy"
+
+
+def adult_tractography_key(subject: str, hemi: Hemisphere) -> str:
+    """Per-subject adult seed-to-target array on S3."""
+    return f"Results/{subject}_tractography_results_VOXEL_{hemi}.npy"
+
+
+def build_connectivity(
+    subjects,
+    hemi: Hemisphere,
+    *,
+    neonatal: bool = True,
+    config: Config = DEFAULT_CONFIG,
+    dtype=np.float32,
+    keep_cache: bool = False,
+    progress: bool = True,
+) -> np.ndarray:
+    """Aggregate per-subject tractography into ``(n_subjects, n_vertices, 360)``.
+
+    This is what ``legacy/classifier.py`` did inside its ``reload_data`` block. It
+    is separated out because rebuilding the neonatal array for the full term
+    cohort is the step needed to analyse all 325 available neonates rather than
+    only the 183 of batch 2.
+
+    Per-subject files are streamed: each is fetched, read, and deleted unless
+    ``keep_cache`` is set, so the peak disk cost is one file rather than ~4 GB.
+    ``float32`` halves the in-memory size at no cost to a regularised fit.
+    """
+    subjects = list(subjects)
+    n_vert = N_SEED_VERTICES[hemi]
+    out = np.zeros((len(subjects), n_vert, N_PARCELS), dtype=dtype)
+    key_fn = neonatal_tractography_key if neonatal else adult_tractography_key
+
+    for i, sub in enumerate(subjects):
+        path = s3io.fetch(key_fn(sub, hemi), config)
+        tract = np.load(path, allow_pickle=True)
+        if tract.shape[0] < N_PARCELS + 1:
+            raise ValueError(
+                f"{sub} {hemi}: tractography array has {tract.shape[0]} rows, "
+                f"expected at least {N_PARCELS + 1} (row 0 unused, rows 1-360 the parcels)"
+            )
+        if tract.shape[1] != n_vert:
+            raise ValueError(
+                f"{sub} {hemi}: {tract.shape[1]} seed vertices, expected {n_vert}"
+            )
+        # rows 1..360 are the parcels; row 0 is unused
+        out[i] = tract[1 : N_PARCELS + 1, :].T
+        if not keep_cache:
+            path.unlink(missing_ok=True)
+        if progress and (i + 1) % 25 == 0:
+            log.info("built %d/%d subjects (%s)", i + 1, len(subjects), hemi)
     return out

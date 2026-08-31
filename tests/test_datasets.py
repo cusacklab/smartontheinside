@@ -37,3 +37,55 @@ def test_missing_local_data_without_download_is_explicit(tmp_path, monkeypatch):
     monkeypatch.setenv("STI_DATA_DIR", str(tmp_path))
     with pytest.raises(MissingDataError, match="downloads are disabled"):
         load_connectivity(155, allow_download=False)
+
+
+def test_tractography_key_conventions():
+    from sti.datasets import adult_tractography_key, neonatal_tractography_key
+
+    assert neonatal_tractography_key("CC00060XX03", "L") == \
+        "Results/sub-CC00060XX03_infants_tractography_results_VOXEL_L.npy"
+    # a bare or prefixed ID must give the same key
+    assert neonatal_tractography_key("sub-CC00060XX03", "R") == \
+        neonatal_tractography_key("CC00060XX03", "R")
+    assert adult_tractography_key("103818", "L") == \
+        "Results/103818_tractography_results_VOXEL_L.npy"
+
+
+def test_build_connectivity_rejects_wrong_vertex_count(tmp_path, monkeypatch):
+    """A per-subject file with the wrong seed count must not be silently accepted."""
+    from sti import datasets
+
+    bad = tmp_path / "bad.npy"
+    np.save(bad, np.zeros((361, 99)))
+    monkeypatch.setattr(datasets.s3io, "fetch", lambda *a, **k: bad)
+    with pytest.raises(ValueError, match="seed vertices"):
+        datasets.build_connectivity(["CC1"], "L", keep_cache=True, progress=False)
+
+
+def test_build_connectivity_rejects_too_few_parcel_rows(tmp_path, monkeypatch):
+    from sti import datasets
+    from sti.config import N_SEED_VERTICES
+
+    bad = tmp_path / "short.npy"
+    np.save(bad, np.zeros((100, N_SEED_VERTICES["L"])))
+    monkeypatch.setattr(datasets.s3io, "fetch", lambda *a, **k: bad)
+    with pytest.raises(ValueError, match="rows"):
+        datasets.build_connectivity(["CC1"], "L", keep_cache=True, progress=False)
+
+
+def test_build_connectivity_transposes_parcels_to_the_last_axis(tmp_path, monkeypatch):
+    """Rows 1..360 of the stored file become the target axis; row 0 is dropped."""
+    from sti import datasets
+    from sti.config import N_PARCELS, N_SEED_VERTICES
+
+    nv = N_SEED_VERTICES["L"]
+    arr = np.zeros((N_PARCELS + 1, nv))
+    arr[0] = 999.0                      # unused row, must not appear in the output
+    arr[7] = 5.0                        # parcel 7 -> column 6
+    f = tmp_path / "one.npy"
+    np.save(f, arr)
+    monkeypatch.setattr(datasets.s3io, "fetch", lambda *a, **k: f)
+    X = datasets.build_connectivity(["CC1"], "L", keep_cache=True, progress=False)
+    assert X.shape == (1, nv, N_PARCELS)
+    assert np.allclose(X[0, :, 6], 5.0)
+    assert 999.0 not in X

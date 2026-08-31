@@ -157,6 +157,46 @@ def cmd_compare(args) -> int:
     return 0
 
 
+def cmd_build_connectivity(args) -> int:
+    """Aggregate per-subject tractography into a cohort connectivity array."""
+    import numpy as np
+
+    from sti.cohorts import load_cohort
+    from sti.datasets import build_connectivity, neonatal_tractography_key, adult_tractography_key
+    from sti import s3io
+
+    cfg = Config()
+    cohort = load_cohort(args.cohort, cfg)
+    key_fn = neonatal_tractography_key if args.neonatal else adult_tractography_key
+
+    subjects, missing = [], []
+    for sub in cohort.subjects:
+        if all(s3io.exists(key_fn(sub, h), cfg) for h in ("L", "R")):
+            subjects.append(sub)
+        else:
+            missing.append(sub)
+    if missing:
+        msg = f"{len(missing)} of {cohort.n} subjects lack tractography: {missing[:10]}"
+        if not args.allow_missing:
+            log.error("%s. Pass --allow-missing to build from the rest.", msg)
+            return 1
+        log.warning("%s -- excluded", msg)
+
+    data = {h: build_connectivity(subjects, h, neonatal=args.neonatal, config=cfg)
+            for h in ("L", "R")}
+    out = _out(args.output)
+    np.save(out, data, allow_pickle=True)
+    # record which subjects are in the array, in order -- the arrays carry no IDs
+    sidecar = out.with_suffix(".subjects.txt")
+    sidecar.write_text("\n".join(subjects) + "\n")
+    print(f"wrote {out} ({len(subjects)} subjects; "
+          f"L{data['L'].shape} R{data['R'].shape})")
+    print(f"wrote {sidecar}")
+    if missing:
+        print(f"excluded {len(missing)}: {', '.join(missing)}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="sti", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -204,6 +244,17 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--b", required=True)
     s.add_argument("-o", "--output", default=None)
     s.set_defaults(func=cmd_compare)
+
+    s = sub.add_parser("build-connectivity",
+                       help="aggregate per-subject tractography into a cohort array")
+    s.add_argument("--cohort", required=True)
+    s.add_argument("--neonatal", action="store_true", default=True)
+    s.add_argument("--adult", dest="neonatal", action="store_false")
+    s.add_argument("--allow-missing", action="store_true",
+                   help="build from the available subjects instead of failing")
+    s.add_argument("-o", "--output", required=True)
+    s.set_defaults(func=cmd_build_connectivity)
+
     return p
 
 

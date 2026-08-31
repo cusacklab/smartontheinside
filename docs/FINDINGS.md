@@ -11,6 +11,13 @@ rerun or resubmitted.
 The manuscript reports **176 adults** and **326 term neonates**. The committed
 code ran **155 adults** and **183 neonates**.
 
+**The rerun is feasible.** Per-subject tractography exists on S3 for **325 of
+the 326** neonates — all 142 of batch 1 and all 183 of batch 2. The single
+exception is `CC00688XX21`, which is exactly the subject the legacy code
+commented out as "# non andato". So the honest full-cohort N is **325**, not 326,
+and `sti build-connectivity` will assemble it. No 326-, 325- or 142-subject array
+exists in either bucket, confirming the manuscript cohort was never analysed.
+
 **Neonates.** `legacy/classifier.py` assigns `subjlist_infants` twice: a
 142-subject list, then a 183-subject list that silently overwrites it. The lists
 are disjoint, and
@@ -35,14 +42,19 @@ it explains 175 → 155.
 The cohorts are now explicit files under `config/subjects/`, asserted in
 `tests/test_cohorts.py`.
 
-## 2. The per-task adult activation arrays were destroyed on S3
+## 2. The per-task adult activation arrays — destroyed on S3, recovered from backup
 
 The extraction step saved activations locally per task but uploaded all five to
-one key, so each overwrote the last. Only one unidentified task survives. These
-are the models' response variable, so nothing can be rerun until they are
-regenerated. Full detail in [DATA.md](DATA.md).
+one key, so each overwrote the last; only one unidentified task survives in
+`s3://smartontheinside/`.
 
-`sti.s3io.upload` now refuses to overwrite an existing key.
+**Recovered.** All fifteen files (five contrasts x N-20, N-155, N-175) are
+present in `s3://foundcog/backups-2026-01-27/home/chiaracaldinelli/`, the backup
+of the original analysis home directory, and verified genuine — correct shapes,
+and group-mean maps correlating 0.23-0.84 with each other rather than being
+copies. See [DATA.md](DATA.md).
+
+`sti.s3io.upload` now refuses to overwrite an existing key, so this cannot recur.
 
 ## 3. Predictions from all five tasks were written into one shared object
 
@@ -138,6 +150,10 @@ on it. The files in `data/rois/` should nonetheless not be trusted.
   are **both** `(361, 2185)` — the R-hemisphere vertex count. The "L" file does
   not hold left-hemisphere data. They look like single-subject debug artefacts;
   they are not read by any analysis.
+- The connectivity arrays have 360 target columns, of which the 26 DLPFC ones
+  are identically zero — the DLPFC was correctly excluded from tractography, as
+  the SI states. Harmless padding; do not trim it and do not mistake it for
+  self-connectivity.
 - The activation z-scoring is per subject across vertices. Pearson correlation is
   invariant to that, so mixing z-scored and raw maps in the adult comparison is
   harmless — noted so nobody "fixes" it into a real change.
