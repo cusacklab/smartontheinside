@@ -3,7 +3,7 @@
 The SI lists this as `[TBD: list labels]`. The labels are in the parcellation
 files, so the table is generated rather than transcribed.
 
-    python pipelines/01_rois/make_table_s1.py -o data/results/table_S1_dlpfc_parcels.tsv
+    python pipelines/02_rois/make_table_s1.py -o data/results/table_S1_dlpfc_parcels.tsv
 """
 from __future__ import annotations
 

@@ -203,7 +203,7 @@ def cmd_spatial_null(args) -> int:
             fig = P.plot_spatial_null(
                 r.observed_r, null, p=r.p_spin,
                 title=f"{task.replace('tfMRI_', '')} {hemi}")
-            print(f"wrote {P.save(fig, f'spatial_null_{task}_{hemi}', cfg)}")
+            print(f"wrote {P.save(fig, f'S8_spatial_null_{task}_{hemi}', cfg)}")
     return 0
 
 
@@ -240,7 +240,7 @@ def cmd_scan_age(args) -> int:
 
         acc = subject_accuracy(res).groupby("subject", as_index=False)["accuracy"].mean()
         fig = P.plot_scan_age(acc, cov, title="Prediction accuracy vs age at scan (n=325)")
-        print(f"wrote {P.save(fig, 'scan_age_N325', cfg)}")
+        print(f"wrote {P.save(fig, 'S9_scan_age', cfg)}")
     return 0
 
 
@@ -296,6 +296,27 @@ def cmd_build_connectivity(args) -> int:
     return 0
 
 
+def _specificity_table(tests: pd.DataFrame) -> pd.DataFrame:
+    """Format the column-wise tests as a supplementary table.
+
+    One row per (hemisphere, target map, competing model): the accuracy of the
+    map's own model against a rival's, on the same target and the same subjects.
+    """
+    short = lambda c: c.replace("tfMRI_", "")
+    out = pd.DataFrame({
+        "hemisphere": tests.hemi,
+        "target_map": tests.comparison_task.map(short),
+        "matched_model_r": tests.mean_within.round(4),
+        "competing_model": tests.task.map(short),
+        "competing_model_r": tests.mean_between.round(4),
+        "difference": tests.difference.round(4),
+        "ci_95": [f"[{lo:.4f}, {hi:.4f}]" for lo, hi in zip(tests.ci_low, tests.ci_high)],
+        "p_fdr": tests.p_fdr.map(lambda v: f"{v:.2g}"),
+        "n": tests.n,
+    })
+    return out.sort_values(["hemisphere", "target_map", "competing_model"]).reset_index(drop=True)
+
+
 def cmd_figures(args) -> int:
     """Render the accuracy and task-specificity figures for a results CSV."""
     from sti import plotting as P
@@ -314,20 +335,33 @@ def cmd_figures(args) -> int:
     }
     outs = [
         P.save(P.plot_accuracy(res, title=args.title), f"{prefix}_accuracy", cfg),
-        # the line panel is the primary specificity figure: it puts the
-        # comparison that matters (down columns) on the vertical axis
+        # the line panel is the specificity figure: it puts the comparison that
+        # matters (down columns) on the vertical axis
         P.save(P.plot_specificity_panel(res, title=args.title),
                f"{prefix}_specificity", cfg),
-        P.save(P.plot_specificity_matrix(res, tests=tests["column"], title=args.title),
-               f"{prefix}_specificity_matrix", cfg),
     ]
+    if args.matrix:
+        # off by default: showing the same data as both a heatmap and a line
+        # panel invites the reader to ask which is authoritative, and the
+        # heatmap's orientation is the confound the line panel exists to avoid
+        outs.append(P.save(P.plot_specificity_matrix(res, tests=tests["column"],
+                                                     title=args.title),
+                           f"{prefix}_specificity_matrix", cfg))
     for o in outs:
         print(f"wrote {o}")
+
     for axis, t in tests.items():
         csv = _out(Path(args.results).with_name(f"{prefix}_specificity_{axis}.csv"))
         t.to_csv(csv, index=False)
         ok = int(((t.difference > 0) & (t.p_fdr < 0.05)).sum())
         print(f"wrote {csv}  ({ok}/{len(t)} with the diagonal significantly higher)")
+
+    # Supplementary table: the pairwise matched-vs-unmatched statistics, which a
+    # heatmap can only approximate.
+    tbl = _specificity_table(tests["column"])
+    tsv = _out(Path(args.results).with_name(f"{prefix}_specificity_table.tsv"))
+    tbl.to_csv(tsv, sep="\t", index=False)
+    print(f"wrote {tsv}  ({len(tbl)} pairwise comparisons)")
 
     within = res[res.task == res.comparison_task]
     print("\nmean within-task accuracy (r):")
@@ -495,6 +529,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--title", default="")
     s.add_argument("--n-boot", type=int, default=10000)
     s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--matrix", action="store_true",
+                   help="also write the specificity heatmap (off by default)")
     s.set_defaults(func=cmd_figures)
 
     s = sub.add_parser("merge", help="concatenate result shards from a cluster run")

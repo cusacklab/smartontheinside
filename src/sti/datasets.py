@@ -123,7 +123,7 @@ def adult_activation_key(task: Task, n: int) -> str:
     activations locally per task but uploaded all five to the single key
     ``Results/act_for_classifier_N-{n}.npy``, so each task overwrote the last and
     only one (unidentified) task survives there. Regenerate with
-    ``pipelines/02_adult_activation``.
+    ``pipelines/03_adult_activation``.
     """
     return f"Results/act_for_classifier_{task}_N-{n}.npy"
 
@@ -211,7 +211,7 @@ def load_all_activations(
             f"{len(missing)}/{len(list(tasks))} tasks:\n" + "\n".join(missing)
             + "\n\nThe per-task activation objects were overwritten on S3 (see "
             "sti.datasets.adult_activation_key). Regenerate them with "
-            "pipelines/02_adult_activation/extract_conn_act.py."
+            "pipelines/03_adult_activation/extract_conn_act.py."
         )
     return out
 

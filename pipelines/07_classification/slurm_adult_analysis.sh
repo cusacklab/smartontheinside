@@ -11,7 +11,7 @@
 # Restricting a shard's model tasks does NOT restrict what it is compared
 # against, so every shard still emits a complete row of the specificity matrix.
 #
-#   sbatch --export=ALL,STI_ANALYSIS=adult-loo pipelines/06_classification/slurm_adult_loo.sh
+#   sbatch --export=ALL,STI_ANALYSIS=adult-loo pipelines/07_classification/slurm_adult_loo.sh
 #   sti merge --inputs 'data/results/shards/adult_loo_*.csv' \
 #             -o data/results/adult_loo_N155.csv
 #

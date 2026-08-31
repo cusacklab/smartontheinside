@@ -37,12 +37,13 @@ pytest
 | Stage | Directory | What it does |
 |-------|-----------|--------------|
 | 00 | `pipelines/00_cohorts` | Derive term/preterm cohorts from participant metadata |
-| 01 | `pipelines/01_rois` | Build DLPFC seed and target ROI masks from the Glasser parcellation |
-| 02 | `pipelines/02_adult_activation` | Extract HCP task activation over DLPFC vertices |
-| 03 | `pipelines/03_adult_tractography` | BEDPOSTX / PROBTRACKX2 seed-to-target in adults |
-| 04 | `pipelines/04_neonatal_registration` | Carry the adult parcellation into neonatal space (ANTs) |
-| 05 | `pipelines/05_neonatal_tractography` | Tractography in neonates; return maps to the adult surface |
-| 06 | `pipelines/06_classification` | SLURM wrappers around the `sti` commands below |
+| 01 | `pipelines/01_contrast_selection` | Choose the five representative task contrasts (Figs. S3–S5) |
+| 02 | `pipelines/02_rois` | Build DLPFC seed and target ROI masks from the Glasser parcellation |
+| 03 | `pipelines/03_adult_activation` | Extract HCP task activation over DLPFC vertices |
+| 04 | `pipelines/04_adult_tractography` | BEDPOSTX / PROBTRACKX2 seed-to-target in adults |
+| 05 | `pipelines/05_neonatal_registration` | Carry the adult parcellation into neonatal space (ANTs) |
+| 06 | `pipelines/06_neonatal_tractography` | Tractography in neonates; return maps to the adult surface |
+| 07 | `pipelines/07_classification` | SLURM wrappers around the `sti` commands below |
 
 ## Running the analyses
 
@@ -70,7 +71,7 @@ The adult leave-one-out analyses are 1,550 model fits (155 folds x 5 contrasts x
 pair is independent, so they shard cleanly:
 
 ```bash
-sbatch pipelines/06_classification/slurm_adult_average.sh     # 10-task array, ~20 min
+sbatch pipelines/07_classification/slurm_adult_average.sh     # 10-task array, ~20 min
 sti merge --inputs 'data/results/shards/adult_average_*.csv' \
           -o data/results/adult_average_N155.csv
 ```
