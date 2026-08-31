@@ -25,7 +25,7 @@ produce.
 | Fig. S5 | DLPFC parcel activation profiles | `sti contrasts --figures` | `manuscript/S5_parcel_profiles.png` |
 | Fig. S6 | Hyperparameter grid | `sti hyperparams` → `plot_hyperparameter_grid` | `manuscript/S6_hyperparameter_grid.png` |
 | Fig. S7 | Adult, group-average map | `sti adult-average` → `sti figures` | `manuscript/S7_adult_group_average_*` |
-| Fig. S8 | Spatial null | `sti spatial-null --figures` | `manuscript/S8_spatial_null_*.png` (10) |
+| Fig. S8 | Spatial null | `sti spatial-null` → `plot_spatial_null_grid` | `manuscript/S8_spatial_null.png` |
 | Fig. S9 | Accuracy vs age at scan | `sti scan-age --figures` | `manuscript/S9_scan_age.png` |
 | Table S1 | The 26 DLPFC parcels | `pipelines/02_rois/make_table_s1.py` | `data/results/table_S1_*.tsv` |
 
@@ -48,6 +48,15 @@ analysis actually uses. So neither is the figure the SI describes.
 restructure (`matrix_*.png`). They were produced by `legacy/classifier_check_res.py`
 from the 183-neonate analysis and are **superseded** by the `neonatal_N325_*`
 figures. Kept for comparison with the current manuscript draft; do not reuse.
+
+## No titles inside the figures
+
+The figures carry no super-titles. Each panel's meaning belongs in its caption,
+and a title inside the image duplicates it and can drift out of step — which is
+what happened when one `--title` was applied to both the accuracy and the
+specificity figure, leaving the specificity panel labelled "connectivity predicts
+each participant's own activation". `sti figures --title` still exists for
+exploratory use; leave it unset for anything going into the manuscript.
 
 ## Naming
 

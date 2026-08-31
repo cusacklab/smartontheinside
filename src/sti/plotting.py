@@ -357,8 +357,8 @@ def plot_specificity_panel(results: pd.DataFrame, *, title: str = "", tasks=None
     """
     plt = _mpl()
     hemis = sorted(results.hemi.unique())
-    fig, axs = plt.subplots(2, len(hemis), figsize=(4.1 * len(hemis), 6.6))
-    axs = np.atleast_2d(axs)
+    fig, axs = plt.subplots(2, len(hemis), figsize=(4.1 * len(hemis), 6.6), squeeze=False)
+    axs = np.asarray(axs)   # always 2-D: squeeze=False keeps a single hemisphere valid
 
     plot_specificity_lines(results, tasks=tasks, centre=False, axes=axs[0],
                            legend=False, standalone=False)
@@ -588,6 +588,52 @@ def plot_maturity_panel(comparison: pd.DataFrame, *, title: str = "",
         for ax in row:
             ax.set_xlim(lo, hi)
     axs[0][-1].legend(fontsize=8, frameon=False, loc="lower right")
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_spatial_null_grid(results: pd.DataFrame, nulls, *, title: str = ""):
+    """All task-by-hemisphere spatial nulls in one figure (Fig. S8).
+
+    Ten separate histograms are unwieldy in a manuscript; a grid lets the reader
+    see at once that every observed value sits outside its null.
+    """
+    plt = _mpl()
+    tasks = sorted(results.task.unique())
+    hemis = sorted(results.hemi.unique())
+    fig, axs = plt.subplots(len(tasks), len(hemis),
+                            figsize=(3.4 * len(hemis), 1.55 * len(tasks)),
+                            squeeze=False, sharex=True)
+    for i, task in enumerate(tasks):
+        for j, hemi in enumerate(hemis):
+            ax = axs[i][j]
+            key = f"{task}__{hemi}"
+            row = results[(results.task == task) & (results.hemi == hemi)]
+            if key not in nulls or row.empty:
+                ax.axis("off")
+                continue
+            r = row.iloc[0]
+            ax.hist(nulls[key], bins=36, color="#c9d9e8", edgecolor="white", linewidth=0.3)
+            ax.axvline(r.observed_r, color=PALETTE[4], lw=1.8)
+            # label on the side away from the observed line, so they never collide
+            lo, hi = ax.get_xlim()
+            on_right = (r.observed_r - lo) / (hi - lo) > 0.55
+            ax.text(0.03 if on_right else 0.97, 0.88,
+                    f"r = {r.observed_r:.2f}\np = {r.p_spin:.3f}",
+                    transform=ax.transAxes, ha="left" if on_right else "right",
+                    va="top", fontsize=6.5, color=INK)
+            if j == 0:
+                ax.set_ylabel(task.replace("tfMRI_", ""), fontsize=8, color=INK,
+                              rotation=0, ha="right", va="center")
+            if i == 0:
+                ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
+            ax.set_yticks([])
+            ax.xaxis.grid(True, color=GRID, lw=0.5)
+            _style(ax)
+    for ax in axs[-1]:
+        ax.set_xlabel("prediction accuracy (r)", fontsize=8, color=INK)
     if title:
         fig.suptitle(title, fontsize=10, color=INK)
     fig.tight_layout()
