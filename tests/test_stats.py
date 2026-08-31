@@ -69,3 +69,48 @@ def test_compare_protocols_recovers_a_known_offset():
     assert len(out) == 6
     assert out.difference.median() == pytest.approx(0.15, abs=0.03)
     assert (out.p_fdr < 0.05).all()
+
+
+def test_specificity_axis_column_isolates_target_difficulty():
+    """A model can be perfectly specific yet fail the row test.
+
+    Construct a case where every target is best predicted by its own model
+    (perfect specificity), but one target -- 'HARD' -- is intrinsically difficult.
+    The row test then fails for the HARD model, because it predicts easy targets
+    better than its own. The column test, which holds the target fixed, does not.
+    """
+    rng = np.random.default_rng(0)
+    tasks = ["EASY", "MID", "HARD"]
+    difficulty = {"EASY": 0.50, "MID": 0.40, "HARD": 0.10}
+    recs = []
+    for t in tasks:
+        for c in tasks:
+            base = difficulty[c] + (0.06 if t == c else 0.0)  # own model always best
+            for s in range(50):
+                recs.append(dict(hemi="L", task=t, comparison_task=c, subject=f"s{s}",
+                                 pearson=rng.normal(base, 0.05)))
+    df = pd.DataFrame(recs)
+
+    col = specificity_tests(df, n_boot=2000, axis="column")
+    assert ((col.difference > 0) & (col.p_fdr < 0.05)).all(), \
+        "column test should confirm specificity for every target"
+
+    row = specificity_tests(df, n_boot=2000, axis="row")
+    hard = row[row.task == "HARD"]
+    assert (hard.difference < 0).all(), \
+        "row test should fail for the model whose own target is hardest"
+
+
+def test_specificity_axis_validates_input():
+    df = _results(np.random.default_rng(0))
+    with pytest.raises(ValueError, match="axis must be"):
+        specificity_tests(df, axis="diagonal")
+
+
+def test_specificity_axis_column_labels_are_oriented_correctly():
+    df = _results(np.random.default_rng(0))
+    col = specificity_tests(df, n_boot=500, axis="column")
+    assert (col.axis == "column").all()
+    # in the column test the fixed factor is the target being predicted
+    for _, r in col.iterrows():
+        assert r.task != r.comparison_task

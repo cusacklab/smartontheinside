@@ -146,9 +146,14 @@ def plot_specificity_matrix(
                 val = m.values[i, j]
                 mark = ""
                 if tests is not None and r != c:
-                    sel = tests[(tests.hemi == hemi) & (tests.task == r) & (tests.comparison_task == c)]
+                    # match on both orientations: the row test keys on (task=r),
+                    # the column test on (comparison_task=c)
+                    sel = tests[(tests.hemi == hemi) & (tests.task == r)
+                                & (tests.comparison_task == c)]
                     if len(sel):
-                        mark = sel.iloc[0].get("stars", "")
+                        mark = sel.iloc[0].get("stars", "") or ""
+                        if pd.isna(mark):
+                            mark = ""
                 ax.text(j, i, f"{val:.2f}\n{mark}".strip(), ha="center", va="center",
                         fontsize=7, color=INK)
         ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)

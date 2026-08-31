@@ -67,16 +67,37 @@ def fdr_bh(pvals: np.ndarray) -> np.ndarray:
 
 
 def specificity_tests(
-    results: pd.DataFrame, *, n_boot: int = 10_000, seed: int = 0, correct: bool = True
+    results: pd.DataFrame, *, n_boot: int = 10_000, seed: int = 0, correct: bool = True,
+    axis: str = "row",
 ) -> pd.DataFrame:
     """Test each off-diagonal cell against its diagonal, per task and hemisphere.
 
-    Answers: does a model trained on task T predict T's activation better than it
-    predicts another task's activation?
+    ``axis="row"`` (the manuscript's comparison) asks: does a model trained on
+    task T predict T better than it predicts some other task's map? This is
+    confounded by how predictable each target map is. A model whose own target is
+    intrinsically hard -- as the motor contrast is here -- will predict easier
+    maps better, and fail the row test even when it is perfectly specific.
+
+    ``axis="column"`` asks the cleaner question: for a given target map, does the
+    model trained on that task predict it better than models trained on other
+    tasks? Target difficulty is held constant, so this isolates specificity.
+
+    Report both: the row test answers "is this model selective for its own
+    contrast", the column test answers "is this map best predicted by its own
+    model".
     """
+    if axis not in ("row", "column"):
+        raise ValueError(f"axis must be 'row' or 'column', got {axis!r}")
     rows = []
-    for (hemi, task), block in results.groupby(["hemi", "task"], sort=False):
-        wide = block.pivot_table(index="subject", columns="comparison_task", values="pearson")
+    if axis == "row":
+        groups = results.groupby(["hemi", "task"], sort=False)
+        index_col, other_col = "task", "comparison_task"
+    else:
+        groups = results.groupby(["hemi", "comparison_task"], sort=False)
+        index_col, other_col = "comparison_task", "task"
+
+    for (hemi, task), block in groups:
+        wide = block.pivot_table(index="subject", columns=other_col, values="pearson")
         if task not in wide.columns:
             continue
         within = wide[task].to_numpy()
@@ -88,7 +109,8 @@ def specificity_tests(
             res = paired_bootstrap(within[ok], between[ok], n_boot=n_boot, seed=seed)
             t, p_t = ttest_rel(within[ok], between[ok])
             rows.append({
-                "hemi": hemi, "task": task, "comparison_task": other,
+                "hemi": hemi, "axis": axis,
+                index_col: task, other_col: other,
                 "mean_within": float(np.mean(within[ok])),
                 "mean_between": float(np.mean(between[ok])),
                 **res,

@@ -116,36 +116,59 @@ def cmd_neonatal(args) -> int:
         nconn = load_connectivity(cohort.n, neonatal=True, config=cfg)
         subjects = list(cohort.subjects)
 
-    res, _ = neonatal(conn, nconn, acts, subjects, config=cfg)
+    res, preds = neonatal(conn, nconn, acts, subjects, config=cfg)
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows, {nconn.n_subjects} neonates)")
+    if args.save_predictions:
+        import numpy as np
+        out = _out(args.save_predictions)
+        np.savez_compressed(
+            out, **{f"{t}__{h}": v for (t, h), v in preds.values.items()},
+            subjects=np.array(subjects))
+        print(f"wrote {out} (predicted maps, needed by `sti spatial-null`)")
     return 0
 
 
 def cmd_spatial_null(args) -> int:
+    """Is the observed accuracy larger than spatial autocorrelation alone allows?"""
+    import numpy as np
+
     from sti.datasets import load_activation
-    from sti.spatial_null import SurrogateMaps, null_correlations, p_spin
+    from sti.spatial_null import SurrogateMaps, group_null_distribution, p_spin
     from sti.surface import distance_matrix
 
     cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
     res = pd.read_csv(args.results)
+    preds = np.load(args.predictions, allow_pickle=True)
+
     rows = []
     for hemi in sorted(res.hemi.unique()):
         gen = SurrogateMaps(distance_matrix(hemi, cfg), seed=args.seed)
         for task in sorted(res.task.unique()):
-            obs_r = res[(res.hemi == hemi) & (res.task == task) &
-                        (res.comparison_task == task)]["pearson"].mean()
-            act = load_activation(task, args.n_adults, config=cfg).zscored()[hemi].mean(axis=0)
-            surr = gen.generate(act, args.n_surrogates)
-            # correlate the group-average observed map against its own surrogates,
-            # scaled to the observed accuracy: the null asks how large an r this
-            # much spatial smoothness alone can produce
-            null = null_correlations(act, act, surr)
-            rows.append({"hemi": hemi, "task": task, "observed_r": obs_r,
-                         "null_mean": float(null.mean()), "null_sd": float(null.std()),
-                         "p_spin": p_spin(obs_r, null), "n_surrogates": args.n_surrogates})
-            log.info("spatial null done: %s %s", hemi, task)
+            key = f"{task}__{hemi}"
+            if key not in preds:
+                log.warning("no predictions for %s; skipping", key)
+                continue
+            observed = float(res[(res.hemi == hemi) & (res.task == task) &
+                                 (res.comparison_task == task)]["pearson"].mean())
+            target = load_activation(task, args.n_adults, config=cfg).zscored()[hemi].mean(axis=0)
+            surr = gen.generate(target, args.n_surrogates)
+            null = group_null_distribution(preds[key], surr)
+            rows.append({
+                "hemi": hemi, "task": task, "observed_r": observed,
+                "null_mean": float(null.mean()), "null_sd": float(null.std()),
+                "null_p95": float(np.percentile(null, 95)),
+                "p_spin": p_spin(observed, null),
+                "n_surrogates": args.n_surrogates, "n_subjects": preds[key].shape[0],
+            })
+            log.info("spatial null done: %s %s  observed=%.3f p=%.4f",
+                     hemi, task, observed, rows[-1]["p_spin"])
+
     out = pd.DataFrame(rows)
+    if not out.empty:
+        from sti.stats import fdr_bh, stars
+        out["p_fdr"] = fdr_bh(out["p_spin"].to_numpy())
+        out["stars"] = out["p_fdr"].map(stars)
     out.to_csv(_out(args.output), index=False)
     print(out.round(4).to_string(index=False))
     print(f"\nwrote {args.output}")
@@ -230,17 +253,25 @@ def cmd_figures(args) -> int:
     res = pd.read_csv(args.results)
     prefix = args.prefix or Path(args.results).stem
 
-    tests = specificity_tests(res, n_boot=args.n_boot, seed=args.seed)
+    # Both orientations. The row test is the manuscript's comparison; the column
+    # test holds the target map fixed and so is not confounded by how predictable
+    # each map is. Stars on the figure come from the column test.
+    tests = {
+        axis: specificity_tests(res, n_boot=args.n_boot, seed=args.seed, axis=axis)
+        for axis in ("row", "column")
+    }
     outs = [
         P.save(P.plot_accuracy(res, title=args.title), f"{prefix}_accuracy", cfg),
-        P.save(P.plot_specificity_matrix(res, tests=tests, title=args.title),
+        P.save(P.plot_specificity_matrix(res, tests=tests["column"], title=args.title),
                f"{prefix}_specificity", cfg),
     ]
-    tests_csv = _out(Path(args.results).with_name(f"{prefix}_specificity_tests.csv"))
-    tests.to_csv(tests_csv, index=False)
     for o in outs:
         print(f"wrote {o}")
-    print(f"wrote {tests_csv}")
+    for axis, t in tests.items():
+        csv = _out(Path(args.results).with_name(f"{prefix}_specificity_{axis}.csv"))
+        t.to_csv(csv, index=False)
+        ok = int(((t.difference > 0) & (t.p_fdr < 0.05)).sum())
+        print(f"wrote {csv}  ({ok}/{len(t)} with the diagonal significantly higher)")
 
     within = res[res.task == res.comparison_task]
     print("\nmean within-task accuracy (r):")
@@ -278,10 +309,14 @@ def build_parser() -> argparse.ArgumentParser:
                    help="explicit connectivity array; its .subjects.txt sidecar "
                         "names the rows, overriding --neonates")
     s.add_argument("-o", "--output", default="data/results/neonatal.csv")
+    s.add_argument("--save-predictions", default=None,
+                   help="npz of predicted maps; required for `sti spatial-null`")
     s.set_defaults(func=cmd_neonatal)
 
     s = sub.add_parser("spatial-null", help="variogram-matched spatial null (Fig. S8)")
     s.add_argument("--results", required=True)
+    s.add_argument("--predictions", required=True,
+                   help="npz from `sti neonatal --save-predictions`")
     s.add_argument("--n-surrogates", type=int, default=1000)
     s.add_argument("--n-adults", type=int, default=155)
     s.add_argument("--seed", type=int, default=0)
