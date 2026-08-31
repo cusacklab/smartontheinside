@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+title: >-
+  smartontheinside: predicting DLPFC functional selectivity from
+  structural connectivity in adults and neonates
+message: >-
+  If you use this software, please cite it using the metadata
+  from this file.
+type: software
+authors:
+  - given-names: Chiara
+    family-names: Caldinelli
+    email: chiaracaldinelli@gmail.com
+    affiliation: Trinity College Dublin
+    # email is the one on her 236 commits; the institutional address in the
+    # original README ("caldinec@tcd.it") looks like a typo -- confirm before use.
+    # ORCID to be added
+  - given-names: Rhodri
+    family-names: Cusack
+    email: rhodricusack@gmail.com
+    affiliation: Trinity College Dublin
+    # ORCID to be added
+abstract: >-
+  Analysis code for a study in which elastic-net models are trained in adults to
+  predict vertex-wise task activation in the dorsolateral prefrontal cortex from
+  tractography-derived structural connectivity, and the adult models are then
+  applied unchanged to neonatal connectivity from the Developing Human
+  Connectome Project.
+keywords:
+  - dorsolateral prefrontal cortex
+  - structural connectivity
+  - tractography
+  - neonatal neuroimaging
+  - Human Connectome Project
+  - Developing Human Connectome Project
+license: MIT
+repository-code: 'TBD'   # set to the canonical repository URL on publication
+# preferred-citation: add the journal article here once published, so that
+# citations resolve to the paper rather than to the software archive.

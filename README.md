@@ -76,7 +76,21 @@ mean:
   the working S3 bucket, but have been **recovered** from
   `s3://foundcog/backups-2026-01-27/`.
 
+## Credit
+
+The original analysis was written by **Chiara Caldinelli**, who authored 236 of
+the 248 commits in this repository's history. That history is preserved intact
+through the 2026 restructure: `git log` and `git blame` still attribute her work
+to her.
+
+The repository as it stood at the end of her work — the state that produced the
+results in the current manuscript — is archived at
+[chiaracc/smartontheinside](https://github.com/chiaracc/smartontheinside) and is
+the reference for anything in [docs/FINDINGS.md](docs/FINDINGS.md).
+
 ## Citation
+
+See [CITATION.cff](CITATION.cff).
 
 HCP data: WU-Minn Human Connectome Project, 1200-subject release.
 dHCP data: Developing Human Connectome Project, second release.
