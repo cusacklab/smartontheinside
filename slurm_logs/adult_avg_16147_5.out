@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-2 array_id=5 task=tfMRI_LANGUAGE hemi=R threads=4
+started 2026-08-31T11:36:56+00:00
+11:42:24 INFO adult_group_mean_loo done: task=tfMRI_LANGUAGE hemi=R
+wrote data/results/shards/adult_average_tfMRI_LANGUAGE_R.csv (775 rows)
+finished 2026-08-31T11:42:24+00:00

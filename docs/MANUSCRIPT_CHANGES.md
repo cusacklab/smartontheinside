@@ -57,10 +57,13 @@ despite being the best available predictor of motor.
 Comparing down **columns** — for a given target map, does its own model beat
 models trained on other tasks — holds target difficulty constant:
 
-| Test | Comparisons with the diagonal significantly higher |
-|---|---|
-| Row (as currently reported) | 26 / 40 |
-| **Column** | **40 / 40** |
+| Test | Neonatal (n=325) | Adult group-average (n=155) |
+|---|---|---|
+| Row (as currently reported) | 26 / 40 | 33 / 40 |
+| **Column** | **40 / 40** | **40 / 40** |
+
+The same pattern appears in both analyses, so this is a property of the test, not
+of the neonatal data.
 
 Every target map is best predicted by its own model, in both hemispheres, margins
 0.019–0.145 (median 0.067). This **strengthens** the specificity claim and
@@ -69,12 +72,19 @@ prediction *generally* exceeded between-task prediction").
 
 **Recommendation.** Report the column test as the primary specificity analysis,
 keep the row test as secondary, and state plainly that the motor contrast is
-poorly predicted by every model. Figure captions need rewording: asterisks now
-mark cells where the diagonal model beats that column's model on the *same*
-target map.
+poorly predicted by every model.
 
-Both tables are written by `sti figures`
-(`*_specificity_column.csv`, `*_specificity_row.csv`).
+**The matrix figure should be replaced.** A heatmap forces the reader to compare
+along rows, which is the confounded direction. `sti figures` now produces a line
+panel as the primary specificity figure (`*_specificity.png`): x is the target
+map, one line per model, so the comparison that matters is vertical. The top row
+shows raw accuracy (making the motor map's difficulty obvious); the bottom row
+subtracts each target's across-model mean, leaving only specificity — and every
+line then peaks at its own target, in both hemispheres, with the own-model point
+ringed and labelled. The heatmap is still written as
+`*_specificity_matrix.png` for reference.
+
+Both test tables are written too (`*_specificity_column.csv`, `*_specificity_row.csv`).
 
 ## 4. Spatial null — Fig. S8 **[NEW]**
 
@@ -126,12 +136,50 @@ never saw. The weakness was never the absence of nested CV, only the unstated
 criterion. The `[TBD: describe the folds and grid]` in Materials and Methods
 should be replaced with a description of this design.
 
-## 6. Still to run **[PENDING]**
+## 6. Figure 4 — adult prediction of the group-average map **[NUMBERS CHANGE]**
+
+Run on the cluster as a 10-task array (`slurm_adult_average.sh`); 51 minutes of
+compute, 5.7 minutes wall clock. Mean within-task accuracy, n=155:
+
+| Contrast | Left | Right |
+|---|---|---|
+| Language (story) | 0.514 | 0.421 |
+| Working memory | 0.469 | 0.432 |
+| Emotion | 0.419 | 0.469 |
+| Social | 0.363 | 0.460 |
+| Motor | 0.335 | 0.275 |
+
+Motor is the least predictable map here too, so its low neonatal accuracy is a
+property of the contrast rather than of neonatal data.
+
+## 7. Figure S7 — neonatal vs adult accuracy **[NEW]** **[DECISION]**
+
+Fills a `[TBD]`. Unpaired bootstrap of the difference in means, FDR-corrected.
+
+| | Left | Right |
+|---|---|---|
+| Emotion | −0.022 (n.s.) | −0.006 (n.s.) |
+| Working memory | −0.044 ** | −0.007 (n.s.) |
+| Social | −0.037 *** | −0.035 * |
+| Language | −0.136 *** | −0.066 *** |
+| Motor | −0.096 *** | −0.117 *** |
+
+Prediction from neonatal connectivity is **statistically indistinguishable from
+prediction from adult connectivity** for emotion in both hemispheres and for
+right working memory. It is significantly lower for language and motor, where the
+shortfall is largest.
+
+**Decision needed.** The Results heading "Most of the adult, functionally
+relevant connectivity structure is present at birth" is supportable but should be
+qualified: the claim holds most strongly for emotion and working memory, and less
+so for language and motor. That language shows the largest neonatal shortfall is
+interesting in its own right and worth a sentence in the Discussion rather than
+being left implicit.
+
+## 8. Still to run **[PENDING]**
 
 | Item | Status |
 |---|---|
-| Fig. 4, adult group-average prediction | Cluster array job ready (`slurm_adult_average.sh`, ~20 min) |
-| Fig. S7, neonate vs adult comparison | Needs Fig. 4 first, then `sti compare` |
 | Fig. S9, scan-age analysis | **Blocked on data** — see below |
 
 **Fig. S9 is blocked.** `config/participants.tsv` supplies `birth_age` only. The
@@ -140,7 +188,7 @@ and `mean_fd` (derived from the dHCP motion/QC outputs). Neither is in this
 repository or either S3 bucket. The analysis runs as soon as they are supplied
 (`sti scan-age --extra <file.tsv>`).
 
-## 7. Also worth a line in the Methods
+## 9. Also worth a line in the Methods
 
 - **Targets.** The connectivity arrays carry 360 columns, not 334. The 26 DLPFC
   columns are identically zero, confirming the DLPFC was excluded from

@@ -237,3 +237,162 @@ def plot_scan_age(accuracy: pd.DataFrame, covariates: pd.DataFrame, *, title: st
         ax.set_title(title, fontsize=9, color=INK)
     fig.tight_layout()
     return fig
+
+
+def plot_specificity_lines(
+    results: pd.DataFrame,
+    *,
+    title: str = "",
+    tasks=None,
+    centre: bool = False,
+    ci: bool = True,
+    label_peaks: bool = False,
+    axes=None,
+    legend: bool = True,
+    standalone: bool = True,
+):
+    """Task specificity read down columns: one line per model, x = target map.
+
+    The comparison that matters is *within* each x position -- for this target
+    map, does its own model predict it best? -- so it is drawn vertically, where
+    the eye makes it naturally. The signature of specificity is that each line
+    peaks at its own target; those points are ringed and labelled.
+
+    A heatmap puts this comparison along the wrong axis: reading a row invites
+    comparing a model across targets of differing difficulty, which is what made
+    the motor contrast look like a failure of specificity when it is not.
+
+    ``centre=True`` subtracts each target's across-model mean, removing the large
+    differences in how predictable each map is so that only the specificity
+    remains.
+    """
+    plt = _mpl()
+    tasks = list(tasks or sorted(results.task.unique()))
+    hemis = sorted(results.hemi.unique())
+    short = [t.replace("tfMRI_", "") for t in tasks]
+
+    if axes is None:
+        fig, axes = plt.subplots(1, len(hemis), figsize=(4.1 * len(hemis), 3.8), sharey=True)
+    else:
+        fig = np.atleast_1d(axes)[0].figure
+    axes = np.atleast_1d(axes)
+    rng = np.random.default_rng(0)
+
+    for ax, hemi in zip(axes, hemis):
+        block = results[results.hemi == hemi]
+        # mean and bootstrap CI of accuracy for every (model, target) cell
+        cell = {}
+        for m in tasks:
+            for t in tasks:
+                v = block[(block.task == m) & (block.comparison_task == t)]["pearson"].to_numpy()
+                v = v[np.isfinite(v)]
+                if v.size == 0:
+                    continue
+                boot = v[rng.integers(0, v.size, size=(1000, v.size))].mean(axis=1)
+                cell[(m, t)] = (v.mean(), *np.percentile(boot, [2.5, 97.5]))
+
+        offsets = {t: np.mean([cell[(m, t)][0] for m in tasks if (m, t) in cell])
+                   for t in tasks} if centre else {t: 0.0 for t in tasks}
+
+        for i, model in enumerate(tasks):
+            xs, ys, los, his = [], [], [], []
+            for j, target in enumerate(tasks):
+                if (model, target) not in cell:
+                    continue
+                mean, lo, hi = cell[(model, target)]
+                xs.append(j); ys.append(mean - offsets[target])
+                los.append(lo - offsets[target]); his.append(hi - offsets[target])
+            colour = PALETTE[i % len(PALETTE)]
+            ax.plot(xs, ys, color=colour, lw=1.6, marker=MARKERS[i % len(MARKERS)],
+                    markersize=5, label=short[i], zorder=2)
+            if ci:
+                ax.fill_between(xs, los, his, color=colour, alpha=0.15, lw=0, zorder=1)
+            # ring and label the own-target point: the specificity signature
+            if model in tasks:
+                j = tasks.index(model)
+                if (model, model) in cell:
+                    y = cell[(model, model)][0] - offsets[model]
+                    ax.plot([j], [y], marker="o", markersize=11, markerfacecolor="none",
+                            markeredgecolor=colour, markeredgewidth=1.8, zorder=4)
+                    if label_peaks:
+                        ax.annotate(short[i], (j, y), textcoords="offset points",
+                                    xytext=(0, 11), ha="center", fontsize=7,
+                                    color=colour, fontweight="bold", zorder=5)
+
+        ax.set_xticks(range(len(tasks)))
+        ax.set_xticklabels(short, rotation=45, ha="right")
+        ax.set_xlabel("target map (evaluated against)", fontsize=9, color=INK)
+        ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
+        ax.yaxis.grid(True, color=GRID, lw=0.6)
+        ax.set_xlim(-0.4, len(tasks) - 0.6)
+        if label_peaks:
+            lo, hi = ax.get_ylim()
+            ax.set_ylim(lo, hi + 0.16 * (hi - lo))   # room for the peak labels
+        if centre:
+            ax.axhline(0, color=MUTED, lw=0.8, ls=":", zorder=0)
+        _style(ax)
+
+    axes[0].set_ylabel("accuracy relative to\ntarget mean (r)" if centre
+                       else "prediction accuracy (r)", fontsize=9, color=INK)
+    if legend:
+        axes[-1].legend(title="model trained on", fontsize=7, title_fontsize=7,
+                        frameon=False, loc="center left", bbox_to_anchor=(1.02, 0.5))
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    if standalone:
+        fig.tight_layout()
+    return fig
+
+
+def plot_specificity_panel(results: pd.DataFrame, *, title: str = "", tasks=None):
+    """The full specificity story in one figure: absolute accuracy and specificity.
+
+    Top row: raw accuracy, which shows how much the target maps differ in
+    predictability -- the motor map is hard for every model.
+    Bottom row: the same values with each target's across-model mean removed, so
+    only specificity remains. Every line peaks at its own target.
+
+    Splitting the two is the point. In a single heatmap they are superimposed,
+    and target difficulty masquerades as a failure of specificity.
+    """
+    plt = _mpl()
+    hemis = sorted(results.hemi.unique())
+    fig, axs = plt.subplots(2, len(hemis), figsize=(4.1 * len(hemis), 6.6))
+    axs = np.atleast_2d(axs)
+
+    plot_specificity_lines(results, tasks=tasks, centre=False, axes=axs[0],
+                           legend=False, standalone=False)
+    plot_specificity_lines(results, tasks=tasks, centre=True, axes=axs[1],
+                           label_peaks=True, legend=True, standalone=False)
+    for ax in axs[0]:
+        ax.set_xlabel("")
+        ax.set_xticklabels([])
+    for ax in axs[1]:
+        ax.set_title("")
+    # One y-range per row, taken from the union of both panels' data. Sharing to
+    # the first panel instead would clip whichever hemisphere ranges wider.
+    def _span(ax):
+        vals = np.concatenate([
+            np.asarray(l.get_ydata(), dtype=float).ravel()
+            for l in ax.get_lines() if len(l.get_ydata())
+        ]) if ax.get_lines() else np.array([0.0])
+        vals = vals[np.isfinite(vals)]
+        return vals.min(), vals.max()
+
+    for row in axs:
+        spans = [_span(ax) for ax in row]
+        lo = min(s0 for s0, _ in spans)
+        hi = max(s1 for _, s1 in spans)
+        pad = 0.08 * (hi - lo)
+        head = 0.20 * (hi - lo) if row is axs[-1] else pad   # room for peak labels
+        for ax in row:
+            ax.set_ylim(lo - pad, hi + head)
+        for ax in row[1:]:
+            ax.set_yticklabels([])
+
+    axs[0][0].set_ylabel("prediction accuracy (r)", fontsize=9, color=INK)
+    axs[1][0].set_ylabel("accuracy relative to\ntarget mean (r)", fontsize=9, color=INK)
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig

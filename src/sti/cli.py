@@ -294,8 +294,12 @@ def cmd_figures(args) -> int:
     }
     outs = [
         P.save(P.plot_accuracy(res, title=args.title), f"{prefix}_accuracy", cfg),
-        P.save(P.plot_specificity_matrix(res, tests=tests["column"], title=args.title),
+        # the line panel is the primary specificity figure: it puts the
+        # comparison that matters (down columns) on the vertical axis
+        P.save(P.plot_specificity_panel(res, title=args.title),
                f"{prefix}_specificity", cfg),
+        P.save(P.plot_specificity_matrix(res, tests=tests["column"], title=args.title),
+               f"{prefix}_specificity_matrix", cfg),
     ]
     for o in outs:
         print(f"wrote {o}")

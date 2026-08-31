@@ -1,2 +1,5 @@
 host=high-memory-dy-r6a-4xlarge-1 array_id=0 task=tfMRI_WM hemi=L threads=4
 started 2026-08-31T11:32:43+00:00
+11:38:15 INFO adult_group_mean_loo done: task=tfMRI_WM hemi=L
+wrote data/results/shards/adult_average_tfMRI_WM_L.csv (775 rows)
+finished 2026-08-31T11:38:15+00:00
