@@ -28,6 +28,17 @@ from sti.config import Config, TASKS
 log = logging.getLogger("sti")
 
 
+def _shard(args):
+    """Which models to train and which hemispheres, for one cluster shard."""
+    tasks = [t.strip() for t in args.tasks.split(",")] if args.tasks else None
+    if tasks:
+        unknown = [t for t in tasks if t not in TASKS]
+        if unknown:
+            raise SystemExit(f"unknown task(s) {unknown}; choose from {sorted(TASKS)}")
+    hemis = tuple(args.hemi.split(",")) if args.hemi else ("L", "R")
+    return tasks, hemis
+
+
 def _out(path: str | Path) -> Path:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -72,7 +83,9 @@ def cmd_adult_loo(args) -> int:
     from sti.evaluate import adult_loo
 
     cfg, adults, conn, acts, _ = _load_inputs(args)
-    res, _ = adult_loo(conn, acts, list(adults.subjects), config=cfg)
+    tasks, hemis = _shard(args)
+    res, _ = adult_loo(conn, acts, list(adults.subjects), config=cfg,
+                       hemispheres=hemis, model_tasks=tasks)
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows)")
     return 0
@@ -82,7 +95,9 @@ def cmd_adult_average(args) -> int:
     from sti.evaluate import adult_group_mean_loo
 
     cfg, adults, conn, acts, _ = _load_inputs(args)
-    res, _ = adult_group_mean_loo(conn, acts, list(adults.subjects), config=cfg)
+    tasks, hemis = _shard(args)
+    res, _ = adult_group_mean_loo(conn, acts, list(adults.subjects), config=cfg,
+                                  hemispheres=hemis, model_tasks=tasks)
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows)")
     return 0
@@ -116,7 +131,9 @@ def cmd_neonatal(args) -> int:
         nconn = load_connectivity(cohort.n, neonatal=True, config=cfg)
         subjects = list(cohort.subjects)
 
-    res, preds = neonatal(conn, nconn, acts, subjects, config=cfg)
+    tasks, hemis = _shard(args)
+    res, preds = neonatal(conn, nconn, acts, subjects, config=cfg,
+                          hemispheres=hemis, model_tasks=tasks)
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows, {nconn.n_subjects} neonates)")
     if args.save_predictions:
@@ -141,7 +158,7 @@ def cmd_spatial_null(args) -> int:
     res = pd.read_csv(args.results)
     preds = np.load(args.predictions, allow_pickle=True)
 
-    rows = []
+    rows, null_dists = [], {}
     for hemi in sorted(res.hemi.unique()):
         gen = SurrogateMaps(distance_matrix(hemi, cfg), seed=args.seed)
         for task in sorted(res.task.unique()):
@@ -154,6 +171,7 @@ def cmd_spatial_null(args) -> int:
             target = load_activation(task, args.n_adults, config=cfg).zscored()[hemi].mean(axis=0)
             surr = gen.generate(target, args.n_surrogates)
             null = group_null_distribution(preds[key], surr)
+            null_dists[key] = null
             rows.append({
                 "hemi": hemi, "task": task, "observed_r": observed,
                 "null_mean": float(null.mean()), "null_sd": float(null.std()),
@@ -172,6 +190,20 @@ def cmd_spatial_null(args) -> int:
     out.to_csv(_out(args.output), index=False)
     print(out.round(4).to_string(index=False))
     print(f"\nwrote {args.output}")
+
+    if args.save_null and null_dists:
+        # the full distributions, so Fig. S8 can be redrawn without recomputing
+        np.savez_compressed(_out(args.save_null), **null_dists)
+        print(f"wrote {args.save_null} (null distributions)")
+    if args.figures and null_dists:
+        from sti import plotting as P
+        for key, null in null_dists.items():
+            task, hemi = key.split("__")
+            r = out[(out.hemi == hemi) & (out.task == task)].iloc[0]
+            fig = P.plot_spatial_null(
+                r.observed_r, null, p=r.p_spin,
+                title=f"{task.replace('tfMRI_', '')} {hemi}")
+            print(f"wrote {P.save(fig, f'spatial_null_{task}_{hemi}', cfg)}")
     return 0
 
 
@@ -280,6 +312,36 @@ def cmd_figures(args) -> int:
     return 0
 
 
+def cmd_merge(args) -> int:
+    """Concatenate result shards from a cluster run into one table."""
+    import glob
+
+    paths = sorted(p for pat in args.inputs for p in glob.glob(pat))
+    if not paths:
+        raise SystemExit(f"no files matched {args.inputs}")
+    frames = [pd.read_csv(p) for p in paths]
+    out = pd.concat(frames, ignore_index=True)
+
+    key = ["protocol", "task", "comparison_task", "hemi", "subject"]
+    key = [c for c in key if c in out.columns]
+    dupes = int(out.duplicated(subset=key).sum())
+    if dupes:
+        log.warning("%d duplicate rows across shards; keeping the first of each", dupes)
+        out = out.drop_duplicates(subset=key, keep="first")
+
+    out.to_csv(_out(args.output), index=False)
+    print(f"merged {len(paths)} shards -> {args.output} ({len(out)} rows)")
+    if {"task", "hemi"} <= set(out.columns):
+        got = out.groupby(["hemi", "task"]).size()
+        print(f"  {out.hemi.nunique()} hemispheres x {out.task.nunique()} model tasks, "
+              f"{out.subject.nunique()} subjects")
+        missing = [f"{h}/{t}" for h in sorted(out.hemi.unique()) for t in sorted(TASKS)
+                   if (h, t) not in got.index]
+        if missing:
+            log.warning("no rows for: %s -- a shard may have failed", ", ".join(missing))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="sti", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -300,6 +362,9 @@ def build_parser() -> argparse.ArgumentParser:
         s = sub.add_parser(name, help=helptext)
         s.add_argument("--cohort", default="adults_analysis")
         s.add_argument("-o", "--output", default=f"data/results/{name.replace('-', '_')}.csv")
+        s.add_argument("--tasks", default=None,
+                       help="comma-separated model tasks for this shard (default: all)")
+        s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
         s.set_defaults(func=fn)
 
     s = sub.add_parser("neonatal", help="adult models applied to neonates (Fig. 3)")
@@ -311,6 +376,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("-o", "--output", default="data/results/neonatal.csv")
     s.add_argument("--save-predictions", default=None,
                    help="npz of predicted maps; required for `sti spatial-null`")
+    s.add_argument("--tasks", default=None,
+                   help="comma-separated model tasks for this shard (default: all)")
+    s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
     s.set_defaults(func=cmd_neonatal)
 
     s = sub.add_parser("spatial-null", help="variogram-matched spatial null (Fig. S8)")
@@ -321,6 +389,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--n-adults", type=int, default=155)
     s.add_argument("--seed", type=int, default=0)
     s.add_argument("-o", "--output", default="data/results/spatial_null.csv")
+    s.add_argument("--save-null", default=None,
+                   help="npz of the full null distributions, for redrawing Fig. S8")
+    s.add_argument("--figures", action="store_true",
+                   help="also render one null histogram per task and hemisphere")
     s.set_defaults(func=cmd_spatial_null)
 
     s = sub.add_parser("scan-age", help="accuracy vs postmenstrual age at scan (Fig. S9)")
@@ -352,6 +424,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--n-boot", type=int, default=10000)
     s.add_argument("--seed", type=int, default=0)
     s.set_defaults(func=cmd_figures)
+
+    s = sub.add_parser("merge", help="concatenate result shards from a cluster run")
+    s.add_argument("--inputs", nargs="+", required=True, help="paths or globs")
+    s.add_argument("-o", "--output", required=True)
+    s.set_defaults(func=cmd_merge)
 
     return p
 

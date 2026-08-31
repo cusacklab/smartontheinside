@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 
 from sti.evaluate import Predictions, adult_group_mean_loo, adult_loo, neonatal, specificity_matrix
@@ -67,3 +68,34 @@ def test_group_mean_target_excludes_the_test_subject(synthetic):
                                   config=s["config"], hemispheres=("L",))
     assert len(res) == len(TASKS) * len(s["adults"]) * len(TASKS)
     assert res.pearson.notna().all()
+
+
+def test_model_tasks_shards_training_but_not_comparison(synthetic):
+    """A shard must still emit a complete row of the specificity matrix.
+
+    If restricting the models also restricted the comparison targets, each
+    cluster shard would return a 1x1 matrix and the merged result would have no
+    off-diagonal cells.
+    """
+    s = synthetic
+    shard, _ = neonatal(s["adult_conn"], s["neo_conn"], s["acts"], s["neonates"],
+                        config=s["config"], hemispheres=("L",), model_tasks=[TASKS[0]])
+    assert set(shard.task) == {TASKS[0]}                 # one model trained
+    assert set(shard.comparison_task) == set(TASKS)      # all targets compared
+    assert len(shard) == len(s["neonates"]) * len(TASKS)
+
+
+def test_shards_reproduce_the_unsharded_run(synthetic):
+    s = synthetic
+    full, _ = neonatal(s["adult_conn"], s["neo_conn"], s["acts"], s["neonates"],
+                       config=s["config"], hemispheres=("L",))
+    shards = [
+        neonatal(s["adult_conn"], s["neo_conn"], s["acts"], s["neonates"],
+                 config=s["config"], hemispheres=("L",), model_tasks=[t])[0]
+        for t in TASKS
+    ]
+    merged = pd.concat(shards, ignore_index=True)
+    key = ["task", "comparison_task", "hemi", "subject"]
+    j = full.merge(merged, on=key, suffixes=("_full", "_shard"))
+    assert len(j) == len(full)
+    assert np.allclose(j.pearson_full, j.pearson_shard)
