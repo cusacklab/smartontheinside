@@ -396,3 +396,52 @@ def plot_specificity_panel(results: pd.DataFrame, *, title: str = "", tasks=None
         fig.suptitle(title, fontsize=10, color=INK)
     fig.tight_layout()
     return fig
+
+
+def plot_protocol_comparison(comparison: pd.DataFrame, *, title: str = "",
+                             label_a: str = "neonatal", label_b: str = "adult"):
+    """Neonatal vs adult prediction accuracy per contrast (manuscript Fig. S7).
+
+    A dumbbell rather than paired bars: the quantity of interest is the *gap*
+    between two means, and a connecting segment shows a gap directly where two
+    bars make the reader subtract.
+    """
+    plt = _mpl()
+    col_a = next(c for c in comparison.columns if c.startswith("mean_") and label_a in c)
+    col_b = next(c for c in comparison.columns if c.startswith("mean_") and c != col_a)
+    hemis = sorted(comparison.hemi.unique())
+
+    # One row order for every panel, or the same y position means a different
+    # contrast in each hemisphere and the reader compares across the wrong rows.
+    order = (comparison.groupby("task")[col_b].mean().sort_values().index.tolist())
+
+    fig, axes = plt.subplots(1, len(hemis), figsize=(3.9 * len(hemis), 3.4), sharex=True)
+    axes = np.atleast_1d(axes)
+    for ax, hemi in zip(axes, hemis):
+        d = (comparison[comparison.hemi == hemi]
+             .set_index("task").reindex(order).reset_index())
+        y = np.arange(len(d))
+        for yi, (_, r) in zip(y, d.iterrows()):
+            ax.plot([r[col_a], r[col_b]], [yi, yi], color=GRID, lw=3,
+                    solid_capstyle="round", zorder=1)
+        ax.scatter(d[col_b], y, s=42, color=PALETTE[3], zorder=3, label=label_b, marker="D")
+        ax.scatter(d[col_a], y, s=42, color=PALETTE[0], zorder=3, label=label_a, marker="o")
+        for yi, (_, r) in zip(y, d.iterrows()):
+            star = r.get("stars", "")
+            star = "" if (star is None or (isinstance(star, float) and np.isnan(star))) else str(star)
+            if star:
+                ax.text(max(r[col_a], r[col_b]) + 0.012, yi, star, va="center",
+                        fontsize=8, color=INK)
+        ax.set_yticks(y)
+        ax.set_yticklabels([t.replace("tfMRI_", "") for t in d.task]
+                           if ax is axes[0] else [])
+        ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
+        ax.set_xlabel("prediction accuracy (r)", fontsize=9, color=INK)
+        ax.xaxis.grid(True, color=GRID, lw=0.6)
+        ax.set_ylim(-0.6, len(d) - 0.4)
+        _style(ax)
+    axes[-1].legend(fontsize=8, frameon=False, loc="lower right")
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig

@@ -96,7 +96,14 @@ class Config:
 
     @property
     def figure_dir(self) -> Path:
-        return Path(os.environ.get("STI_FIGURE_DIR", self.repo_root / "figures"))
+        """Where generated figures are written.
+
+        Defaults to ``figures/manuscript`` rather than ``figures`` so generated
+        output never mixes with ``figures/superseded`` (the pre-2026 figures) or
+        ``figures/upstream_docker_hcp`` (figures this repository does not
+        produce). See figures/README.md.
+        """
+        return Path(os.environ.get("STI_FIGURE_DIR", self.repo_root / "figures" / "manuscript"))
 
     @property
     def config_dir(self) -> Path:
