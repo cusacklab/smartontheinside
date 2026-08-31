@@ -84,6 +84,39 @@ participants, so the comparison is **paired**; treating them as independent grou
 loses power. `sti.stats.paired_bootstrap` implements the paired version and
 reports a t-test alongside for comparison.
 
+## 4b. Task specificity should be tested down columns, not along rows
+
+Found when the neonatal analysis was first run at n=325.
+
+The manuscript tests specificity along **rows** of the matrix: does a model
+trained on task T predict T better than it predicts some other task's map? That
+comparison mixes two things -- how *specific* the model is, and how *predictable
+each target map is*. The motor contrast is intrinsically hard to predict
+(r = 0.24 left, 0.16 right, against 0.33-0.46 for the others), so the motor model
+predicts every other map better than its own and fails the row test even though
+it is the best available predictor of the motor map.
+
+Testing down **columns** -- for a given target map, does the model trained on that
+task predict it better than models trained on other tasks -- holds target
+difficulty constant. On the same 325-neonate data:
+
+| Test | Comparisons with the diagonal significantly higher |
+|------|---------------------------------------------------|
+| row (as in the manuscript) | 26 / 40 |
+| column | **40 / 40** |
+
+Every target map is best predicted by its own model, in both hemispheres, with
+margins of 0.019 to 0.145 (median 0.067). The motor column is not an exception:
+everything predicts it poorly, but its own model predicts it best.
+
+This strengthens the specificity claim rather than weakening it, and it explains
+the hedge in the current figure captions ("within-task prediction *generally*
+exceeded between-task prediction"). Recommendation: report the column test as the
+primary specificity analysis and keep the row test as a secondary one, noting
+explicitly that the motor contrast is poorly predicted by every model.
+
+`sti.stats.specificity_tests(..., axis="column")`; `sti figures` writes both.
+
 ## 5. "Visually chosen" hyperparameters — defensible, but restate it
 
 The SI says alpha and the L1 ratio were "visually chosen" from a heatmap. Two
