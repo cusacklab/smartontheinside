@@ -97,8 +97,16 @@ variables, while age at scan lives in a per-subject `sessions.tsv`. The script
 joins them. All 325 analysed neonates have complete `scan_age` and `birth_age`,
 and none has more than one session.
 
-**Motion is not available.** The release publishes no per-subject motion
-summary: the diffusion JSON records `MotionCompensation: 1`, a flag rather than a
-metric, and eddy's movement-RMS outputs are not distributed. `sti scan-age`
-therefore defaults to `scan_age, birth_age`; pass `--predictors` to add a motion
-column if you derive one.
+**Motion is recoverable from the QC reports.** The release publishes no
+machine-readable motion file — the diffusion JSON's `MotionCompensation` field is
+a flag, not a metric — but each session's `_qc.pdf` is generated from eddy and
+page 2 carries the summary table:
+
+```bash
+python pipelines/00_cohorts/extract_motion.py -o config/neonatal_motion.tsv
+python pipelines/00_cohorts/build_covariates.py --motion config/neonatal_motion.tsv
+```
+
+That yields `mean_fd` (eddy's average relative, i.e. volume-to-volume, RMS
+displacement) for all 325 analysed neonates, plus outlier percentage, SNR and
+within-volume motion. Then pass `--predictors scan_age,birth_age,mean_fd`.

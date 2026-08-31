@@ -18,7 +18,7 @@ Sections 1, 3, 4, 7 and 8 each need an author call; 7 and 8 carry two apiece.
 | 4 | Promote the neonatal-vs-adult figure to the main text and move Fig. 4 to the SI | 7 |
 | 5 | Qualify "most of the adult structure is present at birth" — it holds for emotion and working memory, less so for language and motor | 7 |
 | 6 | Decide how to report the age effect, given age at scan and age at birth cannot be separated in a term-only cohort | 8 |
-| 7 | Derive a motion summary from the raw data, or drop the covariate from the SI text | 8 |
+| 7 | ~~Derive a motion summary, or drop the covariate~~ — **resolved**: recovered from the dHCP QC reports, which are generated from eddy | 8 |
 
 ---
 
@@ -269,13 +269,33 @@ but that a term-only cohort cannot attribute it specifically to age at scan
 rather than to age at birth. The effect is also small: 0.016 r across the whole
 7-week scan-age range, against a cohort accuracy range of 0.28–0.42.
 
-**Motion could not be included.** The manuscript specifies mean framewise
-displacement as a covariate. The dHCP diffusion release does not publish one:
-the pipeline JSON records `MotionCompensation: 1`, a flag that correction was
-applied rather than a metric, and eddy's movement-RMS outputs are not
-distributed. Of the session-level nuisance variables that *are* released,
-sedation has almost no variance here (5 of 325 infants). Either derive a motion
-summary from the raw data or drop the covariate from the SI text.
+**Motion is included after all.** The dHCP release ships no machine-readable
+motion file, but each session's `_qc.pdf` is generated from eddy — its header
+points at `PreProcessed/eddy/eddy_corrected.nii.gz` — and page 2 carries the
+summary table. `pipelines/00_cohorts/extract_motion.py` recovers it for all 325
+analysed neonates. The covariate used is eddy's *average relative motion*, the
+volume-to-volume RMS displacement, which is the diffusion analogue of framewise
+displacement (mean 1.70 mm, SD 0.91, range 0.56–6.93).
+
+Including it does what the manuscript intended — it absorbs noise variance and
+sharpens the age effect rather than merely adding a term:
+
+| Term | β per week | p without motion | p with motion |
+|---|---|---|---|
+| Age at scan | 0.0024 | 0.056 | **0.040** |
+| Gestational age at birth | 0.0043 | 0.006 | **0.007** |
+| Mean relative motion | −0.0037 mm⁻¹ | — | **0.014** |
+
+Motion is essentially orthogonal to both ages (VIF 1.00 against 2.0 for the two
+age terms), so it is a clean addition. Model R² rises from 0.107 to 0.123, and
+more motion predicts lower accuracy, as expected.
+
+**But do not overstate the age result.** Age at scan moves from p = 0.056 to
+p = 0.040 — from just above to just below a conventional threshold, which is not
+a robust distinction. The entanglement with age at birth (r = 0.71) is unchanged
+by adding motion, so the caveat above still stands: a term-only cohort cannot
+attribute the effect specifically to age at scan. Per contrast, only language
+survives correction (p_FDR = 0.0065).
 
 ## 9. Also worth a line in the Methods
 
