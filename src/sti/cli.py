@@ -89,12 +89,36 @@ def cmd_adult_average(args) -> int:
 
 
 def cmd_neonatal(args) -> int:
+    from sti.cohorts import load_cohort
+    from sti.datasets import load_all_activations, load_connectivity, load_connectivity_file
     from sti.evaluate import neonatal
 
-    cfg, adults, conn, acts, (neos, nconn) = _load_inputs(args, neonatal=True)
-    res, _ = neonatal(conn, nconn, acts, list(neos.subjects), config=cfg)
+    cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
+    adults = load_cohort(args.cohort, cfg)
+    acts = load_all_activations(TASKS, adults.n, config=cfg)
+    conn = load_connectivity(adults.n, config=cfg)
+
+    if args.connectivity:
+        # explicit array + its subject sidecar: the array's subjects are the
+        # truth, not the cohort file, because they can legitimately differ
+        nconn, subjects = load_connectivity_file(args.connectivity)
+        if subjects is None:
+            cohort = load_cohort(args.neonates, cfg)
+            if cohort.n != nconn.n_subjects:
+                log.error(
+                    "%s has %d subjects but cohort %s has %d, and no .subjects.txt "
+                    "sidecar is present to resolve which rows are which.",
+                    args.connectivity, nconn.n_subjects, args.neonates, cohort.n)
+                return 1
+            subjects = list(cohort.subjects)
+    else:
+        cohort = load_cohort(args.neonates, cfg)
+        nconn = load_connectivity(cohort.n, neonatal=True, config=cfg)
+        subjects = list(cohort.subjects)
+
+    res, _ = neonatal(conn, nconn, acts, subjects, config=cfg)
     res.to_csv(_out(args.output), index=False)
-    print(f"wrote {args.output} ({len(res)} rows, {neos.n} neonates)")
+    print(f"wrote {args.output} ({len(res)} rows, {nconn.n_subjects} neonates)")
     return 0
 
 
@@ -197,6 +221,34 @@ def cmd_build_connectivity(args) -> int:
     return 0
 
 
+def cmd_figures(args) -> int:
+    """Render the accuracy and task-specificity figures for a results CSV."""
+    from sti import plotting as P
+    from sti.stats import specificity_tests
+
+    cfg = Config()
+    res = pd.read_csv(args.results)
+    prefix = args.prefix or Path(args.results).stem
+
+    tests = specificity_tests(res, n_boot=args.n_boot, seed=args.seed)
+    outs = [
+        P.save(P.plot_accuracy(res, title=args.title), f"{prefix}_accuracy", cfg),
+        P.save(P.plot_specificity_matrix(res, tests=tests, title=args.title),
+               f"{prefix}_specificity", cfg),
+    ]
+    tests_csv = _out(Path(args.results).with_name(f"{prefix}_specificity_tests.csv"))
+    tests.to_csv(tests_csv, index=False)
+    for o in outs:
+        print(f"wrote {o}")
+    print(f"wrote {tests_csv}")
+
+    within = res[res.task == res.comparison_task]
+    print("\nmean within-task accuracy (r):")
+    print(within.groupby(["hemi", "task"])["pearson"].agg(["mean", "std", "count"])
+          .round(4).to_string())
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="sti", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -222,6 +274,9 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("neonatal", help="adult models applied to neonates (Fig. 3)")
     s.add_argument("--cohort", default="adults_analysis")
     s.add_argument("--neonates", default="neonates_batch2")
+    s.add_argument("--connectivity", default=None,
+                   help="explicit connectivity array; its .subjects.txt sidecar "
+                        "names the rows, overriding --neonates")
     s.add_argument("-o", "--output", default="data/results/neonatal.csv")
     s.set_defaults(func=cmd_neonatal)
 
@@ -254,6 +309,14 @@ def build_parser() -> argparse.ArgumentParser:
                    help="build from the available subjects instead of failing")
     s.add_argument("-o", "--output", required=True)
     s.set_defaults(func=cmd_build_connectivity)
+
+    s = sub.add_parser("figures", help="render accuracy and specificity figures")
+    s.add_argument("--results", required=True)
+    s.add_argument("--prefix", default=None)
+    s.add_argument("--title", default="")
+    s.add_argument("--n-boot", type=int, default=10000)
+    s.add_argument("--seed", type=int, default=0)
+    s.set_defaults(func=cmd_figures)
 
     return p
 

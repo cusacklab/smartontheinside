@@ -89,3 +89,47 @@ def test_build_connectivity_transposes_parcels_to_the_last_axis(tmp_path, monkey
     assert X.shape == (1, nv, N_PARCELS)
     assert np.allclose(X[0, :, 6], 5.0)
     assert 999.0 not in X
+
+
+def _write_conn(path, n, nv_l=None, nv_r=None):
+    from sti.config import N_PARCELS, N_SEED_VERTICES
+    d = {"L": np.zeros((n, nv_l or N_SEED_VERTICES["L"], N_PARCELS), np.float32),
+         "R": np.zeros((n, nv_r or N_SEED_VERTICES["R"], N_PARCELS), np.float32)}
+    np.save(path, d, allow_pickle=True)
+
+
+def test_load_connectivity_file_reads_the_subject_sidecar(tmp_path):
+    from sti.datasets import load_connectivity_file
+
+    p = tmp_path / "conn.npy"
+    _write_conn(p, 3)
+    p.with_suffix(".subjects.txt").write_text("CC1\nCC2\nCC3\n")
+    conn, subs = load_connectivity_file(p)
+    assert conn.n_subjects == 3 and subs == ["CC1", "CC2", "CC3"]
+
+
+def test_sidecar_disagreeing_with_the_array_is_an_error(tmp_path):
+    """A 326-subject cohort against a 325-row array would mislabel every row."""
+    from sti.datasets import load_connectivity_file
+
+    p = tmp_path / "conn.npy"
+    _write_conn(p, 3)
+    p.with_suffix(".subjects.txt").write_text("CC1\nCC2\n")
+    with pytest.raises(ValueError, match="lists 2 subjects but"):
+        load_connectivity_file(p)
+
+
+def test_load_connectivity_file_without_sidecar_returns_none(tmp_path):
+    from sti.datasets import load_connectivity_file
+
+    p = tmp_path / "conn.npy"
+    _write_conn(p, 2)
+    conn, subs = load_connectivity_file(p)
+    assert conn.n_subjects == 2 and subs is None
+
+
+def test_missing_connectivity_file_is_explicit(tmp_path):
+    from sti.datasets import load_connectivity_file
+
+    with pytest.raises(MissingDataError, match="not found"):
+        load_connectivity_file(tmp_path / "nope.npy")
