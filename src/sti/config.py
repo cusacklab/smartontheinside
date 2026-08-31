@@ -61,6 +61,29 @@ ALPHA_GRID: tuple[float, ...] = (0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4, 12.8, 25.6, 
 L1_RATIO_GRID: tuple[float, ...] = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0)
 
 
+#: Filename stem for each figure, keyed by the analysis that produces it.
+#:
+#: Figure numbers move during review, so they live here rather than scattered
+#: through the CLI: renumbering is a one-line edit per figure, and the filenames
+#: cannot drift out of step with each other.
+#:
+#: Current assignment follows the authors' decision to promote the
+#: neonatal-vs-adult comparison to the main text and move the adult
+#: group-average panel to the SI, which is a straight swap of those two slots.
+FIGURES: dict[str, str] = {
+    "adult_loo": "Fig2_adult_own_activation",
+    "neonatal": "Fig3_neonatal",
+    "neonate_vs_adult": "Fig4_neonate_vs_adult",   # promoted from S7
+    "similarity_matrix": "S3_similarity_matrix",
+    "dendrogram": "S4_dendrogram",
+    "parcel_profiles": "S5_parcel_profiles",
+    "hyperparameter_grid": "S6_hyperparameter_grid",
+    "adult_average": "S7_adult_group_average",     # demoted from Fig. 4
+    "spatial_null": "S8_spatial_null",
+    "scan_age": "S9_scan_age",
+}
+
+
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 

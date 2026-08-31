@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from sti.config import Config, TASKS
+from sti.config import Config, FIGURES, TASKS
 
 log = logging.getLogger("sti")
 
@@ -203,7 +203,8 @@ def cmd_spatial_null(args) -> int:
             fig = P.plot_spatial_null(
                 r.observed_r, null, p=r.p_spin,
                 title=f"{task.replace('tfMRI_', '')} {hemi}")
-            print(f"wrote {P.save(fig, f'S8_spatial_null_{task}_{hemi}', cfg)}")
+            stem = f"{FIGURES['spatial_null']}_{task}_{hemi}"
+            print(f"wrote {P.save(fig, stem, cfg)}")
     return 0
 
 
@@ -240,7 +241,7 @@ def cmd_scan_age(args) -> int:
 
         acc = subject_accuracy(res).groupby("subject", as_index=False)["accuracy"].mean()
         fig = P.plot_scan_age(acc, cov, title="Prediction accuracy vs age at scan (n=325)")
-        print(f"wrote {P.save(fig, 'S9_scan_age', cfg)}")
+        print(f"wrote {P.save(fig, FIGURES['scan_age'], cfg)}")
     return 0
 
 
@@ -439,12 +440,12 @@ def cmd_contrasts(args) -> int:
         labels = [f"{h}{p}" for h in ("L", "R") for p in DLPFC_PARCELS[h]]
         outs = [
             P.save(P.plot_similarity_matrix(rsm, CONTRASTS, highlight=REPRESENTATIVES,
-                   title="Similarity of DLPFC activation patterns"), "S3_similarity_matrix", cfg),
+                   title="Similarity of DLPFC activation patterns"), FIGURES["similarity_matrix"], cfg),
             P.save(P.plot_dendrogram(linkage(rsm), CONTRASTS, threshold=args.threshold,
                    highlight=REPRESENTATIVES,
-                   title="Hierarchical clustering of contrasts"), "S4_dendrogram", cfg),
+                   title="Hierarchical clustering of contrasts"), FIGURES["dendrogram"], cfg),
             P.save(P.plot_parcel_profiles(parcel_profiles(data), labels,
-                   title="Activation across the 26 DLPFC parcels"), "S5_parcel_profiles", cfg),
+                   title="Activation across the 26 DLPFC parcels"), FIGURES["parcel_profiles"], cfg),
         ]
         for o in outs:
             print(f"wrote {o}")
@@ -522,7 +523,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("-o", "--output", default=None)
     s.add_argument("--n-boot", type=int, default=10000)
     s.add_argument("--figures", action="store_true")
-    s.add_argument("--prefix", default="S7_neonate_vs_adult")
+    s.add_argument("--prefix", default=FIGURES["neonate_vs_adult"])
     s.add_argument("--title", default="")
     s.set_defaults(func=cmd_compare)
 

@@ -12,7 +12,7 @@ produce.
 | Fig. 1 | Overview schematic | Hand-drawn — no code | **Not in this repo** |
 | Fig. 2 | Adult, own activation | `sti adult-loo` → `sti figures` | `manuscript/Fig2_adult_own_activation_*` |
 | Fig. 3 | Neonatal prediction | `sti neonatal` → `sti figures` | `manuscript/Fig3_neonatal_*` |
-| Fig. 4 | Adult, group-average map | `sti adult-average` → `sti figures` | `manuscript/Fig4_adult_group_average_*` |
+| Fig. 4 | Neonatal vs adult accuracy, + % of adult | `sti compare --figures` | `manuscript/Fig4_neonate_vs_adult.png` |
 
 ## SI
 
@@ -24,7 +24,7 @@ produce.
 | Fig. S4 | Hierarchical clustering | `sti contrasts --figures` | `manuscript/S4_dendrogram.png` |
 | Fig. S5 | DLPFC parcel activation profiles | `sti contrasts --figures` | `manuscript/S5_parcel_profiles.png` |
 | Fig. S6 | Hyperparameter grid | `sti hyperparams` → `plot_hyperparameter_grid` | `manuscript/S6_hyperparameter_grid.png` |
-| Fig. S7 | Neonatal vs adult accuracy, + % of adult | `sti compare --figures` | `manuscript/S7_neonate_vs_adult.png` — **proposed for main text**, see docs/MANUSCRIPT_CHANGES.md |
+| Fig. S7 | Adult, group-average map | `sti adult-average` → `sti figures` | `manuscript/S7_adult_group_average_*` |
 | Fig. S8 | Spatial null | `sti spatial-null --figures` | `manuscript/S8_spatial_null_*.png` (10) |
 | Fig. S9 | Accuracy vs age at scan | `sti scan-age --figures` | `manuscript/S9_scan_age.png` |
 | Table S1 | The 26 DLPFC parcels | `pipelines/02_rois/make_table_s1.py` | `data/results/table_S1_*.tsv` |
@@ -54,6 +54,15 @@ figures. Kept for comparison with the current manuscript draft; do not reuse.
 Files are named for the figure they become: `Fig2_`, `Fig3_`, `Fig4_` for the
 main text and `S3_`–`S9_` for the SI, so a filename maps to a manuscript slot
 without cross-referencing this table.
+
+The numbers live in one place, `sti.config.FIGURES`, rather than scattered
+through the CLI — figure numbers move during review, and a renumber should be a
+one-line edit per figure that cannot leave the filenames inconsistent with each
+other.
+
+Following the authors' decision, the neonatal-vs-adult comparison is Fig. 4 and
+the adult group-average panel moved to S7 — a straight swap of those two slots,
+leaving S3–S6 and S8–S9 untouched.
 
 ## The specificity heatmap is not part of the figure set
 
