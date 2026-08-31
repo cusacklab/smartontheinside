@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-1 analysis=adult-loo array_id=3 task=tfMRI_MOTOR hemi=R threads=4
+started 2026-08-31T12:29:29+00:00
+12:35:01 INFO adult_loo done: task=tfMRI_MOTOR hemi=R
+wrote data/results/shards/adult_loo_tfMRI_MOTOR_R.csv (775 rows)
+finished 2026-08-31T12:35:02+00:00

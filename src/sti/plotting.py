@@ -445,3 +445,81 @@ def plot_protocol_comparison(comparison: pd.DataFrame, *, title: str = "",
         fig.suptitle(title, fontsize=10, color=INK)
     fig.tight_layout()
     return fig
+
+
+def plot_similarity_matrix(rsm, labels, *, title: str = "", highlight=()):
+    """Contrast-by-contrast similarity of DLPFC activation patterns (Fig. S3).
+
+    A signed correlation, so a diverging map with a neutral midpoint at zero --
+    the original rendered this in viridis, a sequential map, which makes the sign
+    of a correlation unreadable. Representative contrasts are marked.
+    """
+    plt = _mpl()
+    n = len(labels)
+    fig, ax = plt.subplots(figsize=(7.4, 6.6))
+    im = ax.imshow(rsm, cmap=diverging_cmap(), vmin=-1, vmax=1)
+    ax.set_xticks(range(n)); ax.set_yticks(range(n))
+    short = [l.replace("WORKING_MEM", "WM").replace("RELATIONAL", "REL") for l in labels]
+    ax.set_xticklabels(short, fontsize=5.5, rotation=45, ha="right")
+    ax.set_yticklabels(short, fontsize=5.5)
+    for i, l in enumerate(labels):
+        if l in highlight:
+            for lbl in (ax.get_xticklabels()[i], ax.get_yticklabels()[i]):
+                lbl.set_color(PALETTE[4]); lbl.set_fontweight("bold")
+    ax.tick_params(length=0, colors=MUTED)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    fig.colorbar(im, ax=ax, shrink=0.7, label="r")
+    if title:
+        ax.set_title(title, fontsize=10, color=INK, pad=10)
+    fig.tight_layout()
+    return fig
+
+
+def plot_dendrogram(Z, labels, *, threshold: float = 1.0, title: str = "", highlight=()):
+    """Hierarchical clustering of the contrasts, with the cut shown (Fig. S4)."""
+    plt = _mpl()
+    from scipy.cluster.hierarchy import dendrogram
+
+    fig, ax = plt.subplots(figsize=(6.4, 7.4))
+    short = [l.replace("WORKING_MEM", "WM").replace("RELATIONAL", "REL") for l in labels]
+    dendrogram(Z, labels=short, orientation="right", ax=ax,
+               color_threshold=threshold, above_threshold_color=MUTED)
+    ax.axvline(threshold, color=PALETTE[4], lw=1.4, ls="--",
+               label=f"cut at {threshold:g}")
+    for lbl in ax.get_yticklabels():
+        raw = lbl.get_text()
+        if any(raw == h.replace("WORKING_MEM", "WM").replace("RELATIONAL", "REL")
+               for h in highlight):
+            lbl.set_color(PALETTE[4]); lbl.set_fontweight("bold")
+    ax.tick_params(labelsize=6, colors=MUTED)
+    ax.set_xlabel("Ward distance", fontsize=9, color=INK)
+    ax.legend(fontsize=8, frameon=False, loc="lower right")
+    _style(ax)
+    if title:
+        ax.set_title(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_parcel_profiles(profiles, parcel_labels, *, title: str = ""):
+    """Activation profile across the 26 DLPFC parcels per contrast (Fig. S5)."""
+    plt = _mpl()
+    tasks = list(profiles)
+    fig, axes = plt.subplots(len(tasks), 1, figsize=(8.2, 1.55 * len(tasks)), sharex=True)
+    axes = np.atleast_1d(axes)
+    for i, (ax, task) in enumerate(zip(axes, tasks)):
+        colour = PALETTE[i % len(PALETTE)]
+        ax.bar(range(len(parcel_labels)), profiles[task], color=colour, width=0.72)
+        ax.axhline(0, color=MUTED, lw=0.8)
+        ax.set_ylabel(task.replace("WORKING_MEM", "WM"), fontsize=7, color=INK,
+                      rotation=0, ha="right", va="center")
+        ax.yaxis.grid(True, color=GRID, lw=0.6)
+        _style(ax)
+    axes[-1].set_xticks(range(len(parcel_labels)))
+    axes[-1].set_xticklabels(parcel_labels, rotation=90, fontsize=6)
+    axes[-1].set_xlabel("DLPFC parcel", fontsize=9, color=INK)
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig

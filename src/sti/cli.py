@@ -366,6 +366,48 @@ def cmd_merge(args) -> int:
     return 0
 
 
+def cmd_contrasts(args) -> int:
+    """Contrast selection: the RSA, clustering and parcel profiles (Figs. S3-S5)."""
+    import numpy as np
+
+    from sti import plotting as P
+    from sti.config import DLPFC_PARCELS
+    from sti.contrasts import (CONTRASTS, REPRESENTATIVES, clusters, linkage,
+                               load_contrast_betas, parcel_profiles, similarity_matrix)
+
+    cfg = Config()
+    data = load_contrast_betas(cfg)
+    rsm = similarity_matrix(data)
+    assign = clusters(rsm, threshold=args.threshold)
+
+    print(f"{data.shape[0]} subjects x {data.shape[1]} contrasts x {data.shape[2]} parcels")
+    print(f"clusters at threshold {args.threshold:g}: {len(set(assign))}\n")
+    for c in sorted(set(assign)):
+        members = [CONTRASTS[i] for i in range(len(assign)) if assign[i] == c]
+        rep = [m for m in members if m in REPRESENTATIVES]
+        print(f"  cluster {c} (n={len(members):2d})  representative: {rep[0] if rep else '-'}")
+    n_with_rep = sum(1 for c in set(assign)
+                     if any(CONTRASTS[i] in REPRESENTATIVES
+                            for i in range(len(assign)) if assign[i] == c))
+    print(f"\nclusters containing a published representative: "
+          f"{n_with_rep}/{len(set(assign))}")
+
+    if args.figures:
+        labels = [f"{h}{p}" for h in ("L", "R") for p in DLPFC_PARCELS[h]]
+        outs = [
+            P.save(P.plot_similarity_matrix(rsm, CONTRASTS, highlight=REPRESENTATIVES,
+                   title="Similarity of DLPFC activation patterns"), "S3_similarity_matrix", cfg),
+            P.save(P.plot_dendrogram(linkage(rsm), CONTRASTS, threshold=args.threshold,
+                   highlight=REPRESENTATIVES,
+                   title="Hierarchical clustering of contrasts"), "S4_dendrogram", cfg),
+            P.save(P.plot_parcel_profiles(parcel_profiles(data), labels,
+                   title="Activation across the 26 DLPFC parcels"), "S5_parcel_profiles", cfg),
+        ]
+        for o in outs:
+            print(f"wrote {o}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="sti", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -459,6 +501,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--inputs", nargs="+", required=True, help="paths or globs")
     s.add_argument("-o", "--output", required=True)
     s.set_defaults(func=cmd_merge)
+
+    s = sub.add_parser("contrasts", help="contrast selection: RSA and clustering (Figs. S3-S5)")
+    s.add_argument("--threshold", type=float, default=1.0,
+                   help="dendrogram cut height (SI uses 1.0)")
+    s.add_argument("--figures", action="store_true")
+    s.set_defaults(func=cmd_contrasts)
 
     return p
 
