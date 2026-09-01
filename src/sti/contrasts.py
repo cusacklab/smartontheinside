@@ -132,3 +132,68 @@ def parcel_profiles(data: np.ndarray, contrasts=REPRESENTATIVES) -> dict:
     """Mean beta per DLPFC parcel for each representative contrast (Fig. S5)."""
     mean = data.mean(axis=0)
     return {c: mean[CONTRASTS.index(c)] for c in contrasts if c in CONTRASTS}
+
+
+def parcel_profile_anova(data: np.ndarray, contrasts=REPRESENTATIVES) -> "pd.DataFrame":
+    """Do DLPFC parcels differ in which contrasts they respond to? (Fig. S5)
+
+    Every participant contributes a value for every contrast and every parcel, so
+    contrast and parcel are both **within-subject** factors and the design is a
+    two-way repeated-measures ANOVA. The error term for each effect is that
+    effect's interaction with subject.
+
+    Also returns the naive fixed-effects result -- a two-way ANOVA that ignores
+    subject and treats all n x contrasts x parcels observations as independent.
+    That model is what produced the F values in the current draft, and it is
+    wrong here: pooling within-subject variance into the residual inflates the
+    denominator degrees of freedom from hundreds or thousands to over 22,000.
+
+    The effect of interest is the contrast-by-parcel interaction: a main effect
+    of parcel alone would mean some parcels are simply more active than others,
+    not that they differ in *which* contrast drives them.
+    """
+    import pandas as pd
+    from scipy.stats import f as fdist
+
+    idx = [CONTRASTS.index(c) for c in contrasts]
+    x = data[:, idx, :]
+    n, k, p = x.shape
+
+    g = x.mean()
+    Sm, Cm, Pm = x.mean((1, 2)), x.mean((0, 2)), x.mean((0, 1))
+    CPm, SCm, SPm = x.mean(0), x.mean(2), x.mean(1)
+
+    ss = {
+        "contrast": n * p * ((Cm - g) ** 2).sum(),
+        "parcel": n * k * ((Pm - g) ** 2).sum(),
+        "contrast x parcel": n * ((CPm - Cm[:, None] - Pm[None, :] + g) ** 2).sum(),
+    }
+    ss_subject = k * p * ((Sm - g) ** 2).sum()
+    err = {
+        "contrast": p * ((SCm - Sm[:, None] - Cm[None, :] + g) ** 2).sum(),
+        "parcel": k * ((SPm - Sm[:, None] - Pm[None, :] + g) ** 2).sum(),
+    }
+    total = ((x - g) ** 2).sum()
+    err["contrast x parcel"] = (total - sum(ss.values()) - ss_subject
+                                - err["contrast"] - err["parcel"])
+    dfn = {"contrast": k - 1, "parcel": p - 1, "contrast x parcel": (k - 1) * (p - 1)}
+    dfe = {e: dfn[e] * (n - 1) for e in dfn}
+
+    # the naive model the draft reports: no subject term at all
+    naive_dfe = n * k * p - k * p
+    naive_mse = (total - sum(ss.values())) / naive_dfe
+
+    rows = []
+    for effect in ("contrast", "parcel", "contrast x parcel"):
+        f_rm = (ss[effect] / dfn[effect]) / (err[effect] / dfe[effect])
+        f_naive = (ss[effect] / dfn[effect]) / naive_mse
+        rows.append({
+            "effect": effect,
+            "df1": dfn[effect], "df2": dfe[effect],
+            "F": f_rm, "p": float(fdist.sf(f_rm, dfn[effect], dfe[effect])),
+            "generalised_eta_sq": ss[effect] / (total - ss_subject + ss_subject),
+            "naive_df2": naive_dfe, "naive_F": f_naive,
+        })
+    out = pd.DataFrame(rows)
+    out.attrs["n_subjects"] = n
+    return out

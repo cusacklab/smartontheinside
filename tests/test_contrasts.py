@@ -62,3 +62,44 @@ def test_parcel_profiles_shape(data):
     assert set(prof) == set(REPRESENTATIVES)
     for v in prof.values():
         assert v.shape == (len(ALL_DLPFC_PARCELS),)
+
+
+def test_anova_reproduces_the_published_F_values_under_the_naive_model(data):
+    """The draft's F values come from a model that ignores subject.
+
+    Pinning this down is the point of the check: the reported F(4)=879.9,
+    F(25)=177.9 and F(100)=112.0 are reproduced exactly by a two-way ANOVA with
+    no subject term, which confirms what was run and that it was not the
+    mixed-effects model the text describes.
+    """
+    from sti.contrasts import parcel_profile_anova
+
+    t = parcel_profile_anova(data).set_index("effect")
+    assert t.loc["contrast", "naive_F"] == pytest.approx(879.9, abs=0.1)
+    assert t.loc["parcel", "naive_F"] == pytest.approx(177.9, abs=0.1)
+    assert t.loc["contrast x parcel", "naive_F"] == pytest.approx(112.0, abs=0.1)
+    assert (t["naive_df2"] == 22750).all()
+
+
+def test_anova_repeated_measures_degrees_of_freedom(data):
+    """Both factors are within-subject, so each error df is df1 x (n-1)."""
+    from sti.contrasts import parcel_profile_anova
+
+    t = parcel_profile_anova(data)
+    n = t.attrs["n_subjects"]
+    for _, r in t.iterrows():
+        assert r.df2 == r.df1 * (n - 1), r.effect
+    got = {r.effect: (r.df1, r.df2) for _, r in t.iterrows()}
+    assert got == {"contrast": (4, 700), "parcel": (25, 4375),
+                   "contrast x parcel": (100, 17500)}
+
+
+def test_anova_conclusion_survives_the_correction(data):
+    """The interaction is the effect the claim rests on, and it strengthens."""
+    from sti.contrasts import parcel_profile_anova
+
+    t = parcel_profile_anova(data).set_index("effect")
+    assert (t["p"] < 1e-10).all()
+    inter = t.loc["contrast x parcel"]
+    assert inter.F > inter.naive_F          # correcting raises it, not lowers it
+    assert inter.generalised_eta_sq == max(t["generalised_eta_sq"])

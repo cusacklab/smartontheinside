@@ -297,6 +297,43 @@ by adding motion, so the caveat above still stands: a term-only cohort cannot
 attribute the effect specifically to age at scan. Per contrast, only language
 survives correction (p_FDR = 0.0065).
 
+## 8b. The parcel-profile ANOVA is the wrong model **[NUMBERS CHANGE]**
+
+The draft reports "a mixed-effects ANOVA" with F(25) = 177.9, F(4) = 879.9 and
+F(100) = 112.0. Two problems.
+
+**Only one degree of freedom is given per F.** An F ratio needs both numerator
+and denominator; all three are missing the denominator.
+
+**It is not the model described.** Those three values are reproduced *exactly*
+by a two-way ANOVA with no participant term, treating all 176 x 5 x 26 = 22,880
+observations as independent — confirmed to the decimal in
+`tests/test_contrasts.py`. Both factors are within-subject, so pooling
+within-participant variance into the residual inflates the denominator df from
+hundreds or thousands to 22,750.
+
+Corrected, as a two-way repeated-measures ANOVA:
+
+| Effect | Reported | Correct |
+|---|---|---|
+| Parcel | F(25) = 177.9 | F(25, 4375) = 181.7 |
+| Contrast | F(4) = 879.9 | F(4, 700) = **101.4** |
+| Parcel x contrast | F(100) = 112.0 | F(100, 17500) = **192.5** |
+
+**The conclusion is unchanged and the key effect strengthens.** All three remain
+p < 0.0001. The contrast main effect falls by a factor of nearly nine, but the
+parcel-by-contrast interaction — the effect the claim actually rests on, since a
+parcel main effect alone would only mean some parcels are more active than
+others — rises from 112.0 to 192.5 and is the largest effect
+(generalised η² = 0.27).
+
+Sphericity is violated (Greenhouse–Geisser ε = 0.91, 0.54 and 0.18); all three
+effects remain p < 0.0001 after correction. Note also that the SI already flags
+this analysis as circular, since the contrasts were selected to be distinct, so
+it is a check rather than an inferential claim.
+
+`sti.contrasts.parcel_profile_anova` returns both models side by side.
+
 ## 9. Also worth a line in the Methods
 
 - **Targets.** The connectivity arrays carry 360 columns, not 334. The 26 DLPFC
