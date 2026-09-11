@@ -72,9 +72,7 @@ mean:
   **155 adults and 183 neonates**. Tractography is available for **325** of the
   326, so the full rerun is feasible — build the array with
   `sti build-connectivity --cohort neonates_term_all --allow-missing`;
-- the per-task adult activation arrays — the models' `y` — were overwritten on
-  the working S3 bucket, but have been **recovered** from
-  `s3://foundcog/backups-2026-01-27/`.
+
 
 ## Credit
 
