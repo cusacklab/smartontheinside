@@ -86,6 +86,10 @@ results in the current manuscript — is archived at
 [chiaracc/smartontheinside](https://github.com/chiaracc/smartontheinside) and is
 the reference for anything in [docs/FINDINGS.md](docs/FINDINGS.md).
 
+## License
+
+This code is free for noncommercial use — including academic research and education — under the PolyForm Noncommercial License 1.0.0. Commercial use requires a separate license, available on request (see COMMERCIAL-LICENSE.md or contact cusackrh@tcd.ie).
+
 ## Citation
 
 See [CITATION.cff](CITATION.cff).
