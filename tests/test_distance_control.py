@@ -120,6 +120,7 @@ def test_regress_distance_removes_decay_and_keeps_structure():
     res = regress_distance(conn, {"L": d})
     assert res.cohort.endswith("distance_regressed")
     for s in range(n_sub):
+        assert res["L"][s].std() == pytest.approx(1.0, rel=1e-3)  # unit scale
         raw_r = np.corrcoef(np.log1p(X[s]).ravel(), d.ravel())[0, 1]
         res_r = np.corrcoef(res["L"][s].ravel(), d.ravel())[0, 1]
         assert abs(res_r) < 0.05 < abs(raw_r)

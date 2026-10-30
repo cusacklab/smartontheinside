@@ -1,0 +1,9 @@
+host=high-memory-dy-r6a-4xlarge-5 array_id=7 task=tfMRI_SOCIAL hemi=R threads=4
+started 2026-10-30T15:01:04+00:00
+15:01:17 INFO distance regressed out: hemi=L (155 subjects)
+15:01:22 INFO distance regressed out: hemi=R (155 subjects)
+15:01:40 INFO distance regressed out: hemi=L (325 subjects)
+15:01:50 INFO distance regressed out: hemi=R (325 subjects)
+15:01:52 INFO neonatal done: task=tfMRI_SOCIAL hemi=R (n=325)
+wrote data/results/shards/distance_regressed_tfMRI_SOCIAL_R.csv (1625 rows, 325 neonates)
+finished 2026-10-30T15:01:53+00:00

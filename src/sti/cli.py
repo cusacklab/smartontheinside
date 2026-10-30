@@ -271,6 +271,25 @@ def cmd_distance_control(args) -> int:
                                       positional_share, regress_distance)
 
     cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
+
+    if args.tune:
+        # penalty selection for regressed features, on the tuning adults only
+        from sti.datasets import load_connectivity
+        from sti.distance_control import tune_regressed
+
+        tuning = load_cohort(args.tune_cohort, cfg)
+        acts = load_all_activations(TASKS, tuning.n, config=cfg)
+        conn = load_connectivity(tuning.n, config=cfg)
+        dists = {h: distance_features(h, config=cfg) for h in ("L", "R")}
+        grid = tune_regressed(conn, acts, dists, config=cfg)
+        print(grid.round(4).to_string(index=False))
+        best = grid.iloc[0]
+        print(f"\nbest: --alpha {best.alpha:g} --l1-ratio {best.l1_ratio:g}")
+        if args.output:
+            grid.to_csv(_out(args.output), index=False)
+            print(f"wrote {args.output}")
+        return 0
+
     adults = load_cohort(args.cohort, cfg)
     acts = load_all_activations(TASKS, adults.n, config=cfg)
     dists = {h: distance_features(h, config=cfg) for h in ("L", "R")}
@@ -638,6 +657,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--regress", action="store_true",
                    help="run the full neonatal protocol on distance-regressed "
                         "connectivity instead of the distance-only model")
+    s.add_argument("--tune", action="store_true",
+                   help="select the elastic-net penalty for regressed features "
+                        "on the held-out tuning adults, then exit")
+    s.add_argument("--tune-cohort", default="adults_hyperparam")
     s.add_argument("--neonates", default="neonates_term_all")
     s.add_argument("--connectivity", default=None,
                    help="explicit connectivity array; its .subjects.txt sidecar "

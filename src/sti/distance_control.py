@@ -239,6 +239,14 @@ def regress_distance(
     is per subject, so differences in head size (neonates vs adults) land in
     each subject's own decay constant rather than in the residuals. Excluded
     (DLPFC) columns have ``d == 0`` and stay identically zero.
+
+    Each subject's residuals are scaled to unit SD. Raw counts sit in the
+    thousands while log residuals sit near 1, so the published penalty —
+    selected for raw counts — would shrink every coefficient to zero (it did:
+    7 of 10 cells returned constant predictions on the first cluster run).
+    Per-subject scaling gives both cohorts the same feature scale with no
+    cross-cohort bookkeeping, and the correlation metric is invariant to it.
+    The penalty must still be re-selected for this scale: :func:`tune_regressed`.
     """
     out: dict[Hemisphere, np.ndarray] = {}
     for hemi, X in connectivity.data.items():
@@ -250,9 +258,52 @@ def regress_distance(
         for s in range(X.shape[0]):
             c = np.log1p(np.asarray(X[s], dtype=np.float32).reshape(-1)[keep])
             coef, *_ = np.linalg.lstsq(A, c, rcond=None)
+            r = c - A @ coef
             flat = np.zeros(d.size, dtype=np.float32)
-            flat[keep] = c - A @ coef
+            flat[keep] = r / r.std()
             res[s] = flat.reshape(d.shape)
         out[hemi] = res
         log.info("distance regressed out: hemi=%s (%d subjects)", hemi, X.shape[0])
     return Connectivity(data=out, cohort=f"{connectivity.cohort}_distance_regressed")
+
+
+def tune_regressed(
+    connectivity: Connectivity,
+    activations: dict[Task, Activation],
+    distances: dict[Hemisphere, np.ndarray],
+    *,
+    alphas: tuple[float, ...] = (0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3),
+    l1_ratios: tuple[float, ...] = (0.2, 0.6),
+    config: Config = DEFAULT_CONFIG,
+) -> pd.DataFrame:
+    """Select the elastic-net penalty for distance-regressed features.
+
+    Mirrors the paper's design: hyperparameters are chosen on the held-out
+    tuning adults only, so the reported neonatal result stays independent of
+    the selection. The tuning cohort is split in half (first/second, the order
+    is arbitrary), models are fitted on one half and score each held-out
+    subject's own map; the criterion is the mean within-task correlation over
+    tasks and hemispheres. Returns the grid sorted best-first.
+    """
+    reg = regress_distance(connectivity, distances)
+    n = reg.n_subjects
+    train = slice(0, n // 2)
+    test = slice(n // 2, n)
+
+    rows = []
+    for alpha in alphas:
+        for l1_ratio in l1_ratios:
+            cell = Config(alpha=alpha, l1_ratio=l1_ratio)
+            rs = []
+            for task, activation in activations.items():
+                for hemi in HEMISPHERES:
+                    X = model_mod.as_float32(reg[hemi])
+                    y = activation.zscored()[hemi]
+                    fitted = model_mod.fit(X[train], y[train], cell)
+                    y_hat = model_mod.predict(fitted, X[test]).reshape(n - n // 2, -1)
+                    rs += [float(np.corrcoef(y_hat[i], y[test][i])[0, 1])
+                           for i in range(y_hat.shape[0])]
+            rows.append({"alpha": alpha, "l1_ratio": l1_ratio,
+                         "mean_within_r": float(np.nanmean(rs))})
+            log.info("tune: alpha=%g l1=%g mean_r=%.4f", alpha, l1_ratio, rows[-1]["mean_within_r"])
+    return pd.DataFrame(rows).sort_values("mean_within_r", ascending=False, ignore_index=True)

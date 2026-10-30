@@ -37,9 +37,15 @@ export PYTHONPATH="$REPO/src"
 echo "host=$(hostname) array_id=${SLURM_ARRAY_TASK_ID} task=${TASK} hemi=${HEMI} threads=$OMP_NUM_THREADS"
 echo "started $(date -Is)"
 
+# Residual features live on a different scale from raw counts, so the penalty
+# must come from `sti distance-control --tune` (selected on the tuning adults),
+# not from the published raw-count values.
+: "${STI_ALPHA:?run 'sti distance-control --tune' and export STI_ALPHA}"
+: "${STI_L1:?run 'sti distance-control --tune' and export STI_L1}"
+
 # the term cohort file lists 326 subjects but the assembled array is N-325
 # (one subject has no usable tractography), so the array + sidecar are the truth
-/opt/fsl/bin/python3 -m sti.cli -v distance-control --regress \
+/opt/fsl/bin/python3 -m sti.cli --alpha "$STI_ALPHA" --l1-ratio "$STI_L1" -v distance-control --regress \
     --cohort adults_analysis \
     --connectivity data/derivatives/conn_for_classifier_N-325_infants.npy \
     --tasks "$TASK" \
