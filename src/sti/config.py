@@ -82,6 +82,7 @@ FIGURES: dict[str, str] = {
     "spatial_null": "S8_spatial_null",
     "scan_age": "S9_scan_age",
     "pipeline_null": "S10_pipeline_null",
+    "shares": "Fig1b_shares",
 }
 
 

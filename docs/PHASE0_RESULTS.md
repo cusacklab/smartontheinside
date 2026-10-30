@@ -155,6 +155,27 @@ motor map is the most geometry-predictable target, so the bar is highest
 there, and the regressed transfer clears it anyway — at *, not **, which the
 text should state plainly.
 
+## 3c. The variance partition (Fig. 1b) — geometry interpolates, connectivity extrapolates
+
+Commonality analysis under spatially blocked CV (`sti shares`;
+`data/results/shares.csv`, panel `figures/manuscript/Fig1b_shares.png`).
+Median across tasks and hemispheres:
+
+| | Adult conn | Neonatal conn |
+|---|---|---|
+| Combined R² | 0.65 | 0.50 |
+| Unique connectivity | **0.60** | **0.36** |
+| Unique geometry | 0.03 | 0.05 |
+| Shared | 0.04 | 0.05 |
+
+This resolves the apparent tension with the distance-only model: geometry's
+in-sample strength is *interpolation* (given most of a smooth map, position
+fills in the rest), and under extrapolation to held-out patches it collapses
+— while group-mean connectivity keeps predicting. Motor again carries the
+largest geometric component in both cohorts (unique geometry up to 0.27 in
+neonates). The neonatal unique connectional share (0.36) is 60% of the adult
+one (0.60) in R² terms, consonant with the ~90% maturity figures in r terms.
+
 ## 4. The Phase 0 verdict
 
 - **Go.** On the combined control — the full pipeline, distance-regressed

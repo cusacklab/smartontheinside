@@ -135,19 +135,22 @@ in the first weeks of life.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=\linewidth]{Fig1_overview.png}
-  \caption{\textbf{Overview of the approach.} (a)~In 155 adults from the
-  Human Connectome Project (a further 20 held out for hyperparameter
-  selection), vertex-wise activation across the DLPFC was extracted from
-  each fMRI task contrast. In these adults and 325 neonates from the
-  Developing Human Connectome Project, probabilistic tractography on
-  diffusion-weighted MRI quantified how strongly each vertex connected to
+  \includegraphics[width=\linewidth]{Fig1_overview.png}\\[1ex]
+  \includegraphics[width=.85\linewidth]{Fig1b_shares.png}
+  \caption{\textbf{Overview of the approach and the variance partition.}
+  (a)~In 155 adults from the Human Connectome Project (a further 20 held out
+  for hyperparameter selection), vertex-wise activation across the DLPFC was
+  extracted from each fMRI task contrast. In these adults and 325 neonates
+  from the Developing Human Connectome Project, probabilistic tractography
+  on diffusion-weighted MRI quantified how strongly each vertex connected to
   each of 334 regions across the rest of the brain. Regularised regression
   (elastic net) was trained in adults to predict each vertex's activation
   from its connectivity profile, and the adult models were then applied to
-  neonates. (b)~[Variance partition of each group-average map into
-  geometric, connectional and shared components --- panel to be added when
-  the shares analysis completes.]}
+  neonates. (b)~Share of each group-average map's variance explained
+  uniquely by connectivity, uniquely by geometry, by either (shared), or by
+  neither, under spatially blocked cross-validation; hemispheres averaged.
+  Small negative commonality components (cross-validation noise) are clipped
+  to zero for display.}
   \label{fig:overview}
 \end{figure}
 
@@ -435,8 +438,24 @@ map is the most geometry-predictable target: the bar is highest exactly
 where geometry is strongest, and the regressed transfer clears it, though at
 a smaller margin than the other contrasts.
 
-\subsection{[Variance partition --- Fig.~1b; analysis running, numbers to
-follow]}
+\subsection{Partitioning each map into geometric and connectional
+components}
+
+The commonality analysis (Fig.~\ref{fig:overview}b) reconciles the strength
+of the distance-only model with the controls above. Under spatially blocked
+cross-validation --- where a model must predict held-out patches of cortex
+it has never seen --- geometry generalises poorly (median out-of-sample
+$R^2 = 0.04$ in adults), while group-mean connectivity generalises strongly
+(median $R^2 = 0.62$; unique connectional component 0.60, unique geometric
+component 0.03, shared 0.04). Geometry's in-sample success is interpolation:
+given a map's values over most of the patch, position fills in the rest; it
+carries little that extrapolates. The exception, once again, is motor, which
+has the largest geometric component in both cohorts (unique geometry
+0.05--0.09 in adults, 0.15--0.27 in neonates). With neonatal connectivity
+the partition is the same in kind and smaller in degree: median combined
+$R^2 = 0.50$, of which the unique connectional component is 0.36 --- the
+neonatal connectome already carries the majority of what it will carry in
+adulthood, and carries it over and above geometry.
 
 \subsection{The connectional component is present at birth}
 

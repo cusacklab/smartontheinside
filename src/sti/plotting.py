@@ -638,3 +638,47 @@ def plot_spatial_null_grid(results: pd.DataFrame, nulls, *, title: str = ""):
         fig.suptitle(title, fontsize=10, color=INK)
     fig.tight_layout()
     return fig
+
+
+def plot_shares(shares: pd.DataFrame, *, title: str = ""):
+    """Fig. 1b: the variance partition of each group-average map.
+
+    One horizontal stacked bar per task (hemispheres averaged), one panel per
+    cohort: unique connectivity, shared, unique geometry, unexplained. Small
+    negative commonality components (cross-validation noise) are clipped to
+    zero for display only; the table keeps the signed values.
+    """
+    plt = _mpl()
+
+    comp_cols = ["unique_connectivity", "shared", "unique_geometry", "unexplained"]
+    comp_labels = ["connectivity (unique)", "shared", "geometry (unique)", "unexplained"]
+    comp_colors = ["#332288", "#56B4E9", "#E69F00", GRID]
+
+    cohorts = [c for c in ("adult", "neonatal") if c in set(shares.cohort)]
+    fig, axes = plt.subplots(1, len(cohorts), figsize=(4.2 * len(cohorts), 3.1),
+                             sharey=True, sharex=True)
+    axes = np.atleast_1d(axes)
+
+    task_order = (shares[shares.cohort == cohorts[0]]
+                  .groupby("task")["unique_connectivity"].mean()
+                  .sort_values().index.tolist())
+    for ax, cohort in zip(axes, cohorts):
+        d = (shares[shares.cohort == cohort].groupby("task")[comp_cols].mean()
+             .reindex(task_order).clip(lower=0.0))
+        d = d.div(d.sum(axis=1), axis=0)  # renormalise after clipping
+        left = np.zeros(len(d))
+        for col, lab, colour in zip(comp_cols, comp_labels, comp_colors):
+            ax.barh(range(len(d)), d[col], left=left, color=colour,
+                    label=lab, height=0.68)
+            left += d[col].to_numpy()
+        ax.set_yticks(range(len(d)))
+        ax.set_yticklabels([t.replace("tfMRI_", "") for t in d.index])
+        ax.set_xlim(0, 1)
+        ax.set_title(cohort, color=INK)
+        _style(ax)
+    axes[-1].legend(loc="center left", bbox_to_anchor=(1.02, 0.5), frameon=False)
+    fig.supxlabel("share of map variance (out-of-sample $R^2$)", color=INK)
+    if title:
+        fig.suptitle(title, color=INK)
+    fig.tight_layout()
+    return fig

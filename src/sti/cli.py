@@ -356,6 +356,9 @@ def cmd_shares(args) -> int:
             "unique_geometry", "unique_connectivity", "shared", "unexplained"]
     print(out[cols].round(3).to_string(index=False))
     print(f"\nwrote {args.output}")
+    if args.figures:
+        from sti import plotting as P
+        print(f"wrote {P.save(P.plot_shares(out), FIGURES['shares'], cfg)}")
     return 0
 
 
@@ -719,6 +722,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--adults-only", action="store_true")
     s.add_argument("--k-folds", type=int, default=10,
                    help="spatially blocked folds (k-means on coordinates)")
+    s.add_argument("--figures", action="store_true",
+                   help="also render the Fig. 1b stacked-share panel")
     s.add_argument("-o", "--output", default="data/results/shares.csv")
     s.set_defaults(func=cmd_shares)
 
