@@ -9,6 +9,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[round]{natbib}
 \usepackage{graphicx}
+\graphicspath{{../figures/manuscript/}{../figures/submitted/}{figures/manuscript/}{figures/submitted/}}
 \usepackage{caption}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage[hidelinks]{hyperref}
@@ -462,25 +463,31 @@ We therefore report these associations as exploratory.
 
 \section{Supplementary Figures}
 
-% S1/S2 (registration schematic and example) are in the submitted SI docx;
-% re-export them into figures/manuscript/ before compiling.
-\noindent\textbf{Fig.~S1.} Schematic of the transformations between adult
-and neonatal spaces. [Image to be re-exported from the submitted SI.]
-
-\medskip\noindent\textbf{Fig.~S2.} Example transformation of the adult DLPFC
-mask into an infant's native space. [Image to be re-exported from the
-submitted SI.]
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=.95\linewidth]{S1_registration_schematic.png}
+  \caption*{\textbf{Fig.~S1.} Schematic of the transformations between adult
+  and neonatal spaces. Upper row: adults. Lower row: infants, via the dHCP
+  40-week template.}
+\end{figure}
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.8\linewidth]{../figures/manuscript/S3_similarity_matrix.png}
+  \includegraphics[width=.7\linewidth]{S2_registration_example.png}
+  \caption*{\textbf{Fig.~S2.} Example transformation of the adult DLPFC mask
+  (red) into an infant's space (left) alongside the adult template (right).}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=.8\linewidth]{S3_similarity_matrix.png}
   \caption*{\textbf{Fig.~S3.} Similarity of the spatial patterns of the 31
   task contrasts across the 26 DLPFC parcels.}
 \end{figure}
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.8\linewidth]{../figures/manuscript/S4_dendrogram.png}
+  \includegraphics[width=.8\linewidth]{S4_dendrogram.png}
   \caption*{\textbf{Fig.~S4.} Hierarchical clustering of the contrasts
   (Ward's linkage); the threshold of 1.0 isolates five clusters, each
   represented by the contrast with the shortest stem.}
@@ -488,14 +495,14 @@ submitted SI.]
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.8\linewidth]{../figures/manuscript/S5_parcel_profiles.png}
+  \includegraphics[width=.8\linewidth]{S5_parcel_profiles.png}
   \caption*{\textbf{Fig.~S5.} Activation profiles of the five representative
   contrasts across the 26 DLPFC parcels.}
 \end{figure}
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.7\linewidth]{../figures/manuscript/S6_hyperparameter_grid.png}
+  \includegraphics[width=.7\linewidth]{S6_hyperparameter_grid.png}
   \caption*{\textbf{Fig.~S6.} Hyperparameter grid on the 20 held-out tuning
   participants; the selected cell ($\alpha=0.4$, L1 ratio $=0.6$) ranks third
   of 84 by mean within-task correlation, 0.0001 from the grid maximum.}
@@ -503,15 +510,15 @@ submitted SI.]
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.49\linewidth]{../figures/manuscript/S7_adult_group_average_accuracy.png}
-  \includegraphics[width=.49\linewidth]{../figures/manuscript/S7_adult_group_average_specificity.png}
+  \includegraphics[width=.49\linewidth]{S7_adult_group_average_accuracy.png}
+  \includegraphics[width=.49\linewidth]{S7_adult_group_average_specificity.png}
   \caption*{\textbf{Fig.~S7.} Adult prediction of the group-average map
   (leave-one-participant-out): accuracy and task specificity.}
 \end{figure}
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.8\linewidth]{../figures/manuscript/S8_spatial_null.png}
+  \includegraphics[width=.8\linewidth]{S8_spatial_null.png}
   \caption*{\textbf{Fig.~S8.} Output-level spatial null: observed
   across-neonate mean accuracy against 1{,}000 variogram-matched surrogates
   per contrast and hemisphere.}
@@ -519,14 +526,14 @@ submitted SI.]
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.8\linewidth]{../figures/manuscript/S9_scan_age.png}
+  \includegraphics[width=.8\linewidth]{S9_scan_age.png}
   \caption*{\textbf{Fig.~S9.} Prediction accuracy against postmenstrual age
   at scan (exploratory; see Supplementary Methods).}
 \end{figure}
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.9\linewidth]{../figures/manuscript/S10_pipeline_null_tfMRI_MOTOR_L.png}
+  \includegraphics[width=.9\linewidth]{S10_pipeline_null_tfMRI_MOTOR_L.png}
   \caption*{\textbf{Fig.~S10.} Full-pipeline surrogate null, one panel per
   contrast and hemisphere (left motor shown; remaining panels in
   figures/manuscript/). [Assemble the 10-panel grid for submission.]}

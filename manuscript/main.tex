@@ -9,6 +9,9 @@
 \usepackage[T1]{fontenc}
 \usepackage[round]{natbib}
 \usepackage{graphicx}
+% first paths are for compiling from manuscript/; the others for Overleaf,
+% which compiles from the repository root when the project is the linked repo
+\graphicspath{{../figures/manuscript/}{../figures/submitted/}{figures/manuscript/}{figures/submitted/}}
 \usepackage{amsmath}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{lineno}
@@ -129,6 +132,24 @@ of these topographies --- for the motor map it outperforms tractography ---
 but that connectivity carries a function-specific contribution beyond
 geometry in all five domains, and that this contribution is already present
 in the first weeks of life.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{Fig1_overview.png}
+  \caption{\textbf{Overview of the approach.} (a)~In 155 adults from the
+  Human Connectome Project (a further 20 held out for hyperparameter
+  selection), vertex-wise activation across the DLPFC was extracted from
+  each fMRI task contrast. In these adults and 325 neonates from the
+  Developing Human Connectome Project, probabilistic tractography on
+  diffusion-weighted MRI quantified how strongly each vertex connected to
+  each of 334 regions across the rest of the brain. Regularised regression
+  (elastic net) was trained in adults to predict each vertex's activation
+  from its connectivity profile, and the adult models were then applied to
+  neonates. (b)~[Variance partition of each group-average map into
+  geometric, connectional and shared components --- panel to be added when
+  the shares analysis completes.]}
+  \label{fig:overview}
+\end{figure}
 
 \section{Methods}
 % DCN uses the conventional IMRaD order: Methods precede Results in the main
@@ -351,6 +372,25 @@ contrast-by-hemisphere cells, so these analyses demonstrate a common mapping
 rather than prediction of individual differences, and we make no claim about
 the latter.
 
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=.95\linewidth]{Fig2_adult_own_activation_accuracy.png}\\[1ex]
+  \includegraphics[width=.95\linewidth]{Fig2_adult_own_activation_specificity.png}
+  \caption{\textbf{In adults, the functional response of a DLPFC vertex can
+  be predicted from its structural connectivity.} (A)~For each of the five
+  task contrasts, an elastic-net model was trained to predict vertex-wise
+  activation from tractography-derived connectivity,
+  leave-one-participant-out; each point is one participant and the y axis is
+  the correlation across vertices between predicted and observed activation,
+  for the left and right hemispheres. (B)~Prediction is task-specific. For
+  each target map, the upper panels show the accuracy of every model and the
+  lower panels the same values with each target's across-model mean removed,
+  leaving only specificity; circled points mark each model's own target.
+  Every target map was best predicted by its own model (40 of 40
+  comparisons, $p_{\mathrm{FDR}} \le 0.0002$).}
+  \label{fig:adult}
+\end{figure}
+
 \subsection{Geometry alone predicts much of the group-average topography}
 
 The distance-only model --- position in the cortical sheet, and nothing else
@@ -410,6 +450,22 @@ to this transfer: it exceeds smoothness-plus-position for all five domains
 once the distance artefact is removed, so the neonatal connectome carries
 the function-specific, geometry-independent component of the adult mapping.
 
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=.95\linewidth]{Fig3_neonatal_accuracy.png}\\[1ex]
+  \includegraphics[width=.95\linewidth]{Fig3_neonatal_specificity.png}
+  \caption{\textbf{Neonatal structural connectivity predicts adult
+  functional selectivity in the DLPFC.} (A)~Adult elastic-net models were
+  applied, unchanged, to tractography from 325 term-born neonates; each
+  point is one neonate and the y axis is the correlation across vertices
+  between the activation predicted from that neonate's connectivity and the
+  adult group-average activation, for the left and right hemispheres.
+  (B)~Prediction from neonatal connectivity is task-specific; conventions as
+  in Fig.~\ref{fig:adult}B. Every target map was best predicted by its own
+  model (40 of 40 comparisons, $p_{\mathrm{FDR}} \le 0.0002$).}
+  \label{fig:neonatal}
+\end{figure}
+
 \subsection{Neonatal accuracy approaches the adult ceiling}
 
 Against the matched adult benchmark (group-average prediction,
@@ -420,6 +476,24 @@ prediction was statistically indistinguishable from adult; language
 (74--84\%) and motor (57--71\%) showed the largest shortfalls. This ratio
 compares two prediction accuracies, each bounded by its own measurement
 noise, and should not be read as a direct estimate of connectivity maturity.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=.9\linewidth]{Fig4_neonate_vs_adult.png}
+  \caption{\textbf{Neonatal connectivity predicts adult DLPFC organisation
+  nearly as well as adult connectivity does.} Upper panels: mean prediction
+  accuracy for each contrast from neonatal connectivity ($n = 325$) and from
+  adult connectivity predicting the same group-average map ($n = 155$), for
+  the left and right hemispheres; the connecting segment is the gap between
+  them. Lower panels: the same expressed as a percentage of adult accuracy
+  with a bootstrapped 95\% interval, the dotted line marking parity.
+  Neonatal prediction reached a median of 90\% of adult accuracy (range
+  57--99\%); for emotion in both hemispheres and working memory in the right
+  hemisphere the difference was not significant. Asterisks mark differences
+  significant after Benjamini--Hochberg correction (* $p<0.05$, ** $p<0.01$,
+  *** $p<0.001$).}
+  \label{fig:comparison}
+\end{figure}
 
 \subsection{Supplementary analyses}
 
