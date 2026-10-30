@@ -1,0 +1,9 @@
+host=high-memory-dy-r6a-4xlarge-8 array_id=9 task=tfMRI_EMOTION hemi=R threads=4
+started 2026-10-30T15:16:35+00:00
+15:16:45 INFO distance regressed out: hemi=L (155 subjects)
+15:16:50 INFO distance regressed out: hemi=R (155 subjects)
+15:17:06 INFO distance regressed out: hemi=L (325 subjects)
+15:17:16 INFO distance regressed out: hemi=R (325 subjects)
+15:17:18 INFO neonatal done: task=tfMRI_EMOTION hemi=R (n=325)
+wrote data/results/shards/distance_regressed_tfMRI_EMOTION_R.csv (1625 rows, 325 neonates)
+finished 2026-10-30T15:17:18+00:00

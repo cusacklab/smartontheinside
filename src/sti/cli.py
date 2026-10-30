@@ -249,6 +249,15 @@ def cmd_pipeline_null(args) -> int:
     conn = load_connectivity(adults.n, config=cfg)
     nconn, _ = _neonatal_connectivity(args, cfg)
 
+    if args.regress_distance:
+        # the combined control: the null pipeline runs on distance-regressed
+        # features, so its observed counterpart is the regressed results table
+        from sti.distance_control import distance_features, regress_distance
+
+        dists = {h: distance_features(h, config=cfg) for h in ("L", "R")}
+        conn = regress_distance(conn, dists)
+        nconn = regress_distance(nconn, dists)
+
     tasks, hemis = _shard(args)
     frames = []
     for hemi in hemis:
@@ -637,6 +646,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--tasks", default=None,
                    help="comma-separated model tasks for this shard (default: all)")
     s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
+    s.add_argument("--regress-distance", action="store_true",
+                   help="run the null on distance-regressed features (pair with "
+                        "the penalty from `sti distance-control --tune` and "
+                        "summarise against the distance-regressed results)")
     s.add_argument("--summarise", metavar="NULL_CSV", default=None,
                    help="summarise a (merged) null table against --results "
                         "instead of computing surrogates")

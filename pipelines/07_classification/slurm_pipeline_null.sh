@@ -31,6 +31,21 @@ mkdir -p data/results/shards slurm_logs
 
 N_SURROGATES=${STI_N_SURROGATES:-200}
 
+# STI_REGRESS=1 runs the combined control: the null pipeline on
+# distance-regressed features (requires STI_ALPHA/STI_L1 from
+# `sti distance-control --tune`); outputs gain a _regressed suffix.
+EXTRA_ARGS=()
+GLOBAL_ARGS=()
+OUTBASE="pipeline_null"
+if [[ "${STI_REGRESS:-0}" == "1" ]]; then
+    : "${STI_ALPHA:?run 'sti distance-control --tune' and export STI_ALPHA}"
+    : "${STI_L1:?run 'sti distance-control --tune' and export STI_L1}"
+    EXTRA_ARGS=(--regress-distance)
+    GLOBAL_ARGS=(--alpha "$STI_ALPHA" --l1-ratio "$STI_L1")
+    # distinct basename so the raw null's merge glob cannot pick these up
+    OUTBASE="pipenull_regressed"
+fi
+
 TASKS=(tfMRI_WM tfMRI_MOTOR tfMRI_LANGUAGE tfMRI_SOCIAL tfMRI_EMOTION)
 HEMIS=(L R)
 TASK=${TASKS[$(( SLURM_ARRAY_TASK_ID / 2 ))]}
@@ -48,12 +63,13 @@ echo "started $(date -Is)"
 
 # the term cohort file lists 326 subjects but the assembled array is N-325
 # (one subject has no usable tractography), so the array + sidecar are the truth
-/opt/fsl/bin/python3 -m sti.cli -v pipeline-null \
+/opt/fsl/bin/python3 -m sti.cli "${GLOBAL_ARGS[@]}" -v pipeline-null \
     --cohort adults_analysis \
     --connectivity data/derivatives/conn_for_classifier_N-325_infants.npy \
     --tasks "$TASK" \
     --hemi "$HEMI" \
     --n-surrogates "$N_SURROGATES" \
-    -o "data/results/shards/pipeline_null_${TASK}_${HEMI}.csv"
+    "${EXTRA_ARGS[@]}" \
+    -o "data/results/shards/${OUTBASE}_${TASK}_${HEMI}.csv"
 
 echo "finished $(date -Is)"
