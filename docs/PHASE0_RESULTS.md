@@ -1,17 +1,38 @@
-# Phase 0 results — the distance controls
+# Phase 0 results — the go/no-go controls
 
-First results from the go/no-go controls in [REVISION_PLAN.md](REVISION_PLAN.md).
-Distance-only model run 2026-10-30 (`sti distance-control`); the full-pipeline
-surrogate null and the distance-regressed rerun are on the cluster (jobs
-16514/16515) and will complete this picture.
+Results from the controls in [REVISION_PLAN.md](REVISION_PLAN.md), run
+2026-10-30. The distance-regressed rerun (tuned penalty, job 16534) is in
+flight; everything else is final.
 
-**Summary so far: Reviewer 1's positional concern is substantively correct for
-most contrasts.** Pure geometry — each DLPFC vertex's distance to every target
-parcel, through the same elastic net — predicts the group-average maps as well
-as or better than tractography does for motor, language, WM and (L) social, in
-*both* cohorts. Emotion in both hemispheres, and right social, carry signal
-beyond position. And at the individual level, connectivity predictions never
-beat the leave-one-subject-out group-mean benchmark.
+**Summary: the transfer result survives Reviewer 1's key test for four of the
+five contrasts; motor does not survive it, and the individual-level
+(fingerprinting) benchmark fails outright.** The full-pipeline surrogate null —
+R1's suggestion 1, the destructive control with matched noise and matched
+transfer — puts the positional share of the real pipeline's transfer at
+r ≈ 0.13–0.20, and the observed accuracy exceeds it decisively everywhere
+except motor. The constructive distance-only model (section 1) looks far more
+damning, but it enjoys noiseless features and no cross-cohort transfer; the
+pipeline null is the fair version of the same question. Motor fails both.
+
+## 0. The full-pipeline surrogate null (Fig. S10) — passed, except motor
+
+200 surrogates per cell: each draw spatially permutes every adult's map by one
+variogram-matched permutation, refits the elastic net, transfers to all 325
+neonates (`sti pipeline-null`; `data/results/pipeline_null_summary.csv`).
+
+| | Observed r | Null mean | Excess | p_spin (FDR) |
+|---|---|---|---|---|
+| Emotion L / R | 0.40 / 0.46 | 0.15 / 0.14 | +0.25 / +0.32 | 0.006 / 0.006 |
+| WM L / R | 0.43 / 0.43 | 0.17 / 0.15 | +0.26 / +0.28 | 0.006 / 0.006 |
+| Social L / R | 0.33 / 0.43 | 0.16 / 0.13 | +0.17 / +0.29 | 0.006 / 0.006 |
+| Language L / R | 0.38 / 0.36 | 0.16 / 0.15 | +0.22 / +0.20 | 0.006 / 0.006 |
+| **Motor L / R** | 0.24 / 0.16 | 0.20 / 0.16 | **+0.04 / +0.00** | **0.20 / 0.47** |
+
+p = 0.005 is the floor for 200 surrogates. Two numbers for the manuscript:
+the pipeline transfers an arbitrary smooth map at r ≈ 0.15 (that is the
+positional share under matched noise), and the real maps exceed it by
+0.17–0.32 — except motor, whose transfer is fully accounted for by smoothness
+plus position. Figures: `figures/manuscript/S10_pipeline_null_*.png`.
 
 ## 1. Group-average targets: neonatal (Fig. 3) and adult (Fig. 4) vs distance-only
 
@@ -65,19 +86,41 @@ prove connectivity carries no individual information — but it does mean the
 paper cannot claim individual-level validation, and Fig. 2's framing has to
 change regardless of what the remaining controls show.
 
-## 3. What this means for the checkpoint (preliminary)
+## 3. Distance-regressed connectivity — rerun in flight
 
-- **Emotion (bilateral) and right social are the defensible core**: above
-  geometry in both cohorts' group-average analyses.
-- **Motor should probably become the paper's own negative control** rather
-  than an embarrassment: geometry predicts it at 0.56–0.64 while connectivity
-  manages 0.16–0.34, which is itself informative about what the method
-  measures.
-- If the pipeline null and distance regression confirm this split, the honest
-  paper is substantially different from the submitted one: not "the
-  connectivity that distinguishes adult subregions is present in neonates"
-  across the board, but a task-resolved account of which functional
-  distinctions are carried by connectivity beyond spatial layout — present in
-  neonates for the contrasts where it exists in adults at all.
-- Decision for the authors at the checkpoint, not before: whether that paper
-  is the one to write, and where it goes.
+The first cluster run failed informatively: the published alpha, selected for
+raw streamline counts, shrank every coefficient to zero on log-residual
+features (7 of 10 cells returned constant predictions). Residuals are now
+per-subject unit SD and the penalty was re-selected on the 20 held-out tuning
+adults only (`sti distance-control --tune`): **alpha = 0.1, l1 = 0.2**, on a
+surface flat across three orders of magnitude (mean within-task r
+0.199–0.222), so nothing hinges on the choice. Already informative: tuning
+adults show within-task r ≈ 0.22 *after* decay removal, so connectivity
+carries signal beyond the distance decay at the individual level too.
+Results table to follow from job 16534.
+
+## 4. What this means for the checkpoint (preliminary)
+
+- **The headline transfer claim survives the strongest control for emotion,
+  WM, social and language** — observed accuracy exceeds what the real
+  pipeline can carry positionally (r ≈ 0.15) by 0.17–0.32. This directly
+  answers R1's major issue, with their own proposed analysis.
+- **Motor fails both controls and should become the paper's explicit negative
+  control**: geometry predicts the motor map at 0.56–0.64 in-sample, and the
+  real pipeline's motor transfer is indistinguishable from smooth-map
+  transfer. Naming this strengthens the paper; hiding it invites the review
+  all over again.
+- **The distance-only result (section 1) belongs in the paper as the
+  constructive bound**: for language and WM, noiseless geometry alone can
+  reconstruct the group-average map as well as tractography does — so the
+  claim those contrasts support is "connectivity carries function-specific
+  information beyond smoothness and position through a matched pipeline",
+  not "connectivity outpredicts geometry in absolute terms".
+- **Fig. 2 cannot be framed as individual-level validation** (section 2:
+  0/10 against the LOSO group-mean benchmark). It needs reframing as
+  shared-across-individuals structure, with the benchmark reported.
+- Decision for the authors at the checkpoint: the paper this evidence
+  supports is a task-resolved account — which adult functional distinctions
+  are carried by connectivity beyond spatial layout, and the finding that
+  those (and only those) are already present in neonatal connectivity.
+  Whether that is the paper to write, and where it goes, is yours to call.
