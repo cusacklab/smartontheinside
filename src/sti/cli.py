@@ -103,15 +103,10 @@ def cmd_adult_average(args) -> int:
     return 0
 
 
-def cmd_neonatal(args) -> int:
+def _neonatal_connectivity(args, cfg):
+    """Resolve the neonatal connectivity array and its subject labels."""
     from sti.cohorts import load_cohort
-    from sti.datasets import load_all_activations, load_connectivity, load_connectivity_file
-    from sti.evaluate import neonatal
-
-    cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
-    adults = load_cohort(args.cohort, cfg)
-    acts = load_all_activations(TASKS, adults.n, config=cfg)
-    conn = load_connectivity(adults.n, config=cfg)
+    from sti.datasets import load_connectivity, load_connectivity_file
 
     if args.connectivity:
         # explicit array + its subject sidecar: the array's subjects are the
@@ -120,16 +115,28 @@ def cmd_neonatal(args) -> int:
         if subjects is None:
             cohort = load_cohort(args.neonates, cfg)
             if cohort.n != nconn.n_subjects:
-                log.error(
-                    "%s has %d subjects but cohort %s has %d, and no .subjects.txt "
-                    "sidecar is present to resolve which rows are which.",
-                    args.connectivity, nconn.n_subjects, args.neonates, cohort.n)
-                return 1
+                raise ValueError(
+                    f"{args.connectivity} has {nconn.n_subjects} subjects but "
+                    f"cohort {args.neonates} has {cohort.n}, and no .subjects.txt "
+                    "sidecar is present to resolve which rows are which.")
             subjects = list(cohort.subjects)
     else:
         cohort = load_cohort(args.neonates, cfg)
         nconn = load_connectivity(cohort.n, neonatal=True, config=cfg)
         subjects = list(cohort.subjects)
+    return nconn, subjects
+
+
+def cmd_neonatal(args) -> int:
+    from sti.cohorts import load_cohort
+    from sti.datasets import load_all_activations, load_connectivity
+    from sti.evaluate import neonatal
+
+    cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
+    adults = load_cohort(args.cohort, cfg)
+    acts = load_all_activations(TASKS, adults.n, config=cfg)
+    conn = load_connectivity(adults.n, config=cfg)
+    nconn, subjects = _neonatal_connectivity(args, cfg)
 
     tasks, hemis = _shard(args)
     res, preds = neonatal(conn, nconn, acts, subjects, config=cfg,
@@ -205,6 +212,54 @@ def cmd_spatial_null(args) -> int:
                 title=f"{task.replace('tfMRI_', '')} {hemi}")
             stem = f"{FIGURES['spatial_null']}_{task}_{hemi}"
             print(f"wrote {P.save(fig, stem, cfg)}")
+    return 0
+
+
+def cmd_pipeline_null(args) -> int:
+    """Does the pipeline transfer real task maps better than arbitrary smooth maps?"""
+    from sti.pipeline_null import null_transfer, summarise
+
+    cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
+
+    if args.summarise:
+        if not args.results:
+            raise SystemExit("--summarise needs --results (the observed neonatal table)")
+        null = pd.read_csv(args.summarise)
+        out = summarise(null, pd.read_csv(args.results))
+        out.to_csv(_out(args.output), index=False)
+        print(out.round(4).to_string(index=False))
+        print(f"\nwrote {args.output}")
+        if args.figures and not out.empty:
+            from sti import plotting as P
+            for _, r in out.iterrows():
+                nr = null[(null.task == r.task) & (null.hemi == r.hemi)]["null_r"].to_numpy()
+                fig = P.plot_spatial_null(
+                    r.observed_r, nr, p=r.p_spin,
+                    title=f"{r.task.replace('tfMRI_', '')} {r.hemi} (pipeline null)")
+                stem = f"{FIGURES['pipeline_null']}_{r.task}_{r.hemi}"
+                print(f"wrote {P.save(fig, stem, cfg)}")
+        return 0
+
+    from sti.cohorts import load_cohort
+    from sti.datasets import load_all_activations, load_connectivity
+    from sti.surface import distance_matrix
+
+    adults = load_cohort(args.cohort, cfg)
+    acts = load_all_activations(TASKS, adults.n, config=cfg)
+    conn = load_connectivity(adults.n, config=cfg)
+    nconn, _ = _neonatal_connectivity(args, cfg)
+
+    tasks, hemis = _shard(args)
+    frames = []
+    for hemi in hemis:
+        dist = distance_matrix(hemi, cfg)
+        for task in (tasks if tasks is not None else list(acts)):
+            frames.append(null_transfer(
+                conn, nconn, acts[task], hemi=hemi, dist=dist,
+                n_surrogates=args.n_surrogates, config=cfg, seed=args.seed))
+    out = pd.concat(frames, ignore_index=True)
+    out.to_csv(_out(args.output), index=False)
+    print(f"wrote {args.output} ({len(out)} rows, {nconn.n_subjects} neonates)")
     return 0
 
 
@@ -390,7 +445,7 @@ def cmd_merge(args) -> int:
     frames = [pd.read_csv(p) for p in paths]
     out = pd.concat(frames, ignore_index=True)
 
-    key = ["protocol", "task", "comparison_task", "hemi", "subject"]
+    key = ["protocol", "task", "comparison_task", "hemi", "subject", "surrogate", "seed"]
     key = [c for c in key if c in out.columns]
     dupes = int(out.duplicated(subset=key).sum())
     if dupes:
@@ -401,8 +456,9 @@ def cmd_merge(args) -> int:
     print(f"merged {len(paths)} shards -> {args.output} ({len(out)} rows)")
     if {"task", "hemi"} <= set(out.columns):
         got = out.groupby(["hemi", "task"]).size()
-        print(f"  {out.hemi.nunique()} hemispheres x {out.task.nunique()} model tasks, "
-              f"{out.subject.nunique()} subjects")
+        per = (f"{out.subject.nunique()} subjects" if "subject" in out.columns
+               else f"{out.groupby(['hemi', 'task']).size().min()} rows per cell")
+        print(f"  {out.hemi.nunique()} hemispheres x {out.task.nunique()} model tasks, {per}")
         missing = [f"{h}/{t}" for h in sorted(out.hemi.unique()) for t in sorted(TASKS)
                    if (h, t) not in got.index]
         if missing:
@@ -504,6 +560,31 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--figures", action="store_true",
                    help="also render one null histogram per task and hemisphere")
     s.set_defaults(func=cmd_spatial_null)
+
+    s = sub.add_parser("pipeline-null",
+                       help="full-pipeline surrogate null: refit on spatially "
+                            "permuted maps (Fig. S10)")
+    s.add_argument("--cohort", default="adults_analysis")
+    s.add_argument("--neonates", default="neonates_term_all")
+    s.add_argument("--connectivity", default=None,
+                   help="explicit connectivity array; its .subjects.txt sidecar "
+                        "names the rows, overriding --neonates")
+    s.add_argument("--n-surrogates", type=int, default=200)
+    s.add_argument("--seed", type=int, default=0,
+                   help="shards that split ONE task's surrogates must use "
+                        "distinct seeds, or they will draw the same surrogates")
+    s.add_argument("--tasks", default=None,
+                   help="comma-separated model tasks for this shard (default: all)")
+    s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
+    s.add_argument("--summarise", metavar="NULL_CSV", default=None,
+                   help="summarise a (merged) null table against --results "
+                        "instead of computing surrogates")
+    s.add_argument("--results", default=None,
+                   help="observed neonatal results csv (required with --summarise)")
+    s.add_argument("--figures", action="store_true",
+                   help="with --summarise, render one null histogram per task and hemisphere")
+    s.add_argument("-o", "--output", default="data/results/pipeline_null.csv")
+    s.set_defaults(func=cmd_pipeline_null)
 
     s = sub.add_parser("scan-age", help="accuracy vs postmenstrual age at scan (Fig. S9)")
     s.add_argument("--results", required=True)

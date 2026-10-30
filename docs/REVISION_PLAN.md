@@ -63,7 +63,17 @@ information.
   hemisphere, as in Fig. 4), not per-subject LOO; 100–200 surrogates rather
   than 1,000 is defensible for a pipeline-level null. Shard on the cluster
   with the existing `sti merge` infrastructure.
-- Implement as `sti pipeline-null`, building on `sti.spatial_null`.
+- **Implemented** as `sti pipeline-null` (`sti.pipeline_null`,
+  `slurm_pipeline_null.sh`, Fig. S10 slot). Because rank-resampled surrogates
+  are vertex *permutations* of the group-mean map, each null draw applies one
+  permutation to every adult's individual map — the whole training set is
+  spatially rearranged coherently, preserving between-subject variability —
+  and the pipeline reruns verbatim. Validated on synthetic cohorts
+  (`tests/test_pipeline_null.py`): the null is beaten when adults and
+  neonates share function-specific structure, and absorbs the transfer when
+  connectivity encodes nothing but position. The summary's `excess_r`
+  (observed minus null mean) is the share of transfer that position cannot
+  explain — report it alongside p_spin. Awaiting the cluster run.
 
 ### 0.2 Distance controls (R1 suggestion 2)
 

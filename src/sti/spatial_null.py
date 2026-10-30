@@ -152,17 +152,38 @@ class SurrogateMaps:
         differs.
         """
         x = np.asarray(x, dtype=float).reshape(-1)
+        if resample:
+            return x[self.generate_permutations(x, n)]
         if x.size != self._n:
             raise ValueError(f"x has {x.size} vertices, distance matrix has {self._n}")
         target_gamma = self.fast_variogram(x)
-        sorted_x = np.sort(x)
 
         out = np.empty((n, self._n))
         for i in range(n):
+            out[i] = self._fit_one(x, target_gamma)
+        return out
+
+    def generate_permutations(self, x: np.ndarray, n: int) -> np.ndarray:
+        """Return ``(n, n_vertices)`` vertex permutations ``pi`` with ``x[pi]``
+        a variogram-matched surrogate of ``x``.
+
+        A rank-resampled surrogate *is* a permutation of ``x``; this returns the
+        permutation itself rather than the permuted values, so the same spatial
+        rearrangement can be applied to other maps on the same vertices — in
+        particular to every subject's individual map, which is what lets
+        :mod:`sti.pipeline_null` rearrange an entire training set coherently.
+        """
+        x = np.asarray(x, dtype=float).reshape(-1)
+        if x.size != self._n:
+            raise ValueError(f"x has {x.size} vertices, distance matrix has {self._n}")
+        target_gamma = self.fast_variogram(x)
+        order = np.argsort(x)
+
+        out = np.empty((n, self._n), dtype=np.intp)
+        for i in range(n):
             s = self._fit_one(x, target_gamma)
-            if resample:
-                s = sorted_x[np.argsort(np.argsort(s))]
-            out[i] = s
+            # x[order[rank(s)]] == sorted(x)[rank(s)], the rank-resampled surrogate
+            out[i] = order[np.argsort(np.argsort(s))]
         return out
 
 

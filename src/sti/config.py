@@ -81,6 +81,7 @@ FIGURES: dict[str, str] = {
     "adult_average": "S7_adult_group_average",     # demoted from Fig. 4
     "spatial_null": "S8_spatial_null",
     "scan_age": "S9_scan_age",
+    "pipeline_null": "S10_pipeline_null",
 }
 
 
