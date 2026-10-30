@@ -263,6 +263,48 @@ def cmd_pipeline_null(args) -> int:
     return 0
 
 
+def cmd_distance_control(args) -> int:
+    """How much of the prediction does position alone buy?"""
+    from sti.cohorts import load_cohort
+    from sti.datasets import load_all_activations
+    from sti.distance_control import (distance_features, distance_only_results,
+                                      positional_share, regress_distance)
+
+    cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
+    adults = load_cohort(args.cohort, cfg)
+    acts = load_all_activations(TASKS, adults.n, config=cfg)
+    dists = {h: distance_features(h, config=cfg) for h in ("L", "R")}
+
+    if args.regress:
+        # the REAL analysis on distance-regressed features, both cohorts
+        from sti.datasets import load_connectivity
+        from sti.evaluate import neonatal
+
+        conn = regress_distance(load_connectivity(adults.n, config=cfg), dists)
+        nconn_raw, subjects = _neonatal_connectivity(args, cfg)
+        nconn = regress_distance(nconn_raw, dists)
+        tasks, hemis = _shard(args)
+        res, _ = neonatal(conn, nconn, acts, subjects, config=cfg,
+                          hemispheres=hemis, model_tasks=tasks)
+        res["protocol"] = "neonatal_distance_regressed"
+        res.to_csv(_out(args.output), index=False)
+        print(f"wrote {args.output} ({len(res)} rows, {nconn.n_subjects} neonates)")
+        return 0
+
+    res = distance_only_results(dists, acts, config=cfg, hemispheres=("L", "R"))
+    res.to_csv(_out(args.output), index=False)
+    print(f"wrote {args.output} ({len(res)} rows)")
+    if args.results:
+        share = positional_share(res, pd.read_csv(args.results))
+        print("\nobserved (neonatal) vs distance-only accuracy:\n")
+        print(share.round(3).to_string(index=False))
+        print(f"\nmedian positional share: {share.pct_positional.median():.0f}%")
+        if args.share_output:
+            share.to_csv(_out(args.share_output), index=False)
+            print(f"wrote {args.share_output}")
+    return 0
+
+
 def cmd_scan_age(args) -> int:
     from sti.scan_age import load_covariates, per_task_scan_age, scan_age_regression
 
@@ -585,6 +627,26 @@ def build_parser() -> argparse.ArgumentParser:
                    help="with --summarise, render one null histogram per task and hemisphere")
     s.add_argument("-o", "--output", default="data/results/pipeline_null.csv")
     s.set_defaults(func=cmd_pipeline_null)
+
+    s = sub.add_parser("distance-control",
+                       help="distance-only model, or --regress for the real "
+                            "analysis on distance-regressed connectivity (Fig. S11)")
+    s.add_argument("--cohort", default="adults_analysis")
+    s.add_argument("--results", default=None,
+                   help="observed neonatal results csv, to print the positional share")
+    s.add_argument("--share-output", default="data/results/positional_share.csv")
+    s.add_argument("--regress", action="store_true",
+                   help="run the full neonatal protocol on distance-regressed "
+                        "connectivity instead of the distance-only model")
+    s.add_argument("--neonates", default="neonates_term_all")
+    s.add_argument("--connectivity", default=None,
+                   help="explicit connectivity array; its .subjects.txt sidecar "
+                        "names the rows, overriding --neonates")
+    s.add_argument("--tasks", default=None,
+                   help="comma-separated model tasks for this shard (default: all)")
+    s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
+    s.add_argument("-o", "--output", default="data/results/distance_only.csv")
+    s.set_defaults(func=cmd_distance_control)
 
     s = sub.add_parser("scan-age", help="accuracy vs postmenstrual age at scan (Fig. S9)")
     s.add_argument("--results", required=True)
