@@ -114,11 +114,11 @@ Cusack, 2026, Nat Neurosci].
 > beyond these geometric baselines, with task specificity. (P4) If that
 > connectional contribution requires postnatal experience of the repertoire,
 > it should be absent at birth; if it is part of the scaffold, it should be
-> present. We find that geometry is a strong predictor — for the motor
-> contrast, the strongest available, a result that led us to reinterpret one
-> of our five contrasts — but that connectivity carries a function-specific
-> contribution beyond geometry for all five domains, and that this
-> contribution is already present in the first weeks of life.
+> present. We find that geometry is a strong predictor of these topographies
+> — for the motor map it outperforms tractography — but that connectivity
+> carries a function-specific contribution beyond geometry in all five
+> domains, and that this contribution is already present in the first weeks
+> of life.
 
 ---
 
