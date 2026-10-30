@@ -99,12 +99,13 @@ the framing changes fundamentally — decide then, together.
 Ordered by evidential value; all are feasible with data already in the repo
 or on S3.
 
-1. **LOSO group-average benchmark in adults** (R1 suggestion 6). Test whether
-   individual-level adult predictions beat the leave-one-subject-out
-   population-average task map — the standard fingerprinting benchmark. This
-   determines which claim the paper can make about individual specificity,
-   and R1 explicitly ties the interpretation of the transfer result to it.
-   Data: the recovered per-task adult activation arrays (FINDINGS §2).
+1. **LOSO group-average benchmark in adults** (R1 suggestion 6). **Done**
+   (PHASE0_RESULTS §2): 0/10 — Fig. 2 accuracy is carried by the shared
+   mapping, so Fig. 2 is recaptioned as cross-subject generalisation with the
+   benchmark drawn on the figure, and individual-differences prediction is
+   explicitly out of scope. Optional follow-up: the residual-map analysis
+   (corr(ŷᵢ − ȳ, yᵢ − ȳ)) to answer suggestion 6 with a measurement; needs
+   `--save-predictions` on `adult-loo` and one cluster pass.
 2. **Actual-vs-predicted map figure** (R1 suggestion 3; R2 asks the same —
    "what do these predictions look like in the brain?"). Surface plots of
    observed and predicted maps per task: group-average prediction plus two or

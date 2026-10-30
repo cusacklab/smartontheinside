@@ -82,9 +82,34 @@ constrain the interpretation of the adult-to-neonate generalization."
 
 Nuance: individual activation maps are noisy, and test–retest reliability
 bounds any individual-level prediction, so failing this benchmark does not
-prove connectivity carries no individual information — but it does mean the
-paper cannot claim individual-level validation, and Fig. 2's framing has to
-change regardless of what the remaining controls show.
+prove connectivity carries no individual information.
+
+**Protocol clarification (authors' intent, 2026-10-30).** Fig. 2 was never
+meant as individual-differences prediction: it is the cross-subject
+generalisation control — train without a subject, predict them from their own
+connectivity — matching Fig. 3's training logic. Three distinct questions, one
+figure each:
+
+1. *Does the mapping generalise across subjects?* Fig. 2's job (shared-mapping
+   claim; load-bearing, since neonatal transfer is only meaningful if the
+   mapping is species-typical). The 0/10 benchmark does not damage it — it
+   means Fig. 2's accuracy is carried by the shared component, which is all
+   the argument needs.
+2. *What is the adult ceiling for the neonatal transfer?* Fig. 4/S7's job —
+   the only protocol matched to Fig. 3 target-for-target (group-average map).
+   The target mismatch is also why R2 found neonatal accuracy "higher" than
+   Fig. 2: a smooth group target is easier to hit than noisy individual maps.
+3. *Does connectivity predict individual differences?* A different question
+   (residual maps: corr(ŷᵢ − ȳ, yᵢ − ȳ)), not required by the paper, currently
+   unsupported.
+
+Manuscript consequence: keep Fig. 2, recaption as cross-subject
+generalisation, draw the LOSO group-mean benchmark on the figure as a
+reference line, and state in one sentence that individual-differences
+prediction is a distinct question these data do not address (benchmark in SI).
+Optional upgrade: the residual-map analysis answers R1's suggestion 6 with a
+measurement either way (needs `--save-predictions` on `adult-loo`, one
+cluster pass).
 
 ## 3. Distance-regressed connectivity — passed, and motor improves
 
