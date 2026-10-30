@@ -1,0 +1,147 @@
+% Resubmission manuscript. Link this repo to Overleaf (Menu -> GitHub) and
+% compile with pdfLaTeX + BibTeX. Section drafts are tracked in docs/ until
+% they stabilise; the Introduction below mirrors docs/INTRODUCTION_DRAFT.md.
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[round]{natbib}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{lineno}
+\usepackage{setspace}
+\usepackage[hidelinks]{hyperref}
+
+\title{The structural connectivity that distinguishes adult prefrontal
+subregions is present in neonates\\
+\large [title under discussion -- see docs/INTRODUCTION\_DRAFT.md for candidates]}
+
+\author{Chiara Caldinelli \and Rhodri Cusack}
+\date{}
+
+\begin{document}
+\maketitle
+\linenumbers
+\onehalfspacing
+
+\begin{abstract}
+[To be rewritten last, under the organisers framing: geometry specifies much
+of adult DLPFC functional topography; connectivity carries a function-specific
+contribution beyond geometry for all five task domains; that contribution is
+already present in neonates.]
+\end{abstract}
+
+\section{Introduction}
+
+At term birth, a human is still years away from comprehending a story, months
+from reaching for an object, and more than a decade from the mature working
+memory of an adult. Yet in every neurotypical adult, these functions occupy a
+consistent arrangement of subregions within dorsolateral prefrontal cortex
+(DLPFC): topographies of task preference that recur, individual after
+individual, across working memory, language, social cognition, emotion and
+action \citep{barch2013,glasser2016}. This consistency implies that something
+specifies which patch of prefrontal cortex comes to serve which function, and
+that the specifying information is in place by the time each function
+emerges. Here we ask what that information is, and how early it can be
+measured.
+
+Three broad classes of answer are on offer. The first is \emph{geometry}: a
+patch's fate follows from its position in the cortical sheet. Positional
+identity is established early by morphogen gradients
+\citep{rakic1988,oleary1989}, macroscale function is organised along smooth
+spatial gradients \citep{margulies2016}, and much of adult functional
+organisation is predictable from the geometry of the cortex alone
+\citep{pang2023}. The second is \emph{extrinsic connectivity}: a patch
+computes what its connections allow, so function follows the connectional
+fingerprint \citep{passingham2002} --- an account with causal support from
+rewiring experiments \citep{vonmelchner2000} and correlational support from
+studies predicting adult functional selectivity from connectivity
+\citep{saygin2011,osher2016}. The third is \emph{local microstructure}:
+cytoarchitectonic identity could determine both a region's connections and
+its eventual function, making connectivity a marker rather than a mechanism
+\citep{kubota2025}. These accounts are not exclusive, and in any adult
+dataset their signatures are correlated: connectivity is itself spatially
+organised, and microstructure varies smoothly with position. A demonstration
+that any one of them predicts function therefore does not, by itself,
+distinguish between them.
+
+The entanglement is not hypothetical. Diffusion tractography is biased toward
+nearby targets, so a vertex's tractography profile partly encodes its
+position; and group-average activation maps are spatially smooth, so a model
+needs little more than position to approximate them. A connectivity-based
+prediction of function can therefore succeed as a re-description of geometry
+\citep{donahue2016,pang2023}. We address this by comparison against explicit
+geometric baselines. We measure what spatial smoothness alone achieves, by
+passing surrogate maps with matched spatial autocorrelation
+\citep{burt2020} through the full analysis pipeline; what geometry achieves,
+with a model given only each vertex's distances to the rest of the brain; and
+what connectivity adds beyond both, including after the distance dependence
+of tractography is removed from its profiles. We also estimate how the
+variance of each functional map divides into geometric, connectional and
+shared components (Fig.~1b).
+
+These specifiers differ most sharply in \emph{when} their information becomes
+available relative to experience. We make no claim that neonatal DLPFC is
+inactive or uncommitted: it shows organised spontaneous activity, responses
+to speech are detectable in frontal cortex even in premature neonates
+\citep{mahmoudzadeh2013,dehaenelambertz2002}, attentional signals appear
+within months \citep{ellis2021}, and neural activity can reveal function well
+before behaviour does --- infants hold visual category information that overt
+behaviour alone would not show \citep{odoherty2026}. Our premise is narrower
+and behavioural: the functions indexed by our five contrasts --- instructed
+working memory, narrative comprehension, explicit mentalising, cued action
+selection, emotion recognition --- constitute an \emph{adult task repertoire}
+that emerges over years and matures into the second decade
+\citep{wellman2001,luna2004}, and DLPFC is among the last cortical
+territories to mature by every anatomical index
+\citep{chugani1986,huttenlocher1997,gogtay2004}. At term, essentially all of
+the experience of performing this repertoire lies in the future. Whatever
+precursor computations neonatal DLPFC performs, a specification of the
+repertoire's adult topography that is measurable at birth cannot be a
+consequence of performing that repertoire. Connectivity-based
+proto-organisation of this kind has been demonstrated in ventral temporal
+cortex, where connectivity at age five predicts where the visual word form
+area will emerge by age eight \citep{saygin2016}. Here we ask the
+corresponding question at the beginning of postnatal life, for five domains
+at once, and under explicit geometric controls: is the \emph{connectional}
+component of adult DLPFC topography --- the part geometry cannot carry ---
+already present in the neonatal connectome?
+
+We studied the topography of five task activations within DLPFC in 155 adults
+\citep{vanessen2013,barch2013} and structural connectivity in the same adults
+and in 325 term neonates \citep{edwards2022}, within a single predictive
+framework: identical models, targets and metrics throughout, so that
+competing accounts differ only in the information they are allowed. Four
+predictions follow from the accounts above. (P1) If functional topography is
+unconstrained smooth variation, real task maps should transfer from adults to
+neonates no better than surrogate maps of matched smoothness. (P2) If
+geometry suffices, distances alone should predict the maps as well as
+tractography does, and removing distance information from tractography should
+abolish its predictive power. (P3) If extrinsic connectivity contributes, it
+should predict adult topography beyond these geometric baselines, with task
+specificity. (P4) If that connectional contribution requires postnatal
+experience of the repertoire, it should be absent at birth; if it is part of
+the scaffold, it should be present. We find that geometry is a strong
+predictor --- for the motor contrast, the strongest available, a result that
+led us to reinterpret one of our five contrasts --- but that connectivity
+carries a function-specific contribution beyond geometry for all five
+domains, and that this contribution is already present in the first weeks of
+life.
+
+\section{Results}
+[From PHASE0\_RESULTS.md and MANUSCRIPT\_CHANGES.md; to be drafted.]
+
+\section{Discussion}
+[To be drafted; includes the microstructure third-variable discussion
+(\citealp{kubota2025}) and the retirement of the region-level
+``connectivity precedes function'' framing.]
+
+\section{Materials and Methods}
+[Port from the submitted version with the corrections in
+MANUSCRIPT\_CHANGES.md; add the control analyses.]
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

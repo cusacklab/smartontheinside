@@ -1,0 +1,119 @@
+16:15:37 INFO shares: fold 1/10 alpha=0.03
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 9.640e+00, tolerance: 5.478e-02
+  model = cd_fast.enet_coordinate_descent(
+16:15:47 INFO shares: fold 2/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 8.804e+00, tolerance: 5.252e-02
+  model = cd_fast.enet_coordinate_descent(
+16:15:57 INFO shares: fold 3/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 8.857e+00, tolerance: 5.453e-02
+  model = cd_fast.enet_coordinate_descent(
+16:16:07 INFO shares: fold 4/10 alpha=0.003
+16:16:17 INFO shares: fold 5/10 alpha=0.01
+16:16:28 INFO shares: fold 6/10 alpha=0.01
+16:16:36 INFO shares: fold 7/10 alpha=0.01
+16:16:46 INFO shares: fold 8/10 alpha=0.01
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 7.874e+00, tolerance: 5.223e-02
+  model = cd_fast.enet_coordinate_descent(
+16:16:56 INFO shares: fold 9/10 alpha=0.003
+16:17:05 INFO shares: fold 10/10 alpha=0.03
+16:17:05 INFO shares done: adult tfMRI_WM L  uG=0.020 uC=0.565 shared=0.114
+16:17:20 INFO shares: fold 1/10 alpha=0.1
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.220e+01, tolerance: 7.516e-02
+  model = cd_fast.enet_coordinate_descent(
+16:17:33 INFO shares: fold 2/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.056e+01, tolerance: 7.347e-02
+  model = cd_fast.enet_coordinate_descent(
+16:17:48 INFO shares: fold 3/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.067e+01, tolerance: 7.636e-02
+  model = cd_fast.enet_coordinate_descent(
+16:18:03 INFO shares: fold 4/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.318e+01, tolerance: 7.486e-02
+  model = cd_fast.enet_coordinate_descent(
+16:18:19 INFO shares: fold 5/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 8.782e+00, tolerance: 7.847e-02
+  model = cd_fast.enet_coordinate_descent(
+16:18:35 INFO shares: fold 6/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.671e+01, tolerance: 7.186e-02
+  model = cd_fast.enet_coordinate_descent(
+16:18:51 INFO shares: fold 7/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.305e+01, tolerance: 7.037e-02
+  model = cd_fast.enet_coordinate_descent(
+16:19:06 INFO shares: fold 8/10 alpha=0.003
+16:19:21 INFO shares: fold 9/10 alpha=0.01
+16:19:36 INFO shares: fold 10/10 alpha=0.1
+16:19:36 INFO shares done: adult tfMRI_MOTOR L  uG=0.092 uC=0.322 shared=0.151
+16:19:44 INFO shares: fold 1/10 alpha=0.03
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 2.068e+00, tolerance: 4.287e-02
+  model = cd_fast.enet_coordinate_descent(
+16:19:55 INFO shares: fold 2/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 4.553e-01, tolerance: 4.082e-02
+  model = cd_fast.enet_coordinate_descent(
+16:20:05 INFO shares: fold 3/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.005e+00, tolerance: 4.129e-02
+  model = cd_fast.enet_coordinate_descent(
+16:20:15 INFO shares: fold 4/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.418e-01, tolerance: 4.393e-02
+  model = cd_fast.enet_coordinate_descent(
+16:20:25 INFO shares: fold 5/10 alpha=0.003
+16:20:35 INFO shares: fold 6/10 alpha=0.03
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 8.062e-01, tolerance: 4.007e-02
+  model = cd_fast.enet_coordinate_descent(
+16:20:45 INFO shares: fold 7/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 4.987e-01, tolerance: 4.251e-02
+  model = cd_fast.enet_coordinate_descent(
+16:20:54 INFO shares: fold 8/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 4.313e-01, tolerance: 4.057e-02
+  model = cd_fast.enet_coordinate_descent(
+16:21:04 INFO shares: fold 9/10 alpha=0.003
+16:21:13 INFO shares: fold 10/10 alpha=0.03
+16:21:13 INFO shares done: adult tfMRI_LANGUAGE L  uG=0.031 uC=0.636 shared=0.002
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 2.057e+00, tolerance: 3.293e-02
+  model = cd_fast.enet_coordinate_descent(
+16:21:22 INFO shares: fold 1/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.305e-01, tolerance: 3.098e-02
+  model = cd_fast.enet_coordinate_descent(
+16:21:31 INFO shares: fold 2/10 alpha=0.003
+16:21:39 INFO shares: fold 3/10 alpha=0.03
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.740e-01, tolerance: 3.060e-02
+  model = cd_fast.enet_coordinate_descent(
+16:21:48 INFO shares: fold 4/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 4.850e-01, tolerance: 3.310e-02
+  model = cd_fast.enet_coordinate_descent(
+16:21:59 INFO shares: fold 5/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 1.307e-01, tolerance: 3.374e-02
+  model = cd_fast.enet_coordinate_descent(
+16:22:08 INFO shares: fold 6/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.458e-01, tolerance: 2.951e-02
+  model = cd_fast.enet_coordinate_descent(
+16:22:18 INFO shares: fold 7/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.763e-01, tolerance: 3.101e-02
+  model = cd_fast.enet_coordinate_descent(
+16:22:28 INFO shares: fold 8/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 2.034e-01, tolerance: 2.696e-02
+  model = cd_fast.enet_coordinate_descent(
+16:22:38 INFO shares: fold 9/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 2.732e-01, tolerance: 3.293e-02
+  model = cd_fast.enet_coordinate_descent(
+16:22:47 INFO shares: fold 10/10 alpha=0.003
+16:22:47 INFO shares done: adult tfMRI_SOCIAL L  uG=0.038 uC=0.447 shared=0.122
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 9.869e-02, tolerance: 1.466e-02
+  model = cd_fast.enet_coordinate_descent(
+16:22:54 INFO shares: fold 1/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 7.713e-02, tolerance: 1.461e-02
+  model = cd_fast.enet_coordinate_descent(
+16:22:59 INFO shares: fold 2/10 alpha=0.003
+16:23:04 INFO shares: fold 3/10 alpha=0.01
+16:23:10 INFO shares: fold 4/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 3.486e-02, tolerance: 1.496e-02
+  model = cd_fast.enet_coordinate_descent(
+16:23:16 INFO shares: fold 5/10 alpha=0.003
+16:23:22 INFO shares: fold 6/10 alpha=0.03
+16:23:29 INFO shares: fold 7/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 7.546e-02, tolerance: 1.397e-02
+  model = cd_fast.enet_coordinate_descent(
+16:23:34 INFO shares: fold 8/10 alpha=0.003
+16:23:40 INFO shares: fold 9/10 alpha=0.003
+/opt/fsl/lib/python3.10/site-packages/sklearn/linear_model/_coordinate_descent.py:631: ConvergenceWarning: Objective did not converge. You might want to increase the number of iterations, check the scale of the features or consider increasing regularisation. Duality gap: 9.200e-02, tolerance: 1.475e-02
+  model = cd_fast.enet_coordinate_descent(
+16:23:46 INFO shares: fold 10/10 alpha=0.003
+16:23:46 INFO shares done: adult tfMRI_EMOTION L  uG=0.022 uC=0.634 shared=0.000

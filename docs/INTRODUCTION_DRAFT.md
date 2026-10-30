@@ -24,10 +24,11 @@ Cusack, 2026, Nat Neurosci].
 > occupy a consistent arrangement of subregions within dorsolateral prefrontal
 > cortex (DLPFC): topographies of task preference that recur, individual after
 > individual, across working memory, language, social cognition, emotion and
-> action [refs: HCP task battery; DLPFC parcellation/function]. Consistency on
-> this scale demands a specifying mechanism. Something constrains which patch
-> of prefrontal cortex comes to serve which function — and whatever it is must
-> exist before the functions do. What is it, and how early is it in place?
+> action [refs: HCP task battery; DLPFC parcellation/function]. This
+> consistency implies that something specifies which patch of prefrontal
+> cortex comes to serve which function, and that the specifying information is
+> in place by the time each function emerges. Here we ask what that
+> information is, and how early it can be measured.
 
 ## ¶2 — The candidate specifiers
 
@@ -47,8 +48,8 @@ Cusack, 2026, Nat Neurosci].
 > connectivity a marker rather than a mechanism [Kubota et al. 2025]. These
 > accounts are not exclusive, and in any adult dataset their signatures are
 > correlated: connectivity is itself spatially organised, and microstructure
-> varies smoothly with position. Demonstrating that any one of them predicts
-> function is therefore, by itself, uninformative.
+> varies smoothly with position. A demonstration that any one of them predicts
+> function therefore does not, by itself, distinguish between them.
 
 ## ¶3 — The inferential standard
 
@@ -57,16 +58,15 @@ Cusack, 2026, Nat Neurosci].
 > its position; and group-average activation maps are spatially smooth, so a
 > model needs little more than position to approximate them. A
 > connectivity-based prediction of function can therefore succeed as a
-> re-description of geometry [cf. Donahue et al. 2016; Pang et al. 2023].
-> Every claim in this paper accordingly takes the form of an *increment over
-> a geometry-matched baseline*. We quantify what spatial smoothness alone
-> achieves, by passing surrogate maps with matched spatial autocorrelation
-> through our entire analysis pipeline; what explicit geometry achieves, with
-> a model given only each vertex's distances to the rest of the brain; and
-> what connectivity adds beyond both, including after the distance dependence
-> of tractography is removed from its profiles. We further partition the
-> adult functional map into geometric, connectional and shared components
-> (Fig. 1b).
+> re-description of geometry [cf. Donahue et al. 2016; Pang et al. 2023]. We
+> address this by comparison against explicit geometric baselines. We measure
+> what spatial smoothness alone achieves, by passing surrogate maps with
+> matched spatial autocorrelation through the full analysis pipeline; what
+> geometry achieves, with a model given only each vertex's distances to the
+> rest of the brain; and what connectivity adds beyond both, including after
+> the distance dependence of tractography is removed from its profiles. We
+> also estimate how the variance of each functional map divides into
+> geometric, connectional and shared components (Fig. 1b).
 
 ## ¶4 — Development as the lever
 
@@ -88,7 +88,7 @@ Cusack, 2026, Nat Neurosci].
 > essentially all of the experience of performing this repertoire lies in the
 > future. Whatever precursor computations neonatal DLPFC performs, a
 > specification of the repertoire's adult topography that is measurable at
-> birth cannot have been installed by performing it. Connectivity-based
+> birth cannot be a consequence of performing that repertoire. Connectivity-based
 > proto-organisation of this kind has been demonstrated in ventral temporal
 > cortex, where connectivity at age five predicts where the visual word form
 > area will emerge by age eight [Saygin et al. 2016]. Here we ask the
@@ -114,12 +114,11 @@ Cusack, 2026, Nat Neurosci].
 > beyond these geometric baselines, with task specificity. (P4) If that
 > connectional contribution requires postnatal experience of the repertoire,
 > it should be absent at birth; if it is part of the scaffold, it should be
-> present. We find that geometry is a genuinely strong predictor — for the
-> motor contrast, the strongest available, a result that reclassifies one of
-> our own five contrasts and demonstrates that the controls discriminate —
-> but that connectivity carries a function-specific increment beyond geometry
-> for all five domains, and that this increment is already present, at 79 to
-> 115 percent of its adult strength, in the first weeks of life.
+> present. We find that geometry is a strong predictor — for the motor
+> contrast, the strongest available, a result that led us to reinterpret one
+> of our five contrasts — but that connectivity carries a function-specific
+> contribution beyond geometry for all five domains, and that this
+> contribution is already present in the first weeks of life.
 
 ---
 
@@ -134,9 +133,10 @@ Cusack, 2026, Nat Neurosci].
 - ¶4 carries the temporal-asymmetry argument; the Saygin VWFA citation sits
   here as the nearest prior art, with the extension stated as: measurement at
   birth, five domains, geometric controls.
-- ¶5's "79 to 115 percent" is the distance-regressed retention range
-  (PHASE0_RESULTS §3); swap for the maturity-panel percentages if the final
-  figure set leads with those instead.
+- ¶5 deliberately gives no percentage: 79–115% is retention after decay
+  removal *within neonates*, while the vs-adult maturity figures are 57–99%
+  (median 90%) — an earlier draft conflated them. Quote whichever the Results
+  lead with, in the Results.
 - Title candidates under this framing: "Geometry and connectivity in the
   neonatal specification of prefrontal functional topography"; "The
   connectional component of adult prefrontal organisation is present at
