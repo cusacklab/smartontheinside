@@ -86,18 +86,31 @@ prove connectivity carries no individual information — but it does mean the
 paper cannot claim individual-level validation, and Fig. 2's framing has to
 change regardless of what the remaining controls show.
 
-## 3. Distance-regressed connectivity — rerun in flight
+## 3. Distance-regressed connectivity — passed, and motor improves
 
-The first cluster run failed informatively: the published alpha, selected for
-raw streamline counts, shrank every coefficient to zero on log-residual
-features (7 of 10 cells returned constant predictions). Residuals are now
-per-subject unit SD and the penalty was re-selected on the 20 held-out tuning
-adults only (`sti distance-control --tune`): **alpha = 0.1, l1 = 0.2**, on a
-surface flat across three orders of magnitude (mean within-task r
-0.199–0.222), so nothing hinges on the choice. Already informative: tuning
-adults show within-task r ≈ 0.22 *after* decay removal, so connectivity
-carries signal beyond the distance decay at the individual level too.
-Results table to follow from job 16534.
+Donahue-style control: each subject's exponential distance decay removed from
+their profiles (log space, per-subject unit SD), penalty re-selected on the 20
+held-out tuning adults only (`sti distance-control --tune`: alpha = 0.1,
+l1 = 0.2, on a surface flat across three orders of magnitude — the first run
+used the raw-count alpha, which zeroed every coefficient). Within-task
+accuracy, n = 325 (`data/results/neonatal_N325_distance_regressed.csv`):
+
+| | Raw | Distance-regressed | Retained |
+|---|---|---|---|
+| Emotion L / R | 0.40 / 0.46 | 0.34 / 0.37 | 85% / 79% |
+| WM L / R | 0.43 / 0.43 | 0.45 / 0.45 | 107% / 106% |
+| Social L / R | 0.33 / 0.43 | 0.38 / 0.37 | 115% / 88% |
+| Language L / R | 0.38 / 0.36 | 0.40 / 0.36 | 104% / 101% |
+| **Motor L / R** | 0.24 / 0.16 | **0.33 / 0.28** | **137% / 180%** |
+
+Column specificity: 37/40 comparisons remain significant. The decay component
+of the profiles is not what carries the transfer — removing it costs nothing
+overall, and for motor it was actively *hurting* (accuracy rises by half to
+four fifths). That leaves motor ambiguous: its raw transfer fails the pipeline
+null, but its regressed transfer is substantially higher. The combined control
+— the surrogate null run on the regressed features (job 16544,
+`STI_REGRESS=1`) — settles whether regressed motor exceeds what position
+carries through the same pipeline. Table to follow.
 
 ## 4. What this means for the checkpoint (preliminary)
 
