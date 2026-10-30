@@ -1,0 +1,7 @@
+host=high-memory-dy-r6a-4xlarge-1 array_id=1 task=tfMRI_WM hemi=R threads=4
+started 2026-10-30T14:56:15+00:00
+14:56:25 INFO distance regressed out: hemi=L (155 subjects)
+14:56:30 INFO distance regressed out: hemi=R (155 subjects)
+14:56:31 INFO downloading s3://smartontheinside/infant_classifier/conn_for_classifier_N-326_infants.npy -> /home/ubuntu/repos/smartontheinside/data/cache/infant_classifier/conn_for_classifier_N-326_infants.npy
+14:56:31 INFO Found credentials in shared credentials file: ~/.aws/credentials
+14:56:32 ERROR MissingDataError: Could not obtain conn_for_classifier_N-326_infants.npy: not at /home/ubuntu/repos/smartontheinside/data/derivatives/conn_for_classifier_N-326_infants.npy, and fetching s3://smartontheinside/infant_classifier/conn_for_classifier_N-326_infants.npy failed (An error occurred (404) when calling the HeadObject operation: Not Found)

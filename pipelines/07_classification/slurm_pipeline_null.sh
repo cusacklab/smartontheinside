@@ -46,9 +46,11 @@ export PYTHONPATH="$REPO/src"
 echo "host=$(hostname) array_id=${SLURM_ARRAY_TASK_ID} task=${TASK} hemi=${HEMI} n_surrogates=${N_SURROGATES} threads=$OMP_NUM_THREADS"
 echo "started $(date -Is)"
 
+# the term cohort file lists 326 subjects but the assembled array is N-325
+# (one subject has no usable tractography), so the array + sidecar are the truth
 /opt/fsl/bin/python3 -m sti.cli -v pipeline-null \
     --cohort adults_analysis \
-    --neonates neonates_term_all \
+    --connectivity data/derivatives/conn_for_classifier_N-325_infants.npy \
     --tasks "$TASK" \
     --hemi "$HEMI" \
     --n-surrogates "$N_SURROGATES" \
