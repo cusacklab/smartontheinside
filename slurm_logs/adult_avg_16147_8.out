@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-3 array_id=8 task=tfMRI_EMOTION hemi=L threads=4
+started 2026-08-31T11:36:56+00:00
+11:40:19 INFO adult_group_mean_loo done: task=tfMRI_EMOTION hemi=L
+wrote data/results/shards/adult_average_tfMRI_EMOTION_L.csv (775 rows)
+finished 2026-08-31T11:40:19+00:00

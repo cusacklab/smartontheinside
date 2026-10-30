@@ -104,12 +104,17 @@ def adult_loo(
     config: Config = DEFAULT_CONFIG,
     hemispheres=HEMISPHERES,
     float32: bool = True,
+    model_tasks=None,
 ) -> tuple[pd.DataFrame, Predictions]:
     """Leave-one-adult-out; each model predicts the held-out adult's own map (Fig. 2)."""
     records: list[dict] = []
     preds = Predictions.empty()
 
-    for task, activation in activations.items():
+    # model_tasks restricts which models are TRAINED, so the work can be split
+    # across cluster jobs. Every model is still evaluated against every task's
+    # map, so each shard yields a complete row of the specificity matrix.
+    for task in (model_tasks if model_tasks is not None else list(activations)):
+        activation = activations[task]
         y_all = activation.zscored()
         for hemi in hemispheres:
             X = connectivity[hemi]
@@ -142,6 +147,7 @@ def adult_group_mean_loo(
     config: Config = DEFAULT_CONFIG,
     hemispheres=HEMISPHERES,
     float32: bool = True,
+    model_tasks=None,
 ) -> tuple[pd.DataFrame, Predictions]:
     """Leave-one-adult-out; each model predicts the group-average map (Fig. 4).
 
@@ -153,7 +159,11 @@ def adult_group_mean_loo(
     records: list[dict] = []
     preds = Predictions.empty()
 
-    for task, activation in activations.items():
+    # model_tasks restricts which models are TRAINED, so the work can be split
+    # across cluster jobs. Every model is still evaluated against every task's
+    # map, so each shard yields a complete row of the specificity matrix.
+    for task in (model_tasks if model_tasks is not None else list(activations)):
+        activation = activations[task]
         y_all = activation.zscored()
         for hemi in hemispheres:
             X = connectivity[hemi]
@@ -191,6 +201,7 @@ def neonatal(
     config: Config = DEFAULT_CONFIG,
     hemispheres=HEMISPHERES,
     float32: bool = True,
+    model_tasks=None,
 ) -> tuple[pd.DataFrame, Predictions]:
     """Train on all adults, apply unchanged to each neonate (Fig. 3).
 
@@ -201,7 +212,11 @@ def neonatal(
     records: list[dict] = []
     preds = Predictions.empty()
 
-    for task, activation in activations.items():
+    # model_tasks restricts which models are TRAINED, so the work can be split
+    # across cluster jobs. Every model is still evaluated against every task's
+    # map, so each shard yields a complete row of the specificity matrix.
+    for task in (model_tasks if model_tasks is not None else list(activations)):
+        activation = activations[task]
         y_all = activation.zscored()
         for hemi in hemispheres:
             X_adult = adult_connectivity[hemi]

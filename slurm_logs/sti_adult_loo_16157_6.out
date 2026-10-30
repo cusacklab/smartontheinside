@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-2 analysis=adult-loo array_id=6 task=tfMRI_SOCIAL hemi=L threads=4
+started 2026-08-31T12:29:28+00:00
+12:34:55 INFO adult_loo done: task=tfMRI_SOCIAL hemi=L
+wrote data/results/shards/adult_loo_tfMRI_SOCIAL_L.csv (775 rows)
+finished 2026-08-31T12:34:55+00:00

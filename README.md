@@ -37,12 +37,13 @@ pytest
 | Stage | Directory | What it does |
 |-------|-----------|--------------|
 | 00 | `pipelines/00_cohorts` | Derive term/preterm cohorts from participant metadata |
-| 01 | `pipelines/01_rois` | Build DLPFC seed and target ROI masks from the Glasser parcellation |
-| 02 | `pipelines/02_adult_activation` | Extract HCP task activation over DLPFC vertices |
-| 03 | `pipelines/03_adult_tractography` | BEDPOSTX / PROBTRACKX2 seed-to-target in adults |
-| 04 | `pipelines/04_neonatal_registration` | Carry the adult parcellation into neonatal space (ANTs) |
-| 05 | `pipelines/05_neonatal_tractography` | Tractography in neonates; return maps to the adult surface |
-| 06 | `pipelines/06_classification` | SLURM wrappers around the `sti` commands below |
+| 01 | `pipelines/01_contrast_selection` | Choose the five representative task contrasts (Figs. S3–S5) |
+| 02 | `pipelines/02_rois` | Build DLPFC seed and target ROI masks from the Glasser parcellation |
+| 03 | `pipelines/03_adult_activation` | Extract HCP task activation over DLPFC vertices |
+| 04 | `pipelines/04_adult_tractography` | BEDPOSTX / PROBTRACKX2 seed-to-target in adults |
+| 05 | `pipelines/05_neonatal_registration` | Carry the adult parcellation into neonatal space (ANTs) |
+| 06 | `pipelines/06_neonatal_tractography` | Tractography in neonates; return maps to the adult surface |
+| 07 | `pipelines/07_classification` | SLURM wrappers around the `sti` commands below |
 
 ## Running the analyses
 
@@ -62,6 +63,27 @@ sti scan-age      --results data/results/neonatal.csv \
 ```
 
 All write tidy CSVs with one row per (task, comparison_task, hemisphere, subject).
+
+### On the cluster
+
+The adult leave-one-out analyses are 1,550 model fits (155 folds x 5 contrasts x
+2 hemispheres), about three hours in one process. Each (contrast, hemisphere)
+pair is independent, so they shard cleanly:
+
+```bash
+sbatch pipelines/07_classification/slurm_adult_average.sh     # 10-task array, ~20 min
+sti merge --inputs 'data/results/shards/adult_average_*.csv' \
+          -o data/results/adult_average_N155.csv
+```
+
+`--tasks` and `--hemi` select a shard. Restricting a shard's model tasks does
+**not** restrict what those models are compared against, so each shard still
+emits a complete row of the specificity matrix. `sti merge` de-duplicates and
+warns if any (hemisphere, task) cell is missing, so a failed array task is caught
+rather than silently producing a short table.
+
+Compute nodes need no setup: `/home` and `/opt/fsl` are NFS-exported, so they
+share this checkout, the editable install and the data.
 
 ## Before you rerun anything
 

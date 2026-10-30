@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-3 analysis=adult-loo array_id=9 task=tfMRI_EMOTION hemi=R threads=4
+started 2026-08-31T12:29:28+00:00
+12:32:37 INFO adult_loo done: task=tfMRI_EMOTION hemi=R
+wrote data/results/shards/adult_loo_tfMRI_EMOTION_R.csv (775 rows)
+finished 2026-08-31T12:32:37+00:00

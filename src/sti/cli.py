@@ -23,9 +23,20 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from sti.config import Config, TASKS
+from sti.config import Config, FIGURES, TASKS
 
 log = logging.getLogger("sti")
+
+
+def _shard(args):
+    """Which models to train and which hemispheres, for one cluster shard."""
+    tasks = [t.strip() for t in args.tasks.split(",")] if args.tasks else None
+    if tasks:
+        unknown = [t for t in tasks if t not in TASKS]
+        if unknown:
+            raise SystemExit(f"unknown task(s) {unknown}; choose from {sorted(TASKS)}")
+    hemis = tuple(args.hemi.split(",")) if args.hemi else ("L", "R")
+    return tasks, hemis
 
 
 def _out(path: str | Path) -> Path:
@@ -72,7 +83,9 @@ def cmd_adult_loo(args) -> int:
     from sti.evaluate import adult_loo
 
     cfg, adults, conn, acts, _ = _load_inputs(args)
-    res, _ = adult_loo(conn, acts, list(adults.subjects), config=cfg)
+    tasks, hemis = _shard(args)
+    res, _ = adult_loo(conn, acts, list(adults.subjects), config=cfg,
+                       hemispheres=hemis, model_tasks=tasks)
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows)")
     return 0
@@ -82,78 +95,174 @@ def cmd_adult_average(args) -> int:
     from sti.evaluate import adult_group_mean_loo
 
     cfg, adults, conn, acts, _ = _load_inputs(args)
-    res, _ = adult_group_mean_loo(conn, acts, list(adults.subjects), config=cfg)
+    tasks, hemis = _shard(args)
+    res, _ = adult_group_mean_loo(conn, acts, list(adults.subjects), config=cfg,
+                                  hemispheres=hemis, model_tasks=tasks)
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows)")
     return 0
 
 
 def cmd_neonatal(args) -> int:
+    from sti.cohorts import load_cohort
+    from sti.datasets import load_all_activations, load_connectivity, load_connectivity_file
     from sti.evaluate import neonatal
 
-    cfg, adults, conn, acts, (neos, nconn) = _load_inputs(args, neonatal=True)
-    res, _ = neonatal(conn, nconn, acts, list(neos.subjects), config=cfg)
+    cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
+    adults = load_cohort(args.cohort, cfg)
+    acts = load_all_activations(TASKS, adults.n, config=cfg)
+    conn = load_connectivity(adults.n, config=cfg)
+
+    if args.connectivity:
+        # explicit array + its subject sidecar: the array's subjects are the
+        # truth, not the cohort file, because they can legitimately differ
+        nconn, subjects = load_connectivity_file(args.connectivity)
+        if subjects is None:
+            cohort = load_cohort(args.neonates, cfg)
+            if cohort.n != nconn.n_subjects:
+                log.error(
+                    "%s has %d subjects but cohort %s has %d, and no .subjects.txt "
+                    "sidecar is present to resolve which rows are which.",
+                    args.connectivity, nconn.n_subjects, args.neonates, cohort.n)
+                return 1
+            subjects = list(cohort.subjects)
+    else:
+        cohort = load_cohort(args.neonates, cfg)
+        nconn = load_connectivity(cohort.n, neonatal=True, config=cfg)
+        subjects = list(cohort.subjects)
+
+    tasks, hemis = _shard(args)
+    res, preds = neonatal(conn, nconn, acts, subjects, config=cfg,
+                          hemispheres=hemis, model_tasks=tasks)
     res.to_csv(_out(args.output), index=False)
-    print(f"wrote {args.output} ({len(res)} rows, {neos.n} neonates)")
+    print(f"wrote {args.output} ({len(res)} rows, {nconn.n_subjects} neonates)")
+    if args.save_predictions:
+        import numpy as np
+        out = _out(args.save_predictions)
+        np.savez_compressed(
+            out, **{f"{t}__{h}": v for (t, h), v in preds.values.items()},
+            subjects=np.array(subjects))
+        print(f"wrote {out} (predicted maps, needed by `sti spatial-null`)")
     return 0
 
 
 def cmd_spatial_null(args) -> int:
+    """Is the observed accuracy larger than spatial autocorrelation alone allows?"""
+    import numpy as np
+
     from sti.datasets import load_activation
-    from sti.spatial_null import SurrogateMaps, null_correlations, p_spin
+    from sti.spatial_null import SurrogateMaps, group_null_distribution, p_spin
     from sti.surface import distance_matrix
 
     cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
     res = pd.read_csv(args.results)
-    rows = []
+    preds = np.load(args.predictions, allow_pickle=True)
+
+    rows, null_dists = [], {}
     for hemi in sorted(res.hemi.unique()):
         gen = SurrogateMaps(distance_matrix(hemi, cfg), seed=args.seed)
         for task in sorted(res.task.unique()):
-            obs_r = res[(res.hemi == hemi) & (res.task == task) &
-                        (res.comparison_task == task)]["pearson"].mean()
-            act = load_activation(task, args.n_adults, config=cfg).zscored()[hemi].mean(axis=0)
-            surr = gen.generate(act, args.n_surrogates)
-            # correlate the group-average observed map against its own surrogates,
-            # scaled to the observed accuracy: the null asks how large an r this
-            # much spatial smoothness alone can produce
-            null = null_correlations(act, act, surr)
-            rows.append({"hemi": hemi, "task": task, "observed_r": obs_r,
-                         "null_mean": float(null.mean()), "null_sd": float(null.std()),
-                         "p_spin": p_spin(obs_r, null), "n_surrogates": args.n_surrogates})
-            log.info("spatial null done: %s %s", hemi, task)
+            key = f"{task}__{hemi}"
+            if key not in preds:
+                log.warning("no predictions for %s; skipping", key)
+                continue
+            observed = float(res[(res.hemi == hemi) & (res.task == task) &
+                                 (res.comparison_task == task)]["pearson"].mean())
+            target = load_activation(task, args.n_adults, config=cfg).zscored()[hemi].mean(axis=0)
+            surr = gen.generate(target, args.n_surrogates)
+            null = group_null_distribution(preds[key], surr)
+            null_dists[key] = null
+            rows.append({
+                "hemi": hemi, "task": task, "observed_r": observed,
+                "null_mean": float(null.mean()), "null_sd": float(null.std()),
+                "null_p95": float(np.percentile(null, 95)),
+                "p_spin": p_spin(observed, null),
+                "n_surrogates": args.n_surrogates, "n_subjects": preds[key].shape[0],
+            })
+            log.info("spatial null done: %s %s  observed=%.3f p=%.4f",
+                     hemi, task, observed, rows[-1]["p_spin"])
+
     out = pd.DataFrame(rows)
+    if not out.empty:
+        from sti.stats import fdr_bh, stars
+        out["p_fdr"] = fdr_bh(out["p_spin"].to_numpy())
+        out["stars"] = out["p_fdr"].map(stars)
     out.to_csv(_out(args.output), index=False)
     print(out.round(4).to_string(index=False))
     print(f"\nwrote {args.output}")
+
+    if args.save_null and null_dists:
+        # the full distributions, so Fig. S8 can be redrawn without recomputing
+        np.savez_compressed(_out(args.save_null), **null_dists)
+        print(f"wrote {args.save_null} (null distributions)")
+    if args.figures and null_dists:
+        from sti import plotting as P
+        for key, null in null_dists.items():
+            task, hemi = key.split("__")
+            r = out[(out.hemi == hemi) & (out.task == task)].iloc[0]
+            fig = P.plot_spatial_null(
+                r.observed_r, null, p=r.p_spin,
+                title=f"{task.replace('tfMRI_', '')} {hemi}")
+            stem = f"{FIGURES['spatial_null']}_{task}_{hemi}"
+            print(f"wrote {P.save(fig, stem, cfg)}")
     return 0
 
 
 def cmd_scan_age(args) -> int:
     from sti.scan_age import load_covariates, per_task_scan_age, scan_age_regression
 
+    from sti.scan_age import CORE_COVARIATES
+
     cfg = Config()
     res = pd.read_csv(args.results)
-    cov = load_covariates(cfg, extra=Path(args.extra) if args.extra else None)
-    table, model = scan_age_regression(res, cov)
-    print(f"n = {table.attrs['n']}, R2 = {table.attrs['r_squared']:.3f}\n")
+    predictors = tuple(p.strip() for p in args.predictors.split(",")) if args.predictors \
+        else CORE_COVARIATES
+    cov = load_covariates(cfg, path=Path(args.covariates) if args.covariates else None,
+                          extra=Path(args.extra) if args.extra else None,
+                          require=predictors)
+    table, model = scan_age_regression(res, cov, predictors=predictors)
+    print(f"n = {table.attrs['n']}, R2 = {table.attrs['r_squared']:.3f}, "
+          f"predictors = {', '.join(predictors)}\n")
     print(table.round(4).to_string(index=False))
+    vif = table.attrs.get("vif") or {}
+    if vif:
+        print("\nvariance inflation: " +
+              ", ".join(f"{k}={v:.2f}" for k, v in vif.items()) +
+              ("   (>5 indicates the predictors are hard to separate)"
+               if max(vif.values()) > 5 else ""))
     print("\nper task:")
-    print(per_task_scan_age(res, cov).round(4).to_string(index=False))
+    print(per_task_scan_age(res, cov, predictors=predictors).round(4).to_string(index=False))
     if args.output:
         table.to_csv(_out(args.output), index=False)
         print(f"\nwrote {args.output}")
+    if args.figures:
+        from sti import plotting as P
+        from sti.scan_age import subject_accuracy
+
+        acc = subject_accuracy(res).groupby("subject", as_index=False)["accuracy"].mean()
+        fig = P.plot_scan_age(acc, cov, title="Prediction accuracy vs age at scan (n=325)")
+        print(f"wrote {P.save(fig, FIGURES['scan_age'], cfg)}")
     return 0
 
 
 def cmd_compare(args) -> int:
     from sti.stats import compare_protocols
 
+    cfg = Config()
     a, b = pd.read_csv(args.a), pd.read_csv(args.b)
-    out = compare_protocols(a, b)
-    print(out.round(4).to_string(index=False))
+    out = compare_protocols(a, b, n_boot=args.n_boot)
+    cols = ["hemi", "task", "difference", "p_fdr", "stars", "pct_of_b",
+            "pct_ci_low", "pct_ci_high"]
+    print(out[[c for c in cols if c in out.columns]].round(3).to_string(index=False))
+    print(f"\nneonatal accuracy as % of adult: median {out.pct_of_b.median():.0f}%, "
+          f"range {out.pct_of_b.min():.0f}-{out.pct_of_b.max():.0f}%")
     if args.output:
         out.to_csv(_out(args.output), index=False)
-        print(f"\nwrote {args.output}")
+        print(f"wrote {args.output}")
+    if args.figures:
+        from sti import plotting as P
+        fig = P.plot_maturity_panel(out, title=args.title)
+        print(f"wrote {P.save(fig, args.prefix, cfg)}")
     return 0
 
 
@@ -197,6 +306,152 @@ def cmd_build_connectivity(args) -> int:
     return 0
 
 
+def _specificity_table(tests: pd.DataFrame) -> pd.DataFrame:
+    """Format the column-wise tests as a supplementary table.
+
+    One row per (hemisphere, target map, competing model): the accuracy of the
+    map's own model against a rival's, on the same target and the same subjects.
+    """
+    short = lambda c: c.replace("tfMRI_", "")
+    out = pd.DataFrame({
+        "hemisphere": tests.hemi,
+        "target_map": tests.comparison_task.map(short),
+        "matched_model_r": tests.mean_within.round(4),
+        "competing_model": tests.task.map(short),
+        "competing_model_r": tests.mean_between.round(4),
+        "difference": tests.difference.round(4),
+        "ci_95": [f"[{lo:.4f}, {hi:.4f}]" for lo, hi in zip(tests.ci_low, tests.ci_high)],
+        "p_fdr": tests.p_fdr.map(lambda v: f"{v:.2g}"),
+        "n": tests.n,
+    })
+    return out.sort_values(["hemisphere", "target_map", "competing_model"]).reset_index(drop=True)
+
+
+def cmd_figures(args) -> int:
+    """Render the accuracy and task-specificity figures for a results CSV."""
+    from sti import plotting as P
+    from sti.stats import specificity_tests
+
+    cfg = Config()
+    res = pd.read_csv(args.results)
+    prefix = args.prefix or Path(args.results).stem
+
+    # Both orientations. The row test is the manuscript's comparison; the column
+    # test holds the target map fixed and so is not confounded by how predictable
+    # each map is. Stars on the figure come from the column test.
+    tests = {
+        axis: specificity_tests(res, n_boot=args.n_boot, seed=args.seed, axis=axis)
+        for axis in ("row", "column")
+    }
+    outs = [
+        P.save(P.plot_accuracy(res, title=args.title), f"{prefix}_accuracy", cfg),
+        # the line panel is the specificity figure: it puts the comparison that
+        # matters (down columns) on the vertical axis
+        P.save(P.plot_specificity_panel(res, title=args.title),
+               f"{prefix}_specificity", cfg),
+    ]
+    if args.matrix:
+        # off by default: showing the same data as both a heatmap and a line
+        # panel invites the reader to ask which is authoritative, and the
+        # heatmap's orientation is the confound the line panel exists to avoid
+        outs.append(P.save(P.plot_specificity_matrix(res, tests=tests["column"],
+                                                     title=args.title),
+                           f"{prefix}_specificity_matrix", cfg))
+    for o in outs:
+        print(f"wrote {o}")
+
+    for axis, t in tests.items():
+        csv = _out(Path(args.results).with_name(f"{prefix}_specificity_{axis}.csv"))
+        t.to_csv(csv, index=False)
+        ok = int(((t.difference > 0) & (t.p_fdr < 0.05)).sum())
+        print(f"wrote {csv}  ({ok}/{len(t)} with the diagonal significantly higher)")
+
+    # Supplementary table: the pairwise matched-vs-unmatched statistics, which a
+    # heatmap can only approximate.
+    tbl = _specificity_table(tests["column"])
+    tsv = _out(Path(args.results).with_name(f"{prefix}_specificity_table.tsv"))
+    tbl.to_csv(tsv, sep="\t", index=False)
+    print(f"wrote {tsv}  ({len(tbl)} pairwise comparisons)")
+
+    within = res[res.task == res.comparison_task]
+    print("\nmean within-task accuracy (r):")
+    print(within.groupby(["hemi", "task"])["pearson"].agg(["mean", "std", "count"])
+          .round(4).to_string())
+    return 0
+
+
+def cmd_merge(args) -> int:
+    """Concatenate result shards from a cluster run into one table."""
+    import glob
+
+    paths = sorted(p for pat in args.inputs for p in glob.glob(pat))
+    if not paths:
+        raise SystemExit(f"no files matched {args.inputs}")
+    frames = [pd.read_csv(p) for p in paths]
+    out = pd.concat(frames, ignore_index=True)
+
+    key = ["protocol", "task", "comparison_task", "hemi", "subject"]
+    key = [c for c in key if c in out.columns]
+    dupes = int(out.duplicated(subset=key).sum())
+    if dupes:
+        log.warning("%d duplicate rows across shards; keeping the first of each", dupes)
+        out = out.drop_duplicates(subset=key, keep="first")
+
+    out.to_csv(_out(args.output), index=False)
+    print(f"merged {len(paths)} shards -> {args.output} ({len(out)} rows)")
+    if {"task", "hemi"} <= set(out.columns):
+        got = out.groupby(["hemi", "task"]).size()
+        print(f"  {out.hemi.nunique()} hemispheres x {out.task.nunique()} model tasks, "
+              f"{out.subject.nunique()} subjects")
+        missing = [f"{h}/{t}" for h in sorted(out.hemi.unique()) for t in sorted(TASKS)
+                   if (h, t) not in got.index]
+        if missing:
+            log.warning("no rows for: %s -- a shard may have failed", ", ".join(missing))
+    return 0
+
+
+def cmd_contrasts(args) -> int:
+    """Contrast selection: the RSA, clustering and parcel profiles (Figs. S3-S5)."""
+    import numpy as np
+
+    from sti import plotting as P
+    from sti.config import DLPFC_PARCELS
+    from sti.contrasts import (CONTRASTS, REPRESENTATIVES, clusters, linkage,
+                               load_contrast_betas, parcel_profiles, similarity_matrix)
+
+    cfg = Config()
+    data = load_contrast_betas(cfg)
+    rsm = similarity_matrix(data)
+    assign = clusters(rsm, threshold=args.threshold)
+
+    print(f"{data.shape[0]} subjects x {data.shape[1]} contrasts x {data.shape[2]} parcels")
+    print(f"clusters at threshold {args.threshold:g}: {len(set(assign))}\n")
+    for c in sorted(set(assign)):
+        members = [CONTRASTS[i] for i in range(len(assign)) if assign[i] == c]
+        rep = [m for m in members if m in REPRESENTATIVES]
+        print(f"  cluster {c} (n={len(members):2d})  representative: {rep[0] if rep else '-'}")
+    n_with_rep = sum(1 for c in set(assign)
+                     if any(CONTRASTS[i] in REPRESENTATIVES
+                            for i in range(len(assign)) if assign[i] == c))
+    print(f"\nclusters containing a published representative: "
+          f"{n_with_rep}/{len(set(assign))}")
+
+    if args.figures:
+        labels = [f"{h}{p}" for h in ("L", "R") for p in DLPFC_PARCELS[h]]
+        outs = [
+            P.save(P.plot_similarity_matrix(rsm, CONTRASTS, highlight=REPRESENTATIVES,
+                   title="Similarity of DLPFC activation patterns"), FIGURES["similarity_matrix"], cfg),
+            P.save(P.plot_dendrogram(linkage(rsm), CONTRASTS, threshold=args.threshold,
+                   highlight=REPRESENTATIVES,
+                   title="Hierarchical clustering of contrasts"), FIGURES["dendrogram"], cfg),
+            P.save(P.plot_parcel_profiles(parcel_profiles(data), labels,
+                   title="Activation across the 26 DLPFC parcels"), FIGURES["parcel_profiles"], cfg),
+        ]
+        for o in outs:
+            print(f"wrote {o}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="sti", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -217,25 +472,48 @@ def build_parser() -> argparse.ArgumentParser:
         s = sub.add_parser(name, help=helptext)
         s.add_argument("--cohort", default="adults_analysis")
         s.add_argument("-o", "--output", default=f"data/results/{name.replace('-', '_')}.csv")
+        s.add_argument("--tasks", default=None,
+                       help="comma-separated model tasks for this shard (default: all)")
+        s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
         s.set_defaults(func=fn)
 
     s = sub.add_parser("neonatal", help="adult models applied to neonates (Fig. 3)")
     s.add_argument("--cohort", default="adults_analysis")
     s.add_argument("--neonates", default="neonates_batch2")
+    s.add_argument("--connectivity", default=None,
+                   help="explicit connectivity array; its .subjects.txt sidecar "
+                        "names the rows, overriding --neonates")
     s.add_argument("-o", "--output", default="data/results/neonatal.csv")
+    s.add_argument("--save-predictions", default=None,
+                   help="npz of predicted maps; required for `sti spatial-null`")
+    s.add_argument("--tasks", default=None,
+                   help="comma-separated model tasks for this shard (default: all)")
+    s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
     s.set_defaults(func=cmd_neonatal)
 
     s = sub.add_parser("spatial-null", help="variogram-matched spatial null (Fig. S8)")
     s.add_argument("--results", required=True)
+    s.add_argument("--predictions", required=True,
+                   help="npz from `sti neonatal --save-predictions`")
     s.add_argument("--n-surrogates", type=int, default=1000)
     s.add_argument("--n-adults", type=int, default=155)
     s.add_argument("--seed", type=int, default=0)
     s.add_argument("-o", "--output", default="data/results/spatial_null.csv")
+    s.add_argument("--save-null", default=None,
+                   help="npz of the full null distributions, for redrawing Fig. S8")
+    s.add_argument("--figures", action="store_true",
+                   help="also render one null histogram per task and hemisphere")
     s.set_defaults(func=cmd_spatial_null)
 
     s = sub.add_parser("scan-age", help="accuracy vs postmenstrual age at scan (Fig. S9)")
     s.add_argument("--results", required=True)
-    s.add_argument("--extra", default=None, help="TSV supplying scan_age and mean_fd")
+    s.add_argument("--covariates", default=None,
+                   help="covariate table (default: config/participants.tsv); build one "
+                        "with pipelines/00_cohorts/build_covariates.py")
+    s.add_argument("--extra", default=None, help="second table merged on subject ID")
+    s.add_argument("--predictors", default=None,
+                   help="comma-separated predictors (default: scan_age,birth_age)")
+    s.add_argument("--figures", action="store_true")
     s.add_argument("-o", "--output", default=None)
     s.set_defaults(func=cmd_scan_age)
 
@@ -243,6 +521,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--a", required=True)
     s.add_argument("--b", required=True)
     s.add_argument("-o", "--output", default=None)
+    s.add_argument("--n-boot", type=int, default=10000)
+    s.add_argument("--figures", action="store_true")
+    s.add_argument("--prefix", default=FIGURES["neonate_vs_adult"])
+    s.add_argument("--title", default="")
     s.set_defaults(func=cmd_compare)
 
     s = sub.add_parser("build-connectivity",
@@ -254,6 +536,27 @@ def build_parser() -> argparse.ArgumentParser:
                    help="build from the available subjects instead of failing")
     s.add_argument("-o", "--output", required=True)
     s.set_defaults(func=cmd_build_connectivity)
+
+    s = sub.add_parser("figures", help="render accuracy and specificity figures")
+    s.add_argument("--results", required=True)
+    s.add_argument("--prefix", default=None)
+    s.add_argument("--title", default="")
+    s.add_argument("--n-boot", type=int, default=10000)
+    s.add_argument("--seed", type=int, default=0)
+    s.add_argument("--matrix", action="store_true",
+                   help="also write the specificity heatmap (off by default)")
+    s.set_defaults(func=cmd_figures)
+
+    s = sub.add_parser("merge", help="concatenate result shards from a cluster run")
+    s.add_argument("--inputs", nargs="+", required=True, help="paths or globs")
+    s.add_argument("-o", "--output", required=True)
+    s.set_defaults(func=cmd_merge)
+
+    s = sub.add_parser("contrasts", help="contrast selection: RSA and clustering (Figs. S3-S5)")
+    s.add_argument("--threshold", type=float, default=1.0,
+                   help="dendrogram cut height (SI uses 1.0)")
+    s.add_argument("--figures", action="store_true")
+    s.set_defaults(func=cmd_contrasts)
 
     return p
 

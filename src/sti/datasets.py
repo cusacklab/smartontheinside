@@ -123,7 +123,7 @@ def adult_activation_key(task: Task, n: int) -> str:
     activations locally per task but uploaded all five to the single key
     ``Results/act_for_classifier_N-{n}.npy``, so each task overwrote the last and
     only one (unidentified) task survives there. Regenerate with
-    ``pipelines/02_adult_activation``.
+    ``pipelines/03_adult_activation``.
     """
     return f"Results/act_for_classifier_{task}_N-{n}.npy"
 
@@ -211,7 +211,7 @@ def load_all_activations(
             f"{len(missing)}/{len(list(tasks))} tasks:\n" + "\n".join(missing)
             + "\n\nThe per-task activation objects were overwritten on S3 (see "
             "sti.datasets.adult_activation_key). Regenerate them with "
-            "pipelines/02_adult_activation/extract_conn_act.py."
+            "pipelines/03_adult_activation/extract_conn_act.py."
         )
     return out
 
@@ -277,3 +277,40 @@ def build_connectivity(
         if progress and (i + 1) % 25 == 0:
             log.info("built %d/%d subjects (%s)", i + 1, len(subjects), hemi)
     return out
+
+
+def load_connectivity_file(
+    path, *, cohort_name: str | None = None
+) -> tuple[Connectivity, list[str] | None]:
+    """Load a connectivity array from an explicit path, with its subject sidecar.
+
+    Returns ``(connectivity, subjects)``. ``subjects`` comes from the
+    ``.subjects.txt`` sidecar written by :func:`build_connectivity` and is
+    ``None`` if absent. The sidecar matters because the arrays carry no subject
+    IDs: a cohort file and an array can disagree (the term cohort has 326
+    subjects but only 325 have tractography), and silently zipping the two would
+    mislabel every row.
+    """
+    path = Path(path)
+    if not path.exists():
+        raise MissingDataError(f"connectivity array not found: {path}")
+    raw = _load_hemi_dict(path)
+    conn = Connectivity(
+        data={h: np.asarray(raw[h]) for h in HEMISPHERES if h in raw},
+        cohort=cohort_name or path.stem,
+    )
+    conn.validate()
+
+    sidecar = path.with_suffix(".subjects.txt")
+    subjects = None
+    if sidecar.exists():
+        subjects = [
+            ln.strip() for ln in sidecar.read_text().splitlines()
+            if ln.strip() and not ln.startswith("#")
+        ]
+        if len(subjects) != conn.n_subjects:
+            raise ValueError(
+                f"{sidecar.name} lists {len(subjects)} subjects but "
+                f"{path.name} has {conn.n_subjects} rows"
+            )
+    return conn, subjects

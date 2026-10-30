@@ -191,3 +191,34 @@ def p_spin(observed_r: float, null_r: np.ndarray, *, tail: str = "greater") -> f
     else:
         raise ValueError(f"unknown tail {tail!r}")
     return (k + 1) / (n + 1)
+
+
+def correlation_matrix(A: np.ndarray, B: np.ndarray) -> np.ndarray:
+    """Pearson correlation between every row of ``A`` and every row of ``B``.
+
+    Returns ``(len(A), len(B))``. Vectorised because the null needs
+    ``n_neonates x n_surrogates`` correlations per task and hemisphere -- 325,000
+    for a 1,000-surrogate null, which is impractical one ``pearsonr`` at a time.
+    """
+    def _z(M):
+        M = np.asarray(M, dtype=np.float64)
+        M = M - M.mean(axis=1, keepdims=True)
+        norms = np.linalg.norm(M, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        return M / norms
+
+    return _z(A) @ _z(B).T
+
+
+def group_null_distribution(
+    predictions: np.ndarray, surrogates: np.ndarray
+) -> np.ndarray:
+    """Null distribution of the *group-mean* prediction accuracy.
+
+    ``predictions`` is ``(n_subjects, n_vertices)`` -- each subject's predicted
+    map, held fixed. For each surrogate of the observed target map, every
+    subject's prediction is correlated against it and the correlations averaged,
+    giving one null value per surrogate. This matches the observed statistic,
+    which is the mean within-task correlation across subjects.
+    """
+    return correlation_matrix(predictions, surrogates).mean(axis=0)

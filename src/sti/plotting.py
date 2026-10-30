@@ -146,9 +146,14 @@ def plot_specificity_matrix(
                 val = m.values[i, j]
                 mark = ""
                 if tests is not None and r != c:
-                    sel = tests[(tests.hemi == hemi) & (tests.task == r) & (tests.comparison_task == c)]
+                    # match on both orientations: the row test keys on (task=r),
+                    # the column test on (comparison_task=c)
+                    sel = tests[(tests.hemi == hemi) & (tests.task == r)
+                                & (tests.comparison_task == c)]
                     if len(sel):
-                        mark = sel.iloc[0].get("stars", "")
+                        mark = sel.iloc[0].get("stars", "") or ""
+                        if pd.isna(mark):
+                            mark = ""
                 ax.text(j, i, f"{val:.2f}\n{mark}".strip(), ha="center", va="center",
                         fontsize=7, color=INK)
         ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
@@ -230,5 +235,406 @@ def plot_scan_age(accuracy: pd.DataFrame, covariates: pd.DataFrame, *, title: st
     _style(ax)
     if title:
         ax.set_title(title, fontsize=9, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_specificity_lines(
+    results: pd.DataFrame,
+    *,
+    title: str = "",
+    tasks=None,
+    centre: bool = False,
+    ci: bool = True,
+    label_peaks: bool = False,
+    axes=None,
+    legend: bool = True,
+    standalone: bool = True,
+):
+    """Task specificity read down columns: one line per model, x = target map.
+
+    The comparison that matters is *within* each x position -- for this target
+    map, does its own model predict it best? -- so it is drawn vertically, where
+    the eye makes it naturally. The signature of specificity is that each line
+    peaks at its own target; those points are ringed and labelled.
+
+    A heatmap puts this comparison along the wrong axis: reading a row invites
+    comparing a model across targets of differing difficulty, which is what made
+    the motor contrast look like a failure of specificity when it is not.
+
+    ``centre=True`` subtracts each target's across-model mean, removing the large
+    differences in how predictable each map is so that only the specificity
+    remains.
+    """
+    plt = _mpl()
+    tasks = list(tasks or sorted(results.task.unique()))
+    hemis = sorted(results.hemi.unique())
+    short = [t.replace("tfMRI_", "") for t in tasks]
+
+    if axes is None:
+        fig, axes = plt.subplots(1, len(hemis), figsize=(4.1 * len(hemis), 3.8), sharey=True)
+    else:
+        fig = np.atleast_1d(axes)[0].figure
+    axes = np.atleast_1d(axes)
+    rng = np.random.default_rng(0)
+
+    for ax, hemi in zip(axes, hemis):
+        block = results[results.hemi == hemi]
+        # mean and bootstrap CI of accuracy for every (model, target) cell
+        cell = {}
+        for m in tasks:
+            for t in tasks:
+                v = block[(block.task == m) & (block.comparison_task == t)]["pearson"].to_numpy()
+                v = v[np.isfinite(v)]
+                if v.size == 0:
+                    continue
+                boot = v[rng.integers(0, v.size, size=(1000, v.size))].mean(axis=1)
+                cell[(m, t)] = (v.mean(), *np.percentile(boot, [2.5, 97.5]))
+
+        offsets = {t: np.mean([cell[(m, t)][0] for m in tasks if (m, t) in cell])
+                   for t in tasks} if centre else {t: 0.0 for t in tasks}
+
+        for i, model in enumerate(tasks):
+            xs, ys, los, his = [], [], [], []
+            for j, target in enumerate(tasks):
+                if (model, target) not in cell:
+                    continue
+                mean, lo, hi = cell[(model, target)]
+                xs.append(j); ys.append(mean - offsets[target])
+                los.append(lo - offsets[target]); his.append(hi - offsets[target])
+            colour = PALETTE[i % len(PALETTE)]
+            ax.plot(xs, ys, color=colour, lw=1.6, marker=MARKERS[i % len(MARKERS)],
+                    markersize=5, label=short[i], zorder=2)
+            if ci:
+                ax.fill_between(xs, los, his, color=colour, alpha=0.15, lw=0, zorder=1)
+            # ring and label the own-target point: the specificity signature
+            if model in tasks:
+                j = tasks.index(model)
+                if (model, model) in cell:
+                    y = cell[(model, model)][0] - offsets[model]
+                    ax.plot([j], [y], marker="o", markersize=11, markerfacecolor="none",
+                            markeredgecolor=colour, markeredgewidth=1.8, zorder=4)
+                    if label_peaks:
+                        ax.annotate(short[i], (j, y), textcoords="offset points",
+                                    xytext=(0, 11), ha="center", fontsize=7,
+                                    color=colour, fontweight="bold", zorder=5)
+
+        ax.set_xticks(range(len(tasks)))
+        ax.set_xticklabels(short, rotation=45, ha="right")
+        ax.set_xlabel("target map (evaluated against)", fontsize=9, color=INK)
+        ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
+        ax.yaxis.grid(True, color=GRID, lw=0.6)
+        ax.set_xlim(-0.4, len(tasks) - 0.6)
+        if label_peaks:
+            lo, hi = ax.get_ylim()
+            ax.set_ylim(lo, hi + 0.16 * (hi - lo))   # room for the peak labels
+        if centre:
+            ax.axhline(0, color=MUTED, lw=0.8, ls=":", zorder=0)
+        _style(ax)
+
+    axes[0].set_ylabel("accuracy relative to\ntarget mean (r)" if centre
+                       else "prediction accuracy (r)", fontsize=9, color=INK)
+    if legend:
+        axes[-1].legend(title="model trained on", fontsize=7, title_fontsize=7,
+                        frameon=False, loc="center left", bbox_to_anchor=(1.02, 0.5))
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    if standalone:
+        fig.tight_layout()
+    return fig
+
+
+def plot_specificity_panel(results: pd.DataFrame, *, title: str = "", tasks=None):
+    """The full specificity story in one figure: absolute accuracy and specificity.
+
+    Top row: raw accuracy, which shows how much the target maps differ in
+    predictability -- the motor map is hard for every model.
+    Bottom row: the same values with each target's across-model mean removed, so
+    only specificity remains. Every line peaks at its own target.
+
+    Splitting the two is the point. In a single heatmap they are superimposed,
+    and target difficulty masquerades as a failure of specificity.
+    """
+    plt = _mpl()
+    hemis = sorted(results.hemi.unique())
+    fig, axs = plt.subplots(2, len(hemis), figsize=(4.1 * len(hemis), 6.6), squeeze=False)
+    axs = np.asarray(axs)   # always 2-D: squeeze=False keeps a single hemisphere valid
+
+    plot_specificity_lines(results, tasks=tasks, centre=False, axes=axs[0],
+                           legend=False, standalone=False)
+    plot_specificity_lines(results, tasks=tasks, centre=True, axes=axs[1],
+                           label_peaks=True, legend=True, standalone=False)
+    for ax in axs[0]:
+        ax.set_xlabel("")
+        ax.set_xticklabels([])
+    for ax in axs[1]:
+        ax.set_title("")
+    # One y-range per row, taken from the union of both panels' data. Sharing to
+    # the first panel instead would clip whichever hemisphere ranges wider.
+    def _span(ax):
+        vals = np.concatenate([
+            np.asarray(l.get_ydata(), dtype=float).ravel()
+            for l in ax.get_lines() if len(l.get_ydata())
+        ]) if ax.get_lines() else np.array([0.0])
+        vals = vals[np.isfinite(vals)]
+        return vals.min(), vals.max()
+
+    for row in axs:
+        spans = [_span(ax) for ax in row]
+        lo = min(s0 for s0, _ in spans)
+        hi = max(s1 for _, s1 in spans)
+        pad = 0.08 * (hi - lo)
+        head = 0.20 * (hi - lo) if row is axs[-1] else pad   # room for peak labels
+        for ax in row:
+            ax.set_ylim(lo - pad, hi + head)
+        for ax in row[1:]:
+            ax.set_yticklabels([])
+
+    axs[0][0].set_ylabel("prediction accuracy (r)", fontsize=9, color=INK)
+    axs[1][0].set_ylabel("accuracy relative to\ntarget mean (r)", fontsize=9, color=INK)
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_protocol_comparison(comparison: pd.DataFrame, *, title: str = "",
+                             label_a: str = "neonatal", label_b: str = "adult"):
+    """Neonatal vs adult prediction accuracy per contrast (manuscript Fig. S7).
+
+    A dumbbell rather than paired bars: the quantity of interest is the *gap*
+    between two means, and a connecting segment shows a gap directly where two
+    bars make the reader subtract.
+    """
+    plt = _mpl()
+    col_a = next(c for c in comparison.columns if c.startswith("mean_") and label_a in c)
+    col_b = next(c for c in comparison.columns if c.startswith("mean_") and c != col_a)
+    hemis = sorted(comparison.hemi.unique())
+
+    # One row order for every panel, or the same y position means a different
+    # contrast in each hemisphere and the reader compares across the wrong rows.
+    order = (comparison.groupby("task")[col_b].mean().sort_values().index.tolist())
+
+    fig, axes = plt.subplots(1, len(hemis), figsize=(3.9 * len(hemis), 3.4), sharex=True)
+    axes = np.atleast_1d(axes)
+    for ax, hemi in zip(axes, hemis):
+        d = (comparison[comparison.hemi == hemi]
+             .set_index("task").reindex(order).reset_index())
+        y = np.arange(len(d))
+        for yi, (_, r) in zip(y, d.iterrows()):
+            ax.plot([r[col_a], r[col_b]], [yi, yi], color=GRID, lw=3,
+                    solid_capstyle="round", zorder=1)
+        ax.scatter(d[col_b], y, s=42, color=PALETTE[3], zorder=3, label=label_b, marker="D")
+        ax.scatter(d[col_a], y, s=42, color=PALETTE[0], zorder=3, label=label_a, marker="o")
+        for yi, (_, r) in zip(y, d.iterrows()):
+            star = r.get("stars", "")
+            star = "" if (star is None or (isinstance(star, float) and np.isnan(star))) else str(star)
+            if star:
+                ax.text(max(r[col_a], r[col_b]) + 0.012, yi, star, va="center",
+                        fontsize=8, color=INK)
+        ax.set_yticks(y)
+        ax.set_yticklabels([t.replace("tfMRI_", "") for t in d.task]
+                           if ax is axes[0] else [])
+        ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
+        ax.set_xlabel("prediction accuracy (r)", fontsize=9, color=INK)
+        ax.xaxis.grid(True, color=GRID, lw=0.6)
+        ax.set_ylim(-0.6, len(d) - 0.4)
+        _style(ax)
+    axes[-1].legend(fontsize=8, frameon=False, loc="lower right")
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_similarity_matrix(rsm, labels, *, title: str = "", highlight=()):
+    """Contrast-by-contrast similarity of DLPFC activation patterns (Fig. S3).
+
+    A signed correlation, so a diverging map with a neutral midpoint at zero --
+    the original rendered this in viridis, a sequential map, which makes the sign
+    of a correlation unreadable. Representative contrasts are marked.
+    """
+    plt = _mpl()
+    n = len(labels)
+    fig, ax = plt.subplots(figsize=(7.4, 6.6))
+    im = ax.imshow(rsm, cmap=diverging_cmap(), vmin=-1, vmax=1)
+    ax.set_xticks(range(n)); ax.set_yticks(range(n))
+    short = [l.replace("WORKING_MEM", "WM").replace("RELATIONAL", "REL") for l in labels]
+    ax.set_xticklabels(short, fontsize=5.5, rotation=45, ha="right")
+    ax.set_yticklabels(short, fontsize=5.5)
+    for i, l in enumerate(labels):
+        if l in highlight:
+            for lbl in (ax.get_xticklabels()[i], ax.get_yticklabels()[i]):
+                lbl.set_color(PALETTE[4]); lbl.set_fontweight("bold")
+    ax.tick_params(length=0, colors=MUTED)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    fig.colorbar(im, ax=ax, shrink=0.7, label="r")
+    if title:
+        ax.set_title(title, fontsize=10, color=INK, pad=10)
+    fig.tight_layout()
+    return fig
+
+
+def plot_dendrogram(Z, labels, *, threshold: float = 1.0, title: str = "", highlight=()):
+    """Hierarchical clustering of the contrasts, with the cut shown (Fig. S4)."""
+    plt = _mpl()
+    from scipy.cluster.hierarchy import dendrogram
+
+    fig, ax = plt.subplots(figsize=(6.4, 7.4))
+    short = [l.replace("WORKING_MEM", "WM").replace("RELATIONAL", "REL") for l in labels]
+    dendrogram(Z, labels=short, orientation="right", ax=ax,
+               color_threshold=threshold, above_threshold_color=MUTED)
+    ax.axvline(threshold, color=PALETTE[4], lw=1.4, ls="--",
+               label=f"cut at {threshold:g}")
+    for lbl in ax.get_yticklabels():
+        raw = lbl.get_text()
+        if any(raw == h.replace("WORKING_MEM", "WM").replace("RELATIONAL", "REL")
+               for h in highlight):
+            lbl.set_color(PALETTE[4]); lbl.set_fontweight("bold")
+    ax.tick_params(labelsize=6, colors=MUTED)
+    ax.set_xlabel("Ward distance", fontsize=9, color=INK)
+    ax.legend(fontsize=8, frameon=False, loc="lower right")
+    _style(ax)
+    if title:
+        ax.set_title(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_parcel_profiles(profiles, parcel_labels, *, title: str = ""):
+    """Activation profile across the 26 DLPFC parcels per contrast (Fig. S5)."""
+    plt = _mpl()
+    tasks = list(profiles)
+    fig, axes = plt.subplots(len(tasks), 1, figsize=(8.2, 1.55 * len(tasks)), sharex=True)
+    axes = np.atleast_1d(axes)
+    for i, (ax, task) in enumerate(zip(axes, tasks)):
+        colour = PALETTE[i % len(PALETTE)]
+        ax.bar(range(len(parcel_labels)), profiles[task], color=colour, width=0.72)
+        ax.axhline(0, color=MUTED, lw=0.8)
+        ax.set_ylabel(task.replace("WORKING_MEM", "WM"), fontsize=7, color=INK,
+                      rotation=0, ha="right", va="center")
+        ax.yaxis.grid(True, color=GRID, lw=0.6)
+        _style(ax)
+    axes[-1].set_xticks(range(len(parcel_labels)))
+    axes[-1].set_xticklabels(parcel_labels, rotation=90, fontsize=6)
+    axes[-1].set_xlabel("DLPFC parcel", fontsize=9, color=INK)
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_maturity_panel(comparison: pd.DataFrame, *, title: str = "",
+                        label_a: str = "neonatal", label_b: str = "adult"):
+    """How close neonatal prediction comes to adult prediction, per contrast.
+
+    (A) absolute accuracy for both, as a dumbbell -- the quantity of interest is
+    the gap, and a connecting segment shows a gap where two bars make the reader
+    subtract. (B) the same as a proportion of adult accuracy, which is the claim
+    in its own units: how mature is the neonatal connectivity. The interval on
+    (B) is bootstrapped rather than derived from the two point estimates, which
+    rest on different sample sizes.
+    """
+    plt = _mpl()
+    col_a = next(c for c in comparison.columns if c.startswith("mean_") and label_a in c)
+    col_b = next(c for c in comparison.columns if c.startswith("mean_") and c != col_a)
+    hemis = sorted(comparison.hemi.unique())
+
+    # one row order everywhere, most mature at the top
+    order = comparison.groupby("task")["pct_of_b"].mean().sort_values().index.tolist()
+
+    fig, axs = plt.subplots(2, len(hemis), figsize=(3.9 * len(hemis), 6.4))
+    axs = np.atleast_2d(axs)
+
+    for j, hemi in enumerate(hemis):
+        d = (comparison[comparison.hemi == hemi]
+             .set_index("task").reindex(order).reset_index())
+        y = np.arange(len(d))
+
+        ax = axs[0][j]
+        for yi, (_, r) in zip(y, d.iterrows()):
+            ax.plot([r[col_a], r[col_b]], [yi, yi], color=GRID, lw=3,
+                    solid_capstyle="round", zorder=1)
+        ax.scatter(d[col_b], y, s=42, color=PALETTE[3], zorder=3, label=label_b, marker="D")
+        ax.scatter(d[col_a], y, s=42, color=PALETTE[0], zorder=3, label=label_a, marker="o")
+        for yi, (_, r) in zip(y, d.iterrows()):
+            star = r.get("stars", "")
+            star = "" if (star is None or (isinstance(star, float) and np.isnan(star))) else str(star)
+            if star:
+                ax.text(max(r[col_a], r[col_b]) + 0.012, yi, star, va="center",
+                        fontsize=8, color=INK)
+        ax.set_xlabel("prediction accuracy (r)", fontsize=9, color=INK)
+        ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
+
+        ax = axs[1][j]
+        ax.axvline(100, color=MUTED, lw=0.9, ls=":", zorder=1)
+        ax.hlines(y, d.pct_ci_low, d.pct_ci_high, color=PALETTE[0], lw=2.2, zorder=2)
+        ax.scatter(d.pct_of_b, y, s=42, color=PALETTE[0], zorder=3)
+        for yi, (_, r) in zip(y, d.iterrows()):
+            ax.text(r.pct_ci_high + 1.6, yi, f"{r.pct_of_b:.0f}%", va="center",
+                    fontsize=7.5, color=INK)
+        ax.set_xlabel(f"% of {label_b} accuracy", fontsize=9, color=INK)
+
+        for ax in (axs[0][j], axs[1][j]):
+            ax.set_yticks(y)
+            ax.set_yticklabels([t.replace("tfMRI_", "") for t in d.task] if j == 0 else [])
+            ax.xaxis.grid(True, color=GRID, lw=0.6)
+            ax.set_ylim(-0.6, len(d) - 0.4)
+            _style(ax)
+
+    for row in axs:
+        lo = min(ax.get_xlim()[0] for ax in row); hi = max(ax.get_xlim()[1] for ax in row)
+        for ax in row:
+            ax.set_xlim(lo, hi)
+    axs[0][-1].legend(fontsize=8, frameon=False, loc="lower right")
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_spatial_null_grid(results: pd.DataFrame, nulls, *, title: str = ""):
+    """All task-by-hemisphere spatial nulls in one figure (Fig. S8).
+
+    Ten separate histograms are unwieldy in a manuscript; a grid lets the reader
+    see at once that every observed value sits outside its null.
+    """
+    plt = _mpl()
+    tasks = sorted(results.task.unique())
+    hemis = sorted(results.hemi.unique())
+    fig, axs = plt.subplots(len(tasks), len(hemis),
+                            figsize=(3.4 * len(hemis), 1.55 * len(tasks)),
+                            squeeze=False, sharex=True)
+    for i, task in enumerate(tasks):
+        for j, hemi in enumerate(hemis):
+            ax = axs[i][j]
+            key = f"{task}__{hemi}"
+            row = results[(results.task == task) & (results.hemi == hemi)]
+            if key not in nulls or row.empty:
+                ax.axis("off")
+                continue
+            r = row.iloc[0]
+            ax.hist(nulls[key], bins=36, color="#c9d9e8", edgecolor="white", linewidth=0.3)
+            ax.axvline(r.observed_r, color=PALETTE[4], lw=1.8)
+            # label on the side away from the observed line, so they never collide
+            lo, hi = ax.get_xlim()
+            on_right = (r.observed_r - lo) / (hi - lo) > 0.55
+            ax.text(0.03 if on_right else 0.97, 0.88,
+                    f"r = {r.observed_r:.2f}\np = {r.p_spin:.3f}",
+                    transform=ax.transAxes, ha="left" if on_right else "right",
+                    va="top", fontsize=6.5, color=INK)
+            if j == 0:
+                ax.set_ylabel(task.replace("tfMRI_", ""), fontsize=8, color=INK,
+                              rotation=0, ha="right", va="center")
+            if i == 0:
+                ax.set_title(f"{hemi} hemisphere", fontsize=9, color=INK)
+            ax.set_yticks([])
+            ax.xaxis.grid(True, color=GRID, lw=0.5)
+            _style(ax)
+    for ax in axs[-1]:
+        ax.set_xlabel("prediction accuracy (r)", fontsize=8, color=INK)
+    if title:
+        fig.suptitle(title, fontsize=10, color=INK)
     fig.tight_layout()
     return fig

@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-2 array_id=6 task=tfMRI_SOCIAL hemi=L threads=4
+started 2026-08-31T11:36:56+00:00
+11:42:24 INFO adult_group_mean_loo done: task=tfMRI_SOCIAL hemi=L
+wrote data/results/shards/adult_average_tfMRI_SOCIAL_L.csv (775 rows)
+finished 2026-08-31T11:42:24+00:00

@@ -83,12 +83,30 @@ Per-subject files are streamed and deleted as they are read, so peak disk use is
 one file rather than ~4 GB. A `.subjects.txt` sidecar records the subject order,
 since the arrays themselves carry no IDs.
 
-## Covariates still required
+## Neonatal covariates
 
-`config/participants.tsv` has `birth_age` only. The scan-age analysis (Fig. S9)
-additionally needs, from the dHCP release:
+Built from the dHCP diffusion release mounted at `/dhcp/dhcp_dmri_pipeline`:
 
-- `scan_age` — postmenstrual age at scan, from the release's `sessions.tsv`;
-- `mean_fd` — mean framewise displacement, derived from the motion/QC outputs.
+```bash
+python pipelines/00_cohorts/build_covariates.py \
+    --release /dhcp/dhcp_dmri_pipeline -o config/neonatal_covariates.tsv
+```
 
-Supply either as extra columns or via `sti scan-age --extra <file.tsv>`.
+The release splits its metadata: `participants.tsv` at the root holds birth
+variables, while age at scan lives in a per-subject `sessions.tsv`. The script
+joins them. All 325 analysed neonates have complete `scan_age` and `birth_age`,
+and none has more than one session.
+
+**Motion is recoverable from the QC reports.** The release publishes no
+machine-readable motion file — the diffusion JSON's `MotionCompensation` field is
+a flag, not a metric — but each session's `_qc.pdf` is generated from eddy and
+page 2 carries the summary table:
+
+```bash
+python pipelines/00_cohorts/extract_motion.py -o config/neonatal_motion.tsv
+python pipelines/00_cohorts/build_covariates.py --motion config/neonatal_motion.tsv
+```
+
+That yields `mean_fd` (eddy's average relative, i.e. volume-to-volume, RMS
+displacement) for all 325 analysed neonates, plus outlier percentage, SNR and
+within-volume motion. Then pass `--predictors scan_age,birth_age,mean_fd`.
