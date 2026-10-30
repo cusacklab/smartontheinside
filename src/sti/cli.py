@@ -333,6 +333,32 @@ def cmd_distance_control(args) -> int:
     return 0
 
 
+def cmd_shares(args) -> int:
+    """Partition each map into geometric, connectional and shared components (Fig. 1b)."""
+    from sti.cohorts import load_cohort
+    from sti.datasets import load_all_activations, load_connectivity
+    from sti.distance_control import distance_features
+    from sti.shares import shares_table
+    from sti.surface import dlpfc_coordinates
+
+    cfg = Config(alpha=args.alpha, l1_ratio=args.l1_ratio)
+    adults = load_cohort(args.cohort, cfg)
+    acts = load_all_activations(TASKS, adults.n, config=cfg)
+    conns = {"adult": load_connectivity(adults.n, config=cfg)}
+    if not args.adults_only:
+        conns["neonatal"], _ = _neonatal_connectivity(args, cfg)
+    dists = {h: distance_features(h, config=cfg) for h in ("L", "R")}
+
+    out = shares_table(dists, conns, acts, lambda h: dlpfc_coordinates(h, cfg),
+                       k=args.k_folds, config=cfg)
+    out.to_csv(_out(args.output), index=False)
+    cols = ["cohort", "task", "hemi", "r2_geometry", "r2_connectivity", "r2_combined",
+            "unique_geometry", "unique_connectivity", "shared", "unexplained"]
+    print(out[cols].round(3).to_string(index=False))
+    print(f"\nwrote {args.output}")
+    return 0
+
+
 def cmd_scan_age(args) -> int:
     from sti.scan_age import load_covariates, per_task_scan_age, scan_age_regression
 
@@ -683,6 +709,18 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
     s.add_argument("-o", "--output", default="data/results/distance_only.csv")
     s.set_defaults(func=cmd_distance_control)
+
+    s = sub.add_parser("shares",
+                       help="geometry/connectivity variance partition of each map (Fig. 1b)")
+    s.add_argument("--cohort", default="adults_analysis")
+    s.add_argument("--neonates", default="neonates_term_all")
+    s.add_argument("--connectivity", default=None,
+                   help="explicit neonatal connectivity array with .subjects.txt sidecar")
+    s.add_argument("--adults-only", action="store_true")
+    s.add_argument("--k-folds", type=int, default=10,
+                   help="spatially blocked folds (k-means on coordinates)")
+    s.add_argument("-o", "--output", default="data/results/shares.csv")
+    s.set_defaults(func=cmd_shares)
 
     s = sub.add_parser("scan-age", help="accuracy vs postmenstrual age at scan (Fig. S9)")
     s.add_argument("--results", required=True)
