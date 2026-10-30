@@ -191,18 +191,20 @@ Everything in MANUSCRIPT_CHANGES.md (sample sizes, column-test specificity,
 corrected ANOVA, spatial null, scan age) goes in regardless — those were
 needed before the reviews existed.
 
-## Phase 4 — venue
+## Phase 4 — venue: **Developmental Cognitive Neuroscience** (decided 2026-10-30)
 
-Decide after Phase 0 results are in, since the strength of the controls
-shapes the pitch. Realistic targets, given two-reviewer depth of methods and
-a developmental-cognitive-neuroscience audience:
+Chosen over Cerebral Cortex (JIF 2.9, systems audience) and Imaging
+Neuroscience (best methods audience but no established JIF yet): DCN has the
+strongest current metric (~5) and exactly the audience for the organisers
+framing and the task-repertoire argument. Practicalities:
 
-- **Nature Communications** — if Phase 0/1 produce a clearly stronger paper.
-- **eLife** — review model suits a paper with this much methodological
-  transparency; the public repo is an asset there.
-- **Imaging Neuroscience** or **Cerebral Cortex** — strong, sympathetic
-  methodological audience; likely smoothest path.
-- **Developmental Cognitive Neuroscience** — safest fit if we want speed.
+- Fully open access; APC ≈ USD 3,280 (third-party figure — confirm on the
+  Elsevier page; waivers exist).
+- Submission via Editorial Manager; Elsevier free-format first submission
+  applies, so `manuscript/main.tex` needs no restyling for round one.
+- Name–date citations (natbib round, already configured).
+- Strong data/code-availability culture — the public repo and Zenodo DOI
+  plan are assets; say so in the cover letter.
 
 PNAS reviews are not transferred, so all reviewer-facing material goes into
 the manuscript itself, not a response letter.
