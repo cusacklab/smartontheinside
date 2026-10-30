@@ -61,13 +61,17 @@ def null_transfer(
     config: Config = DEFAULT_CONFIG,
     seed: int = 0,
     float32: bool = True,
+    region_folds: np.ndarray | None = None,
 ) -> pd.DataFrame:
     """Null distribution of adult-to-neonate transfer accuracy for one task.
 
     Returns one row per surrogate with ``null_r``, the across-neonate mean
     correlation between the refitted model's predictions and the permuted
     target. Rows carry the seed, so shards that split one task's surrogates
-    must use distinct seeds.
+    must use distinct seeds. With ``region_folds`` (vertex->region labels for
+    this hemisphere), each refit is leave-one-region-out, matching the
+    region-cross-validated observed statistic; the anatomical folds are not
+    permuted, only the maps are.
     """
     task = activation.task
     y = activation.zscored()[hemi]  # (n_adults, n_vertices)
@@ -86,11 +90,16 @@ def null_transfer(
 
     records: list[dict] = []
     for k, pi in enumerate(perms):
-        fitted = model_mod.fit(X_adult, y[:, pi], config)
-        y_hat = model_mod.predict(fitted, Xf_inf).reshape(n_neo, -1)
+        if region_folds is not None:
+            from sti.evaluate import stitched_predictions
+
+            y_hat = stitched_predictions(X_adult, y[:, pi], X_inf, region_folds, config)
+        else:
+            fitted = model_mod.fit(X_adult, y[:, pi], config)
+            y_hat = model_mod.predict(fitted, Xf_inf).reshape(n_neo, -1)
         r = correlation_matrix(y_hat, group_mean[pi][None, :])[:, 0]
         records.append({
-            "protocol": "pipeline_null",
+            "protocol": "pipeline_null" + ("_regioncv" if region_folds is not None else ""),
             "algorithm": "LinearRegression" if config.alpha == 0 else "ElasticNet",
             "alpha": config.alpha,
             "l1_ratio": config.l1_ratio,

@@ -73,3 +73,17 @@ def distance_matrix(hemi: Hemisphere, config: Config = DEFAULT_CONFIG) -> np.nda
     from scipy.spatial.distance import squareform, pdist
 
     return squareform(pdist(dlpfc_coordinates(hemi, config)))
+
+
+def dlpfc_vertex_parcels(hemi: Hemisphere, config: Config = DEFAULT_CONFIG) -> np.ndarray:
+    """Parcel label of each DLPFC seed vertex, in seed-vertex order.
+
+    Used as fold labels for leave-one-region-out cross-validation.
+    """
+    import nibabel as nib
+
+    parc_dir = _parcellation_dir(config)
+    idx = dlpfc_vertex_indices(hemi, str(parc_dir))
+    labels = nib.load(str(parc_dir / LABEL_FILE.format(hemi=hemi))).agg_data(
+        "NIFTI_INTENT_LABEL")
+    return np.asarray(labels)[idx]

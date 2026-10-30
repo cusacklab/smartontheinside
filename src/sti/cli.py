@@ -45,6 +45,15 @@ def _out(path: str | Path) -> Path:
     return p
 
 
+def _region_folds(args, cfg):
+    """Per-hemisphere vertex->region labels when --region-cv is set, else None."""
+    if not getattr(args, "region_cv", False):
+        return None
+    from sti.surface import dlpfc_vertex_parcels
+
+    return {h: dlpfc_vertex_parcels(h, cfg) for h in ("L", "R")}
+
+
 def _load_inputs(args, *, neonatal: bool = False):
     from sti.cohorts import load_cohort
     from sti.datasets import load_all_activations, load_connectivity
@@ -85,7 +94,8 @@ def cmd_adult_loo(args) -> int:
     cfg, adults, conn, acts, _ = _load_inputs(args)
     tasks, hemis = _shard(args)
     res, _ = adult_loo(conn, acts, list(adults.subjects), config=cfg,
-                       hemispheres=hemis, model_tasks=tasks)
+                       hemispheres=hemis, model_tasks=tasks,
+                       region_folds=_region_folds(args, cfg))
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows)")
     return 0
@@ -97,7 +107,8 @@ def cmd_adult_average(args) -> int:
     cfg, adults, conn, acts, _ = _load_inputs(args)
     tasks, hemis = _shard(args)
     res, _ = adult_group_mean_loo(conn, acts, list(adults.subjects), config=cfg,
-                                  hemispheres=hemis, model_tasks=tasks)
+                                  hemispheres=hemis, model_tasks=tasks,
+                                  region_folds=_region_folds(args, cfg))
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows)")
     return 0
@@ -140,7 +151,8 @@ def cmd_neonatal(args) -> int:
 
     tasks, hemis = _shard(args)
     res, preds = neonatal(conn, nconn, acts, subjects, config=cfg,
-                          hemispheres=hemis, model_tasks=tasks)
+                          hemispheres=hemis, model_tasks=tasks,
+                          region_folds=_region_folds(args, cfg))
     res.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(res)} rows, {nconn.n_subjects} neonates)")
     if args.save_predictions:
@@ -259,13 +271,15 @@ def cmd_pipeline_null(args) -> int:
         nconn = regress_distance(nconn, dists)
 
     tasks, hemis = _shard(args)
+    folds = _region_folds(args, cfg)
     frames = []
     for hemi in hemis:
         dist = distance_matrix(hemi, cfg)
         for task in (tasks if tasks is not None else list(acts)):
             frames.append(null_transfer(
                 conn, nconn, acts[task], hemi=hemi, dist=dist,
-                n_surrogates=args.n_surrogates, config=cfg, seed=args.seed))
+                n_surrogates=args.n_surrogates, config=cfg, seed=args.seed,
+                region_folds=folds[hemi] if folds is not None else None))
     out = pd.concat(frames, ignore_index=True)
     out.to_csv(_out(args.output), index=False)
     print(f"wrote {args.output} ({len(out)} rows, {nconn.n_subjects} neonates)")
@@ -312,9 +326,12 @@ def cmd_distance_control(args) -> int:
         nconn_raw, subjects = _neonatal_connectivity(args, cfg)
         nconn = regress_distance(nconn_raw, dists)
         tasks, hemis = _shard(args)
+        folds = _region_folds(args, cfg)
         res, _ = neonatal(conn, nconn, acts, subjects, config=cfg,
-                          hemispheres=hemis, model_tasks=tasks)
-        res["protocol"] = "neonatal_distance_regressed"
+                          hemispheres=hemis, model_tasks=tasks,
+                          region_folds=folds)
+        res["protocol"] = "neonatal_distance_regressed" + \
+            ("_regioncv" if folds is not None else "")
         res.to_csv(_out(args.output), index=False)
         print(f"wrote {args.output} ({len(res)} rows, {nconn.n_subjects} neonates)")
         return 0
@@ -349,8 +366,12 @@ def cmd_shares(args) -> int:
         conns["neonatal"], _ = _neonatal_connectivity(args, cfg)
     dists = {h: distance_features(h, config=cfg) for h in ("L", "R")}
 
+    folds_fn = None
+    if args.folds == "regions":
+        from sti.surface import dlpfc_vertex_parcels
+        folds_fn = lambda h: dlpfc_vertex_parcels(h, cfg)  # noqa: E731
     out = shares_table(dists, conns, acts, lambda h: dlpfc_coordinates(h, cfg),
-                       k=args.k_folds, config=cfg)
+                       k=args.k_folds, config=cfg, fold_labels_fn=folds_fn)
     out.to_csv(_out(args.output), index=False)
     cols = ["cohort", "task", "hemi", "r2_geometry", "r2_connectivity", "r2_combined",
             "unique_geometry", "unique_connectivity", "shared", "unexplained"]
@@ -630,6 +651,9 @@ def build_parser() -> argparse.ArgumentParser:
         s.add_argument("--tasks", default=None,
                        help="comma-separated model tasks for this shard (default: all)")
         s.add_argument("--hemi", default=None, help="L, R, or L,R (default: both)")
+        s.add_argument("--region-cv", action="store_true",
+                       help="additionally leave each DLPFC region out: no "
+                            "prediction comes from a model that saw its territory")
         s.set_defaults(func=fn)
 
     s = sub.add_parser("neonatal", help="adult models applied to neonates (Fig. 3)")
@@ -639,6 +663,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="explicit connectivity array; its .subjects.txt sidecar "
                         "names the rows, overriding --neonates")
     s.add_argument("-o", "--output", default="data/results/neonatal.csv")
+    s.add_argument("--region-cv", action="store_true",
+                   help="additionally leave each DLPFC region out")
     s.add_argument("--save-predictions", default=None,
                    help="npz of predicted maps; required for `sti spatial-null`")
     s.add_argument("--tasks", default=None,
@@ -679,6 +705,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="run the null on distance-regressed features (pair with "
                         "the penalty from `sti distance-control --tune` and "
                         "summarise against the distance-regressed results)")
+    s.add_argument("--region-cv", action="store_true",
+                   help="additionally leave each DLPFC region out")
     s.add_argument("--summarise", metavar="NULL_CSV", default=None,
                    help="summarise a (merged) null table against --results "
                         "instead of computing surrogates")
@@ -702,6 +730,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--tune", action="store_true",
                    help="select the elastic-net penalty for regressed features "
                         "on the held-out tuning adults, then exit")
+    s.add_argument("--region-cv", action="store_true",
+                   help="additionally leave each DLPFC region out")
     s.add_argument("--tune-cohort", default="adults_hyperparam")
     s.add_argument("--neonates", default="neonates_term_all")
     s.add_argument("--connectivity", default=None,
@@ -720,8 +750,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--connectivity", default=None,
                    help="explicit neonatal connectivity array with .subjects.txt sidecar")
     s.add_argument("--adults-only", action="store_true")
+    s.add_argument("--folds", choices=("regions", "blocks"), default="regions",
+                   help="leave-one-DLPFC-region-out (default) or k-means blocks")
     s.add_argument("--k-folds", type=int, default=10,
-                   help="spatially blocked folds (k-means on coordinates)")
+                   help="number of blocks when --folds blocks")
     s.add_argument("--figures", action="store_true",
                    help="also render the Fig. 1b stacked-share panel")
     s.add_argument("-o", "--output", default="data/results/shares.csv")

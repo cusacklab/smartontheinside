@@ -71,6 +71,38 @@ def _record(*, task, comparison_task, hemi, subject, r, p, config, protocol) -> 
     }
 
 
+def stitched_predictions(X_tr, y_tr, X_te, folds, config) -> np.ndarray:
+    """Leave-one-region-out predictions, stitched into full maps.
+
+    For each region fold, the model is fitted on the training subjects'
+    vertices OUTSIDE the region and predicts the test subjects' vertices
+    INSIDE it, so no prediction ever comes from a model that saw its own
+    territory -- interpolation across vertices is excluded by construction.
+
+    Note on stitched intercepts: each fold's intercept is estimated from the
+    other regions, so structure carried purely by region means scores at or
+    below zero (the leave-one-out means anti-correlate with the held-out
+    mean). The bias is conservative -- region means cannot masquerade as
+    positive transfer; only feature-driven structure can score.
+
+    ``X_tr``: (n_train_subjects, n_vertices, n_targets); ``y_tr``:
+    (n_train_subjects, n_vertices); ``X_te``: (n_test_subjects, n_vertices,
+    n_targets); ``folds``: (n_vertices,) region label per vertex. Returns
+    (n_test_subjects, n_vertices).
+    """
+    folds = np.asarray(folds).reshape(-1)
+    if folds.size != X_tr.shape[1]:
+        raise ValueError(f"{folds.size} fold labels for {X_tr.shape[1]} vertices")
+    out = np.empty((X_te.shape[0], X_te.shape[1]), dtype=np.float64)
+    for b in np.unique(folds):
+        tr_v, te_v = folds != b, folds == b
+        fitted = model_mod.fit(X_tr[:, tr_v, :], y_tr[:, tr_v], config)
+        out[:, te_v] = model_mod.predict(
+            fitted, model_mod.flatten(X_te[:, te_v, :])
+        ).reshape(X_te.shape[0], -1)
+    return out
+
+
 def _score_against_all(
     y_hat: np.ndarray,
     targets: dict[Task, np.ndarray],
@@ -105,10 +137,17 @@ def adult_loo(
     hemispheres=HEMISPHERES,
     float32: bool = True,
     model_tasks=None,
+    region_folds=None,
 ) -> tuple[pd.DataFrame, Predictions]:
-    """Leave-one-adult-out; each model predicts the held-out adult's own map (Fig. 2)."""
+    """Leave-one-adult-out; each model predicts the held-out adult's own map (Fig. 2).
+
+    With ``region_folds`` (a dict of per-hemisphere vertex->region labels),
+    predictions are additionally leave-one-region-out via
+    :func:`stitched_predictions`.
+    """
     records: list[dict] = []
     preds = Predictions.empty()
+    protocol = "adult_loo" + ("_regioncv" if region_folds is not None else "")
 
     # model_tasks restricts which models are TRAINED, so the work can be split
     # across cluster jobs. Every model is still evaluated against every task's
@@ -124,16 +163,21 @@ def adult_loo(
 
             for train_idx, test_idx in LeaveOneOut().split(X):
                 i = int(test_idx[0])
-                fitted = model_mod.fit(X[train_idx], y[train_idx], config)
-                y_hat = model_mod.predict(fitted, X[test_idx])
+                if region_folds is not None:
+                    y_hat = stitched_predictions(
+                        X[train_idx], y[train_idx], X[test_idx],
+                        region_folds[hemi], config)[0]
+                else:
+                    fitted = model_mod.fit(X[train_idx], y[train_idx], config)
+                    y_hat = model_mod.predict(fitted, X[test_idx])
                 preds.add(task, hemi, y_hat)
 
                 targets = {t: a[hemi][i] for t, a in activations.items()}
                 records += _score_against_all(
                     y_hat, targets, task=task, hemi=hemi, subject=subjects[i],
-                    config=config, protocol="adult_loo",
+                    config=config, protocol=protocol,
                 )
-            log.info("adult_loo done: task=%s hemi=%s", task, hemi)
+            log.info("%s done: task=%s hemi=%s", protocol, task, hemi)
 
     preds.finalise()
     return pd.DataFrame.from_records(records), preds
@@ -148,16 +192,19 @@ def adult_group_mean_loo(
     hemispheres=HEMISPHERES,
     float32: bool = True,
     model_tasks=None,
+    region_folds=None,
 ) -> tuple[pd.DataFrame, Predictions]:
     """Leave-one-adult-out; each model predicts the group-average map (Fig. 4).
 
     The held-out adult is excluded from the group average as well as from
     training, so the target is independent of the test subject -- this is the
     like-for-like comparison with the neonatal protocol, where the neonate
-    contributes nothing to the adult average.
+    contributes nothing to the adult average. With ``region_folds``,
+    predictions are additionally leave-one-region-out.
     """
     records: list[dict] = []
     preds = Predictions.empty()
+    protocol = "adult_group_mean_loo" + ("_regioncv" if region_folds is not None else "")
 
     # model_tasks restricts which models are TRAINED, so the work can be split
     # across cluster jobs. Every model is still evaluated against every task's
@@ -173,8 +220,13 @@ def adult_group_mean_loo(
 
             for train_idx, test_idx in LeaveOneOut().split(X):
                 i = int(test_idx[0])
-                fitted = model_mod.fit(X[train_idx], y[train_idx], config)
-                y_hat = model_mod.predict(fitted, X[test_idx])
+                if region_folds is not None:
+                    y_hat = stitched_predictions(
+                        X[train_idx], y[train_idx], X[test_idx],
+                        region_folds[hemi], config)[0]
+                else:
+                    fitted = model_mod.fit(X[train_idx], y[train_idx], config)
+                    y_hat = model_mod.predict(fitted, X[test_idx])
                 preds.add(task, hemi, y_hat)
 
                 # group average over training subjects only
@@ -184,9 +236,9 @@ def adult_group_mean_loo(
                 }
                 records += _score_against_all(
                     y_hat, targets, task=task, hemi=hemi, subject=subjects[i],
-                    config=config, protocol="adult_group_mean_loo",
+                    config=config, protocol=protocol,
                 )
-            log.info("adult_group_mean_loo done: task=%s hemi=%s", task, hemi)
+            log.info("%s done: task=%s hemi=%s", protocol, task, hemi)
 
     preds.finalise()
     return pd.DataFrame.from_records(records), preds
@@ -202,15 +254,18 @@ def neonatal(
     hemispheres=HEMISPHERES,
     float32: bool = True,
     model_tasks=None,
+    region_folds=None,
 ) -> tuple[pd.DataFrame, Predictions]:
     """Train on all adults, apply unchanged to each neonate (Fig. 3).
 
     The adult models are fitted once per (task, hemisphere) and reused across
     neonates -- there is no leave-one-out here, because no neonate contributes to
-    the training set.
+    the training set. With ``region_folds``, predictions are additionally
+    leave-one-region-out.
     """
     records: list[dict] = []
     preds = Predictions.empty()
+    protocol = "neonatal" + ("_regioncv" if region_folds is not None else "")
 
     # model_tasks restricts which models are TRAINED, so the work can be split
     # across cluster jobs. Every model is still evaluated against every task's
@@ -225,17 +280,22 @@ def neonatal(
                 X_adult = model_mod.as_float32(X_adult)
                 X_inf = model_mod.as_float32(X_inf)
 
-            fitted = model_mod.fit(X_adult, y_all[hemi], config)
+            if region_folds is not None:
+                all_hat = stitched_predictions(
+                    X_adult, y_all[hemi], X_inf, region_folds[hemi], config)
+            else:
+                fitted = model_mod.fit(X_adult, y_all[hemi], config)
+                all_hat = None
             targets = {t: a.zscored()[hemi].mean(axis=0) for t, a in activations.items()}
 
             for i in range(X_inf.shape[0]):
-                y_hat = model_mod.predict(fitted, X_inf[i])
+                y_hat = all_hat[i] if all_hat is not None else model_mod.predict(fitted, X_inf[i])
                 preds.add(task, hemi, y_hat)
                 records += _score_against_all(
                     y_hat, targets, task=task, hemi=hemi, subject=neonates[i],
-                    config=config, protocol="neonatal",
+                    config=config, protocol=protocol,
                 )
-            log.info("neonatal done: task=%s hemi=%s (n=%d)", task, hemi, X_inf.shape[0])
+            log.info("%s done: task=%s hemi=%s (n=%d)", protocol, task, hemi, X_inf.shape[0])
 
     preds.finalise()
     return pd.DataFrame.from_records(records), preds

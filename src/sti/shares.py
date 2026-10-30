@@ -82,29 +82,40 @@ def partition(
     k: int = 10,
     l1_ratio: float = 0.5,
     seed: int = 0,
+    fold_labels: np.ndarray | None = None,
 ) -> dict:
     """Spatially blocked commonality analysis of one map.
 
-    Returns out-of-sample R² for G, C and G+C, the commonality partition, and
-    the out-of-sample Pearson correlations.
+    Folds are ``fold_labels`` when given — one fold per label, e.g. the 13
+    DLPFC regions of the hemisphere for leave-one-region-out — and otherwise
+    ``k`` contiguous k-means blocks of the coordinates. Returns out-of-sample
+    R² for G, C and G+C, the commonality partition, and the out-of-sample
+    Pearson correlations.
     """
     y = np.asarray(y, dtype=float).reshape(-1)
     G = np.asarray(G, dtype=np.float32)
     C = np.asarray(C, dtype=np.float32)
-    labels = spatial_folds(coords, k=k, seed=seed)
+    if fold_labels is None:
+        labels = spatial_folds(coords, k=k, seed=seed)
+    else:
+        labels = np.asarray(fold_labels).reshape(-1)
+        if labels.size != y.size:
+            raise ValueError(f"{labels.size} fold labels for {y.size} vertices")
+    fold_ids = np.unique(labels)
+    k = fold_ids.size
     models = {"G": G, "C": C, "GC": np.hstack([G, C])}
 
     oof = {m: np.full(y.size, np.nan) for m in models}
-    for b in range(k):
+    for n_done, b in enumerate(fold_ids):
         tr, te = labels != b, labels == b
-        inner_blocks = [i for i in range(k) if i != b]
+        inner_blocks = [i for i in fold_ids if i != b]
         inner_labels = labels[tr]
         alpha = _select_alpha(models["GC"][tr], y[tr], inner_labels, inner_blocks, l1_ratio)
         for name, X in models.items():
             Xtr, Xte = _standardise(X[tr], X[te])
             oof[name][te] = y[tr].mean() + _fit_predict(
                 Xtr, y[tr] - y[tr].mean(), Xte, alpha, l1_ratio)
-        log.info("shares: fold %d/%d alpha=%g", b + 1, k, alpha)
+        log.info("shares: fold %d/%d alpha=%g", n_done + 1, k, alpha)
 
     ss_tot = float(np.sum((y - y.mean()) ** 2))
     r2 = {m: 1.0 - float(np.sum((y - p) ** 2)) / ss_tot for m, p in oof.items()}
@@ -130,20 +141,25 @@ def shares_table(
     k: int = 10,
     l1_ratio: float = 0.5,
     config: Config | None = None,
+    fold_labels_fn=None,
 ) -> pd.DataFrame:
     """The full partition: every task × hemisphere × cohort.
 
     ``connectivity_by_cohort`` maps a cohort name to a ``Connectivity``;
-    ``coords_fn(hemi)`` returns the seed-vertex coordinates.
+    ``coords_fn(hemi)`` returns the seed-vertex coordinates. When
+    ``fold_labels_fn(hemi)`` is given, its labels define the folds
+    (leave-one-region-out); otherwise k-means blocks are used.
     """
     rows = []
     for cohort, conn in connectivity_by_cohort.items():
         for hemi in ("L", "R"):
             C = np.asarray(conn[hemi], dtype=np.float32).mean(axis=0)
             coords = coords_fn(hemi)
+            folds = fold_labels_fn(hemi) if fold_labels_fn is not None else None
             for task, activation in activations.items():
                 y = activation.zscored()[hemi].mean(axis=0)
-                res = partition(distances[hemi], C, y, coords, k=k, l1_ratio=l1_ratio)
+                res = partition(distances[hemi], C, y, coords, k=k,
+                                l1_ratio=l1_ratio, fold_labels=folds)
                 rows.append({"cohort": cohort, "task": task, "hemi": hemi, **res})
                 log.info("shares done: %s %s %s  uG=%.3f uC=%.3f shared=%.3f",
                          cohort, task, hemi, res["unique_geometry"],
