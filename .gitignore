@@ -23,3 +23,6 @@ htmlcov/
 # ---- editors / os ----
 .DS_Store
 .~lock.*#
+
+# ---- confidential (public repo) ----
+docs/pnas_reviews.txt
