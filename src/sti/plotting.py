@@ -541,6 +541,12 @@ def plot_maturity_panel(comparison: pd.DataFrame, *, title: str = "",
     col_b = next(c for c in comparison.columns if c.startswith("mean_") and c != col_a)
     hemis = sorted(comparison.hemi.unique())
 
+    # a percentage of a near-zero denominator is meaningless: mask panel (B)
+    # wherever the adult baseline is below 0.1 and mark it "n/d"
+    comparison = comparison.copy()
+    undefined = comparison[col_b] < 0.1
+    comparison.loc[undefined, ["pct_of_b", "pct_ci_low", "pct_ci_high"]] = np.nan
+
     # one row order everywhere, most mature at the top
     order = comparison.groupby("task")["pct_of_b"].mean().sort_values().index.tolist()
 
@@ -572,8 +578,12 @@ def plot_maturity_panel(comparison: pd.DataFrame, *, title: str = "",
         ax.hlines(y, d.pct_ci_low, d.pct_ci_high, color=PALETTE[0], lw=2.2, zorder=2)
         ax.scatter(d.pct_of_b, y, s=42, color=PALETTE[0], zorder=3)
         for yi, (_, r) in zip(y, d.iterrows()):
-            ax.text(r.pct_ci_high + 1.6, yi, f"{r.pct_of_b:.0f}%", va="center",
-                    fontsize=7.5, color=INK)
+            if np.isnan(r.pct_of_b):
+                ax.text(ax.get_xlim()[0], yi, "n/d", va="center",
+                        fontsize=7.5, color=MUTED, style="italic")
+            else:
+                ax.text(r.pct_ci_high + 1.6, yi, f"{r.pct_of_b:.0f}%", va="center",
+                        fontsize=7.5, color=INK)
         ax.set_xlabel(f"% of {label_b} accuracy", fontsize=9, color=INK)
 
         for ax in (axs[0][j], axs[1][j]):
@@ -678,6 +688,62 @@ def plot_shares(shares: pd.DataFrame, *, title: str = ""):
         _style(ax)
     axes[-1].legend(loc="center left", bbox_to_anchor=(1.02, 0.5), frameon=False)
     fig.supxlabel("share of map variance (out-of-sample $R^2$)", color=INK)
+    if title:
+        fig.suptitle(title, color=INK)
+    fig.tight_layout()
+    return fig
+
+
+def plot_pipeline_null_ladder(nulls: dict, summaries: dict, *, title: str = ""):
+    """Main-text controls figure: observed transfer against the pipeline null.
+
+    ``nulls`` maps a feature-set label (e.g. "tractography", "distance
+    regressed") to the merged per-surrogate null table; ``summaries`` maps the
+    same labels to the summary tables (observed_r, p_fdr, stars). One panel
+    per (hemisphere, feature set): the null distribution of each contrast as
+    a violin, the observed accuracy as a filled marker in the contrast's
+    colour. Under region-level cross-validation the nulls sit below zero
+    (stitched intercepts anti-predict), so the zero line is drawn explicitly.
+    """
+    plt = _mpl()
+    labels = list(nulls)
+    hemis = ("L", "R")
+    fig, axes = plt.subplots(len(hemis), len(labels),
+                             figsize=(4.4 * len(labels), 2.9 * len(hemis)),
+                             sharex=True, sharey=True)
+    axes = np.atleast_2d(axes)
+
+    tasks = sorted(summaries[labels[0]].task.unique())
+    short = [t.replace("tfMRI_", "") for t in tasks]
+    colours = dict(zip(tasks, PALETTE))
+
+    for i, hemi in enumerate(hemis):
+        for j, lab in enumerate(labels):
+            ax = axes[i][j]
+            null, summ = nulls[lab], summaries[lab]
+            for x, task in enumerate(tasks):
+                nr = null[(null.task == task) & (null.hemi == hemi)]["null_r"]
+                v = ax.violinplot([nr.to_numpy()], positions=[x], widths=0.7,
+                                  showextrema=False)
+                for body in v["bodies"]:
+                    body.set_facecolor(GRID)
+                    body.set_alpha(0.85)
+                r = summ[(summ.task == task) & (summ.hemi == hemi)].iloc[0]
+                ax.scatter([x], [r.observed_r], s=60, zorder=3,
+                           color=colours[task], marker=MARKERS[x % len(MARKERS)])
+                star = str(r.get("stars", "")) if pd.notna(r.get("stars", "")) else ""
+                ax.annotate(star if star else "n.s.",
+                            (x, r.observed_r), xytext=(0, 7),
+                            textcoords="offset points", ha="center",
+                            fontsize=8, color=INK if star else MUTED)
+            ax.axhline(0.0, color=MUTED, lw=0.8, ls=":")
+            ax.set_xticks(range(len(tasks)))
+            ax.set_xticklabels(short, rotation=45, ha="right")
+            if i == 0:
+                ax.set_title(lab, color=INK)
+            if j == 0:
+                ax.set_ylabel(f"{hemi} hemisphere\naccuracy (r)")
+            _style(ax)
     if title:
         fig.suptitle(title, color=INK)
     fig.tight_layout()

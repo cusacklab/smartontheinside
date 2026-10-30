@@ -1,0 +1,9 @@
+host=high-memory-dy-r6a-4xlarge-11 analysis=distance-regressed task=tfMRI_WM hemi=L
+started 2026-10-30T17:19:35+00:00
+17:20:26 INFO distance regressed out: hemi=L (155 subjects)
+17:20:32 INFO distance regressed out: hemi=R (155 subjects)
+17:20:51 INFO distance regressed out: hemi=L (325 subjects)
+17:21:01 INFO distance regressed out: hemi=R (325 subjects)
+17:21:40 INFO neonatal_regioncv done: task=tfMRI_WM hemi=L (n=325)
+wrote data/results/shards/distreg_regioncv_tfMRI_WM_L.csv (1625 rows, 325 neonates)
+finished 2026-10-30T17:21:41+00:00

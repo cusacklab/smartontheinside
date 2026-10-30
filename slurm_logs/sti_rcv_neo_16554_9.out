@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-4 analysis=neonatal task=tfMRI_EMOTION hemi=R
+started 2026-10-30T17:19:35+00:00
+17:20:44 INFO neonatal_regioncv done: task=tfMRI_EMOTION hemi=R (n=325)
+wrote data/results/shards/neonatal_regioncv_tfMRI_EMOTION_R.csv (1625 rows, 325 neonates)
+finished 2026-10-30T17:20:45+00:00

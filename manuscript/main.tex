@@ -82,9 +82,11 @@ passing surrogate maps with matched spatial autocorrelation
 \citep{burt2020} through the full analysis pipeline; what geometry achieves,
 with a model given only each vertex's distances to the rest of the brain; and
 what connectivity adds beyond both, including after the distance dependence
-of tractography is removed from its profiles. We also estimate how the
-variance of each functional map divides into geometric, connectional and
-shared components (Fig.~1b).
+of tractography is removed from its profiles. Beyond these baselines, every
+primary analysis is evaluated only on cortical regions the model has never
+seen, so success requires extrapolation rather than interpolation. We also
+estimate how the variance of each functional map divides into geometric,
+connectional and shared components (Fig.~1b).
 
 These specifiers differ most sharply in \emph{when} their information becomes
 available relative to experience. We make no claim that neonatal DLPFC is
@@ -148,9 +150,9 @@ in the first weeks of life.
   from its connectivity profile, and the adult models were then applied to
   neonates. (b)~Share of each group-average map's variance explained
   uniquely by connectivity, uniquely by geometry, by either (shared), or by
-  neither, under spatially blocked cross-validation; hemispheres averaged.
-  Small negative commonality components (cross-validation noise) are clipped
-  to zero for display.}
+  neither, under leave-one-region-out cross-validation; hemispheres
+  averaged. Small negative commonality components (cross-validation noise)
+  are clipped to zero for display.}
   \label{fig:overview}
 \end{figure}
 
@@ -275,14 +277,16 @@ within-model comparison would misreport that as a failure of specificity.
 Four analyses bound the contribution of spatial position to the results.
 
 \emph{Full-pipeline surrogate null.} For each contrast and hemisphere we
-generated 200 variogram-matched surrogates \citep{burt2020} of the adult
+generated 100 variogram-matched surrogates \citep{burt2020} of the adult
 group-average map within the DLPFC mask. Each surrogate is, by construction,
 a spatial permutation of the observed map, so the same permutation was
 applied to every adult's individual map --- rearranging the whole training
 set coherently while preserving between-participant variability --- and the
-entire analysis was rerun: the elastic net refitted, transferred to all 325
-neonates, and scored against the permuted target. The null distribution is
-that of the across-neonate mean accuracy, matching the observed statistic;
+entire analysis was rerun under the same region-level cross-validation: the
+elastic net refitted leave-one-region-out (the anatomical folds are not
+permuted, only the maps), transferred to all 325 neonates, and scored
+against the permuted target. The null distribution is that of the
+across-neonate mean accuracy, matching the observed statistic;
 $p_{\mathrm{spin}} = (k+1)/(n+1)$, Benjamini--Hochberg corrected. This asks
 whether the pipeline transfers real task maps better than arbitrary maps of
 matched smoothness. A secondary, output-level null that holds the prediction
@@ -297,6 +301,20 @@ graph), Euclidean distance to the nearest vertex of contralateral parcels
 is identical for every participant, so this fit is equivalent to training on
 the stacked individual maps; its accuracy is the prediction attainable from
 position alone.
+
+\emph{Region-level cross-validation.} All primary analyses are additionally
+cross-validated across regions: for each of the 13 DLPFC regions per
+hemisphere, the model is fitted on the vertices of the other twelve and
+predicts the held-out region's vertices, and the per-region predictions are
+stitched into one map. No prediction therefore comes from a model that saw
+its own territory, in either the participant dimension or the spatial
+dimension, so interpolation across the cortical sheet is excluded by design.
+One property of stitched folds should be noted: each fold's intercept is
+estimated from the other regions, so structure carried purely by regional
+mean levels scores at or below zero --- under this protocol, spatial nulls
+centre below zero and regional means cannot masquerade as positive transfer.
+Subject-only cross-validated versions of all analyses are reported in the
+Supplementary Materials.
 
 \emph{Distance-regressed connectivity.} Tractography counts fall off
 approximately exponentially with distance \citep{donahue2016}. For each
@@ -314,10 +332,9 @@ control.
 explained by geometry, by connectivity, and by either, we fitted the
 elastic net with geometric features, connectional features (the cohort
 group-mean profile per vertex), and both concatenated, and computed
-out-of-sample $R^2$ over spatially blocked folds: vertices were clustered
-into ten contiguous blocks by k-means on their coordinates and each block
-held out in turn, so spatial autocorrelation cannot inflate the estimate.
-One penalty per fold was selected by inner blocked cross-validation on the
+out-of-sample $R^2$ under the same leave-one-region-out folds, so spatial
+autocorrelation cannot inflate the estimate. One penalty per fold was
+selected by inner cross-validation over the remaining regions on the
 combined model and applied to all three models. Unique and shared components
 follow from the commonality identities ($\mathrm{unique}_G = R^2_{GC} -
 R^2_{C}$, and symmetrically; $\mathrm{shared} = R^2_G + R^2_C - R^2_{GC}$).
@@ -359,38 +376,42 @@ prefer different tasks, which is the topography the remainder of the paper
 seeks to explain. As noted in Methods, contrast selection makes this
 analysis partly circular; it is a check, not an effect-size estimate.
 
-\subsection{The connectivity--function mapping generalises to unseen adults}
+\subsection{The connectivity--function mapping generalises to unseen adults
+and unseen regions}
 
-Models trained on other adults predicted a held-out adult's own activation
-map from their own connectivity (mean within-task $r$ by contrast and
-hemisphere, 0.12--0.26; Fig.~2). Prediction was task-specific: for every
-target map, the model trained on that contrast predicted it better than did
-models trained on other contrasts, in 40 of 40 comparisons
-($p_{\mathrm{FDR}} < 0.05$, paired bootstrap). The mapping from connectivity
-to function is therefore shared across individuals. It is this shared
-component that carries the prediction: the group-average map of the training
-participants predicted each held-out individual's map better than that
-individual's own connectivity-based prediction in all ten
-contrast-by-hemisphere cells, so these analyses demonstrate a common mapping
+Models trained on other adults' other regions predicted a held-out adult's
+own activation map, region by region, from their own connectivity (mean
+within-task $r$ by contrast and hemisphere, 0.06--0.22;
+Fig.~\ref{fig:adult}). Prediction was task-specific: for a given target map,
+the model trained on that contrast predicted it better than did models
+trained on other contrasts in 36 of 40 comparisons ($p_{\mathrm{FDR}} <
+0.05$, paired bootstrap). The mapping from connectivity to function is
+therefore shared across individuals and extrapolates to cortical territory
+the model has never seen. It is the shared component that carries the
+prediction: the group-average map of the training participants predicted
+each held-out individual's map better than that individual's own
+connectivity-based prediction in all ten contrast-by-hemisphere cells
+(Supplementary Materials), so these analyses demonstrate a common mapping
 rather than prediction of individual differences, and we make no claim about
 the latter.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.95\linewidth]{Fig2_adult_own_activation_accuracy.png}\\[1ex]
-  \includegraphics[width=.95\linewidth]{Fig2_adult_own_activation_specificity.png}
-  \caption{\textbf{In adults, the functional response of a DLPFC vertex can
-  be predicted from its structural connectivity.} (A)~For each of the five
-  task contrasts, an elastic-net model was trained to predict vertex-wise
-  activation from tractography-derived connectivity,
-  leave-one-participant-out; each point is one participant and the y axis is
-  the correlation across vertices between predicted and observed activation,
-  for the left and right hemispheres. (B)~Prediction is task-specific. For
-  each target map, the upper panels show the accuracy of every model and the
-  lower panels the same values with each target's across-model mean removed,
-  leaving only specificity; circled points mark each model's own target.
-  Every target map was best predicted by its own model (40 of 40
-  comparisons, $p_{\mathrm{FDR}} \le 0.0002$).}
+  \includegraphics[width=.95\linewidth]{RegionCV_Fig2_adult_accuracy.png}\\[1ex]
+  \includegraphics[width=.95\linewidth]{RegionCV_Fig2_adult_specificity.png}
+  \caption{\textbf{In adults, the functional response of a DLPFC region can
+  be predicted from structural connectivity, by models that never saw the
+  region or the participant.} (A)~For each of the five task contrasts, an
+  elastic-net model was trained to predict vertex-wise activation from
+  tractography-derived connectivity, leave-one-participant-out and
+  leave-one-region-out; each point is one participant and the y axis is the
+  correlation across vertices between the stitched out-of-region prediction
+  and the observed activation, for the left and right hemispheres.
+  (B)~Prediction is task-specific. For each target map, the upper panels
+  show the accuracy of every model and the lower panels the same values with
+  each target's across-model mean removed, leaving only specificity; circled
+  points mark each model's own target (36 of 40 comparisons significant,
+  $p_{\mathrm{FDR}} < 0.05$).}
   \label{fig:adult}
 \end{figure}
 
@@ -403,112 +424,141 @@ cells, 0.44). For the motor map it reached $r = 0.64$ (left) and 0.56
 language it approximately matched tractography; only for emotion (both
 hemispheres) and right social did raw tractography clearly exceed it. In
 adults, the distance-only model attained a median of 104\% of the accuracy
-of connectivity-based prediction of the same group-average targets. Position
-is therefore a strong baseline, and any claim for connectivity must be an
-increment beyond it.
+of connectivity-based prediction of the same group-average targets under
+the subject-only protocol. Position is therefore a strong baseline --- but
+its strength is interpolation: evaluated on held-out regions it retains
+almost nothing (Fig.~\ref{fig:overview}b), which is why every primary
+analysis is evaluated that way.
 
 \subsection{Connectivity carries function-specific information beyond
 geometry}
 
-Three analyses establish the increment. First, the full-pipeline surrogate
-null: arbitrary maps of matched smoothness transferred from adults to
-neonates at $r \approx 0.13$--$0.20$ (null means), quantifying what position
-and smoothness alone carry through the real pipeline. Observed transfer
-exceeded the null for emotion, working memory, social and language in both
-hemispheres (excess $r = +0.17$ to $+0.32$; all $p_{\mathrm{FDR}} = 0.006$,
-the floor for 200 surrogates), but not for motor (excess $+0.04$ left,
-$+0.001$ right; $p_{\mathrm{FDR}} = 0.20$ and $0.47$).
+Three analyses establish the increment (Fig.~\ref{fig:ladder}). First, the
+full-pipeline surrogate null: under region-level cross-validation, arbitrary
+maps of matched smoothness do not transfer from adults to neonates at all
+--- the null distributions centre below zero ($r \approx -0.09$ to $-0.13$),
+as expected when stitched folds cannot exploit regional means --- so
+whatever transfers is carried by function-specific structure. Observed
+transfer exceeded the null for emotion, working memory, social and language
+in both hemispheres (excess $r = +0.37$ to $+0.55$; all $p_{\mathrm{FDR}} =
+0.012$, near the floor for 100 surrogates), but not for motor (excess
+$+0.23$ left, $p_{\mathrm{FDR}} = 0.055$; $+0.10$ right, $p_{\mathrm{FDR}} =
+0.26$): the raw motor transfer does not survive extrapolation.
 
 Second, removing the distance dependence of tractography left the transfer
-essentially intact: within-task accuracy on distance-regressed features was
-79--115\% of its raw value across emotion, working memory, social and
-language, with task specificity preserved (37 of 40 comparisons). The
-distance decay is therefore not what carries the prediction. For motor,
-accuracy \emph{rose} after decay removal (left, 0.24 to 0.33; right, 0.16 to
-0.28): the proximity bias of tractography was actively corrupting the motor
-prediction.
+essentially intact for the four surviving contrasts (within-task $r$
+0.27--0.41), so the distance decay is not what carries the prediction ---
+and for motor, accuracy \emph{rose} after decay removal (left, 0.12 to 0.26;
+right, $-0.02$ to 0.21): the proximity bias of tractography was actively
+corrupting the motor prediction.
 
 Third, the combined control --- the surrogate null run through the full
-pipeline on the distance-regressed features --- was exceeded by all ten
-contrast-by-hemisphere cells, now including motor (excess $r = +0.11$ in
-both hemispheres, $p_{\mathrm{FDR}} = 0.040$ left, $0.028$ right; all other
-cells $p_{\mathrm{FDR}} = 0.006$, excess $+0.19$ to $+0.29$). We note that
-the motor null is also the widest (null means 0.18--0.22), because the motor
-map is the most geometry-predictable target: the bar is highest exactly
-where geometry is strongest, and the regressed transfer clears it, though at
-a smaller margin than the other contrasts.
+region-cross-validated pipeline on the distance-regressed features --- was
+exceeded by all ten contrast-by-hemisphere cells, now including motor
+(excess $r = +0.33$ and $+0.32$, $p_{\mathrm{FDR}} = 0.020$ in both
+hemispheres; all other cells $p_{\mathrm{FDR}} = 0.012$, excess $+0.37$ to
+$+0.51$).
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=.95\linewidth]{Fig3_controls_ladder.png}
+  \caption{\textbf{Transfer from adults to neonates carries
+  function-specific information beyond smoothness, position and the distance
+  decay of tractography.} Observed adult-to-neonate transfer accuracy (one
+  marker per contrast) against the full-pipeline surrogate null (grey
+  violins: 100 variogram-matched surrogate maps passed through the entire
+  region-cross-validated analysis), for raw tractography features (left) and
+  distance-regressed features (right), in each hemisphere (rows). Null
+  distributions centre below zero because stitched region folds cannot
+  exploit regional mean levels. Raw motor transfer does not exceed its null;
+  after removal of the distance decay every contrast does
+  ($p_{\mathrm{FDR}} < 0.05$).}
+  \label{fig:ladder}
+\end{figure}
 
 \subsection{Partitioning each map into geometric and connectional
 components}
 
 The commonality analysis (Fig.~\ref{fig:overview}b) reconciles the strength
-of the distance-only model with the controls above. Under spatially blocked
-cross-validation --- where a model must predict held-out patches of cortex
-it has never seen --- geometry generalises poorly (median out-of-sample
-$R^2 = 0.04$ in adults), while group-mean connectivity generalises strongly
-(median $R^2 = 0.62$; unique connectional component 0.60, unique geometric
-component 0.03, shared 0.04). Geometry's in-sample success is interpolation:
-given a map's values over most of the patch, position fills in the rest; it
-carries little that extrapolates. The exception, once again, is motor, which
-has the largest geometric component in both cohorts (unique geometry
-0.05--0.09 in adults, 0.15--0.27 in neonates). With neonatal connectivity
-the partition is the same in kind and smaller in degree: median combined
-$R^2 = 0.50$, of which the unique connectional component is 0.36 --- the
-neonatal connectome already carries the majority of what it will carry in
-adulthood, and carries it over and above geometry.
+of the distance-only model with the controls above. Under
+leave-one-region-out cross-validation --- where a model must predict a
+cortical region it has never seen --- geometry generalises poorly (median
+unique component, $R^2 = 0.01$ in adults), while group-mean connectivity
+generalises strongly (median combined $R^2 = 0.72$; unique connectional
+component 0.54, shared 0.12). Geometry's in-sample success is
+interpolation: given a map's values over most of the DLPFC, position fills
+in the rest; it carries little that extrapolates to an unseen region. The
+exception, once again, is motor, which has the largest geometric component
+in both cohorts (unique geometry up to 0.04 in adults but 0.27--0.42 in
+neonates). With neonatal connectivity the partition is the same in kind and
+smaller in degree: median combined $R^2 = 0.54$, of which the unique
+connectional component is 0.39 --- the neonatal connectome already carries
+the majority of what it will carry in adulthood, and carries it over and
+above geometry.
 
 \subsection{The connectional component is present at birth}
 
 Applied without retraining to each of 325 neonates, the adult models
-predicted the adult group-average maps from neonatal connectivity alone
-(mean within-task $r$: emotion 0.40/0.46, working memory 0.43/0.43, social
-0.33/0.43, language 0.38/0.36, motor 0.24/0.16, left/right; Fig.~3), with
-every contrast clear of zero in every one of the 325 infants. Transfer was
-task-specific in 40 of 40 column-wise comparisons. The controls above apply
-to this transfer: it exceeds smoothness-plus-position for all five domains
-once the distance artefact is removed, so the neonatal connectome carries
-the function-specific, geometry-independent component of the adult mapping.
+predicted the adult group-average maps from neonatal connectivity alone,
+region by unseen region (mean within-task $r$: emotion 0.37/0.44, working
+memory 0.38/0.37, social 0.27/0.40, language 0.31/0.29, left/right;
+Fig.~\ref{fig:neonatal}). Transfer was task-specific in 34 of 40
+column-wise comparisons. Raw motor transfer did not survive the
+extrapolation protocol (0.12 left, $-0.02$ right), consistent with its
+failure against the surrogate null above; with the distance decay removed
+it recovered to 0.26/0.21 and exceeded its null. The neonatal connectome
+therefore carries the function-specific, geometry-independent component of
+the adult mapping for all five domains, with the motor component visible
+only once tractography's proximity bias is removed.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=.95\linewidth]{Fig3_neonatal_accuracy.png}\\[1ex]
-  \includegraphics[width=.95\linewidth]{Fig3_neonatal_specificity.png}
+  \includegraphics[width=.95\linewidth]{RegionCV_Fig3_neonatal_accuracy.png}\\[1ex]
+  \includegraphics[width=.95\linewidth]{RegionCV_Fig3_neonatal_specificity.png}
   \caption{\textbf{Neonatal structural connectivity predicts adult
-  functional selectivity in the DLPFC.} (A)~Adult elastic-net models were
-  applied, unchanged, to tractography from 325 term-born neonates; each
-  point is one neonate and the y axis is the correlation across vertices
-  between the activation predicted from that neonate's connectivity and the
-  adult group-average activation, for the left and right hemispheres.
+  functional selectivity in DLPFC regions the models never saw.} (A)~Adult
+  elastic-net models, trained leave-one-region-out, were applied unchanged
+  to tractography from 325 term-born neonates; each point is one neonate and
+  the y axis is the correlation across vertices between the stitched
+  out-of-region prediction from that neonate's connectivity and the adult
+  group-average activation, for the left and right hemispheres.
   (B)~Prediction from neonatal connectivity is task-specific; conventions as
-  in Fig.~\ref{fig:adult}B. Every target map was best predicted by its own
-  model (40 of 40 comparisons, $p_{\mathrm{FDR}} \le 0.0002$).}
+  in Fig.~\ref{fig:adult}B (34 of 40 comparisons significant,
+  $p_{\mathrm{FDR}} < 0.05$). Raw motor transfer does not survive this
+  protocol; see Fig.~\ref{fig:ladder} for its recovery after removal of the
+  distance decay.}
   \label{fig:neonatal}
 \end{figure}
 
 \subsection{Neonatal accuracy approaches the adult ceiling}
 
 Against the matched adult benchmark (group-average prediction,
-leave-one-out), neonatal accuracy was 57--99\% of adult accuracy (median
-90\%; Fig.~4). For emotion in both hemispheres and right working memory the
-difference was not significant (bootstrap, FDR-corrected), so neonatal
-prediction was statistically indistinguishable from adult; language
-(74--84\%) and motor (57--71\%) showed the largest shortfalls. This ratio
-compares two prediction accuracies, each bounded by its own measurement
-noise, and should not be read as a direct estimate of connectivity maturity.
+leave-one-participant-out and leave-one-region-out), neonatal accuracy was a
+median 95\% of adult accuracy (Fig.~\ref{fig:comparison}). For emotion,
+working memory and social cognition the difference was not significant in
+either hemisphere (bootstrap, FDR-corrected) --- neonatal prediction was
+statistically indistinguishable from adult --- while language showed a
+significant shortfall (77--88\%). For motor the ratio is reported for the
+left hemisphere only (61\%); on the right, both accuracies are too close to
+zero for a percentage to be meaningful. This ratio compares two prediction
+accuracies, each bounded by its own measurement noise, and should not be
+read as a direct estimate of connectivity maturity.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=.9\linewidth]{Fig4_neonate_vs_adult.png}
+  \includegraphics[width=.9\linewidth]{Fig5_neonate_vs_adult_regioncv.png}
   \caption{\textbf{Neonatal connectivity predicts adult DLPFC organisation
-  nearly as well as adult connectivity does.} Upper panels: mean prediction
-  accuracy for each contrast from neonatal connectivity ($n = 325$) and from
-  adult connectivity predicting the same group-average map ($n = 155$), for
-  the left and right hemispheres; the connecting segment is the gap between
+  nearly as well as adult connectivity does, in regions the models never
+  saw.} Upper panels: mean out-of-region prediction accuracy for each
+  contrast from neonatal connectivity ($n = 325$) and from adult
+  connectivity predicting the same group-average map ($n = 155$), for the
+  left and right hemispheres; the connecting segment is the gap between
   them. Lower panels: the same expressed as a percentage of adult accuracy
   with a bootstrapped 95\% interval, the dotted line marking parity.
-  Neonatal prediction reached a median of 90\% of adult accuracy (range
-  57--99\%); for emotion in both hemispheres and working memory in the right
-  hemisphere the difference was not significant. Asterisks mark differences
+  Neonatal prediction reached a median of 95\% of adult accuracy; emotion,
+  working memory and social cognition were statistically indistinguishable
+  from adult in both hemispheres. The right-hemisphere motor ratio is not
+  defined (n/d): both accuracies are near zero. Asterisks mark differences
   significant after Benjamini--Hochberg correction (* $p<0.05$, ** $p<0.01$,
   *** $p<0.001$).}
   \label{fig:comparison}
@@ -516,10 +566,15 @@ noise, and should not be read as a direct estimate of connectivity maturity.
 
 \subsection{Supplementary analyses}
 
-The output-level spatial null (1{,}000 surrogates per cell) confirmed that
-no observed accuracy is attributable to spatial autocorrelation of
-prediction and target alone ($p_{\mathrm{spin}} \le 0.002$ throughout;
-Fig.~S8). Prediction accuracy increased across the neonatal period with both
+Subject-only cross-validated versions of all analyses --- the protocol in
+which models see every region but never the test participant --- are
+reported in the Supplementary Materials; accuracies are uniformly higher
+(e.g.\ neonatal within-task $r$ 0.16--0.46), the difference being the
+interpolation that region-level cross-validation removes. The output-level
+spatial null (1{,}000 surrogates per cell) confirmed that no observed
+accuracy is attributable to spatial autocorrelation of prediction and
+target alone ($p_{\mathrm{spin}} \le 0.002$ throughout; Fig.~S8).
+Prediction accuracy increased across the neonatal period with both
 age at scan and gestational age at birth, which a term-only cohort cannot
 separate ($r = 0.71$ between them), and decreased with head motion; the
 effect was small and is reported as exploratory (Fig.~S9; Supplementary

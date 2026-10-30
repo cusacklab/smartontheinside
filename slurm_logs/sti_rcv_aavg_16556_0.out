@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-7 analysis=adult-average task=tfMRI_WM hemi=L
+started 2026-10-30T17:19:35+00:00
+18:15:09 INFO adult_group_mean_loo_regioncv done: task=tfMRI_WM hemi=L
+wrote data/results/shards/adult_average_regioncv_tfMRI_WM_L.csv (775 rows)
+finished 2026-10-30T18:15:09+00:00

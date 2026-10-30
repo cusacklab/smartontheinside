@@ -418,6 +418,47 @@ a surface.
 All the registration steps were manually checked for each infant to
 ensure that the registration was successful.
 
+\section{Subject-only cross-validation}
+
+The main text evaluates every analysis under leave-one-region-out
+cross-validation, so no prediction comes from a model that saw its own
+territory. For comparison, this section reports the subject-only protocol
+--- the convention in prior work --- in which models are trained on all
+DLPFC vertices of the training participants and evaluated on the full map
+of the held-out participant or neonate. Accuracies are uniformly higher
+(adult own-map within-task $r$ 0.12--0.26; neonatal transfer 0.16--0.46;
+task specificity 40 of 40 column-wise comparisons in both), the difference
+being the within-region interpolation that the region-level protocol
+removes. Under this protocol the raw motor transfer appears successful
+($r = 0.24$ left, $0.16$ right); the main-text controls show that this
+apparent success is carried by spatial smoothness, position and the
+distance decay of tractography rather than by function-specific structure.
+The leave-one-subject-out group-mean benchmark reported in the main text
+(individual connectivity-based predictions never exceeding the group-average
+map, 0 of 10 cells) was computed under this protocol.
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=.9\linewidth]{Fig2_adult_own_activation_accuracy.png}
+  \caption*{\textbf{Fig.~S11.} Adult own-map prediction under subject-only
+  cross-validation (conventions as in main-text Fig.~2A).}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=.9\linewidth]{Fig3_neonatal_accuracy.png}
+  \caption*{\textbf{Fig.~S12.} Neonatal transfer under subject-only
+  cross-validation (conventions as in main-text Fig.~4A).}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=.9\linewidth]{Fig4_neonate_vs_adult.png}
+  \caption*{\textbf{Fig.~S13.} Neonatal accuracy as a proportion of adult
+  accuracy under subject-only cross-validation (median 90\%, range
+  57--99\%).}
+\end{figure}
+
 \section{Output-level spatial null}
 
 Rotating a map defined only on the DLPFC displaces most vertices outside the

@@ -64,9 +64,12 @@ Cusack, 2026, Nat Neurosci].
 > matched spatial autocorrelation through the full analysis pipeline; what
 > geometry achieves, with a model given only each vertex's distances to the
 > rest of the brain; and what connectivity adds beyond both, including after
-> the distance dependence of tractography is removed from its profiles. We
-> also estimate how the variance of each functional map divides into
-> geometric, connectional and shared components (Fig. 1b).
+> the distance dependence of tractography is removed from its profiles.
+> Beyond these baselines, every primary analysis is evaluated only on
+> cortical regions the model has never seen, so success requires
+> extrapolation rather than interpolation. We also estimate how the variance
+> of each functional map divides into geometric, connectional and shared
+> components (Fig. 1b).
 
 ## ¶4 — Development as the lever
 

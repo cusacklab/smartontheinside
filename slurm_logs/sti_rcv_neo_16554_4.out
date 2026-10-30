@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-2 analysis=neonatal task=tfMRI_LANGUAGE hemi=L
+started 2026-10-30T17:19:36+00:00
+17:20:56 INFO neonatal_regioncv done: task=tfMRI_LANGUAGE hemi=L (n=325)
+wrote data/results/shards/neonatal_regioncv_tfMRI_LANGUAGE_L.csv (1625 rows, 325 neonates)
+finished 2026-10-30T17:20:56+00:00

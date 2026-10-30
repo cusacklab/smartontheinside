@@ -1,0 +1,5 @@
+host=high-memory-dy-r6a-4xlarge-6 analysis=adult-loo task=tfMRI_SOCIAL hemi=R
+started 2026-10-30T17:19:35+00:00
+18:14:57 INFO adult_loo_regioncv done: task=tfMRI_SOCIAL hemi=R
+wrote data/results/shards/adult_loo_regioncv_tfMRI_SOCIAL_R.csv (775 rows)
+finished 2026-10-30T18:14:58+00:00

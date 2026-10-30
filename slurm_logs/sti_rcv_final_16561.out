@@ -1,0 +1,175 @@
+Region-CV stack finalised 2026-10-30T18:20:38+00:00
+
+merged 10 shards -> data/results/regioncv/neonatal_regioncv_N325.csv (16250 rows)
+  2 hemispheres x 5 model tasks, 325 subjects
+merged 10 shards -> data/results/regioncv/adult_loo_regioncv_N155.csv (7750 rows)
+  2 hemispheres x 5 model tasks, 155 subjects
+merged 10 shards -> data/results/regioncv/adult_average_regioncv_N155.csv (7750 rows)
+  2 hemispheres x 5 model tasks, 155 subjects
+merged 10 shards -> data/results/regioncv/neonatal_regioncv_distance_regressed.csv (16250 rows)
+  2 hemispheres x 5 model tasks, 325 subjects
+merged 10 shards -> data/results/regioncv/pipeline_null_regioncv_N325.csv (1000 rows)
+  2 hemispheres x 5 model tasks, 100 rows per cell
+merged 10 shards -> data/results/regioncv/pipeline_null_regressed_regioncv_N325.csv (1000 rows)
+  2 hemispheres x 5 model tasks, 100 rows per cell
+
+=== within-task accuracy, all region-CV protocols ===
+
+--- neonatal_regioncv_N325 ---
+task            hemi
+tfMRI_EMOTION   L       0.373
+                R       0.444
+tfMRI_LANGUAGE  L       0.307
+                R       0.290
+tfMRI_MOTOR     L       0.120
+                R      -0.024
+tfMRI_SOCIAL    L       0.269
+                R       0.402
+tfMRI_WM        L       0.383
+                R       0.368
+
+--- adult_loo_regioncv_N155 ---
+task            hemi
+tfMRI_EMOTION   L       0.113
+                R       0.160
+tfMRI_LANGUAGE  L       0.205
+                R       0.147
+tfMRI_MOTOR     L       0.138
+                R       0.062
+tfMRI_SOCIAL    L       0.121
+                R       0.183
+tfMRI_WM        L       0.223
+                R       0.187
+
+--- adult_average_regioncv_N155 ---
+task            hemi
+tfMRI_EMOTION   L       0.381
+                R       0.435
+tfMRI_LANGUAGE  L       0.401
+                R       0.331
+tfMRI_MOTOR     L       0.199
+                R       0.092
+tfMRI_SOCIAL    L       0.279
+                R       0.418
+tfMRI_WM        L       0.412
+                R       0.358
+
+--- neonatal_regioncv_distance_regressed ---
+task            hemi
+tfMRI_EMOTION   L       0.298
+                R       0.329
+tfMRI_LANGUAGE  L       0.268
+                R       0.298
+tfMRI_MOTOR     L       0.257
+                R       0.206
+tfMRI_SOCIAL    L       0.302
+                R       0.352
+tfMRI_WM        L       0.414
+                R       0.407
+
+=== pipeline null (region-CV, raw features) vs observed ===
+hemi           task  observed_r  null_mean  null_sd  null_p95  excess_r  p_spin  n_surrogates  p_fdr stars
+   L  tfMRI_EMOTION      0.3727    -0.0859   0.0830    0.0407    0.4585  0.0099           100 0.0124     *
+   R  tfMRI_EMOTION      0.4442    -0.1102   0.0851    0.0223    0.5544  0.0099           100 0.0124     *
+   L tfMRI_LANGUAGE      0.3070    -0.1001   0.1033    0.0527    0.4071  0.0099           100 0.0124     *
+   R tfMRI_LANGUAGE      0.2903    -0.1102   0.1083    0.0558    0.4005  0.0099           100 0.0124     *
+   L    tfMRI_MOTOR      0.1205    -0.1088   0.1177    0.0938    0.2293  0.0495           100 0.0550      
+   R    tfMRI_MOTOR     -0.0239    -0.1280   0.1174    0.0398    0.1040  0.2574           100 0.2574      
+   L   tfMRI_SOCIAL      0.2688    -0.1056   0.0997    0.0674    0.3745  0.0099           100 0.0124     *
+   R   tfMRI_SOCIAL      0.4019    -0.0997   0.0891    0.0324    0.5016  0.0099           100 0.0124     *
+   L       tfMRI_WM      0.3832    -0.0986   0.1004    0.0455    0.4818  0.0099           100 0.0124     *
+   R       tfMRI_WM      0.3680    -0.1169   0.0952    0.0258    0.4849  0.0099           100 0.0124     *
+
+wrote data/results/regioncv/pipeline_null_regioncv_summary.csv
+
+=== pipeline null (region-CV, distance-regressed) vs observed ===
+hemi           task  observed_r  null_mean  null_sd  null_p95  excess_r  p_spin  n_surrogates  p_fdr stars
+   L  tfMRI_EMOTION      0.2982    -0.1334   0.1223    0.0489    0.4315  0.0099           100 0.0124     *
+   R  tfMRI_EMOTION      0.3294    -0.1248   0.1269    0.0696    0.4542  0.0099           100 0.0124     *
+   L tfMRI_LANGUAGE      0.2681    -0.0984   0.1329    0.0912    0.3666  0.0099           100 0.0124     *
+   R tfMRI_LANGUAGE      0.2983    -0.1095   0.1419    0.1077    0.4078  0.0099           100 0.0124     *
+   L    tfMRI_MOTOR      0.2574    -0.0700   0.1264    0.1466    0.3274  0.0198           100 0.0198     *
+   R    tfMRI_MOTOR      0.2059    -0.1112   0.1543    0.1265    0.3172  0.0198           100 0.0198     *
+   L   tfMRI_SOCIAL      0.3025    -0.1107   0.1297    0.0873    0.4131  0.0099           100 0.0124     *
+   R   tfMRI_SOCIAL      0.3519    -0.1142   0.1327    0.0775    0.4661  0.0099           100 0.0124     *
+   L       tfMRI_WM      0.4139    -0.0932   0.1389    0.1243    0.5071  0.0099           100 0.0124     *
+   R       tfMRI_WM      0.4073    -0.0985   0.1298    0.0918    0.5058  0.0099           100 0.0124     *
+
+wrote data/results/regioncv/pipeline_null_regressed_regioncv_summary.csv
+
+=== neonatal vs adult ceiling (region-CV) ===
+hemi           task  difference  p_fdr stars  pct_of_b  pct_ci_low  pct_ci_high
+   L  tfMRI_EMOTION      -0.008  0.590          97.787      90.932      106.031
+   L tfMRI_LANGUAGE      -0.094  0.001   ***    76.639      71.270       83.268
+   L    tfMRI_MOTOR      -0.079  0.001   ***    60.503      52.040       71.890
+   L   tfMRI_SOCIAL      -0.010  0.590          96.506      88.189      107.156
+   L       tfMRI_WM      -0.029  0.144          92.933      86.345      101.270
+   R  tfMRI_EMOTION       0.009  0.590         102.024      95.114      110.612
+   R tfMRI_LANGUAGE      -0.040  0.020     *    87.814      80.319       97.105
+   R    tfMRI_MOTOR      -0.116  0.001   ***   -26.086     -39.836      -18.124
+   R   tfMRI_SOCIAL      -0.016  0.504          96.102      89.754      104.200
+   R       tfMRI_WM       0.010  0.590         102.771      94.586      112.778
+
+neonatal accuracy as % of adult: median 95%, range -26-103%
+wrote data/results/regioncv/compare_neonate_vs_adult_regioncv.csv
+
+=== figures and specificity tables ===
+wrote /home/ubuntu/repos/smartontheinside/figures/manuscript/RegionCV_Fig3_neonatal_accuracy.png
+wrote /home/ubuntu/repos/smartontheinside/figures/manuscript/RegionCV_Fig3_neonatal_specificity.png
+wrote data/results/regioncv/RegionCV_Fig3_neonatal_specificity_row.csv  (24/40 with the diagonal significantly higher)
+wrote data/results/regioncv/RegionCV_Fig3_neonatal_specificity_column.csv  (34/40 with the diagonal significantly higher)
+wrote data/results/regioncv/RegionCV_Fig3_neonatal_specificity_table.tsv  (40 pairwise comparisons)
+
+mean within-task accuracy (r):
+                       mean     std  count
+hemi task                                 
+L    tfMRI_EMOTION   0.3727  0.0546    325
+     tfMRI_LANGUAGE  0.3070  0.0441    325
+     tfMRI_MOTOR     0.1205  0.0526    325
+     tfMRI_SOCIAL    0.2688  0.0373    325
+     tfMRI_WM        0.3832  0.0518    325
+R    tfMRI_EMOTION   0.4442  0.0534    325
+     tfMRI_LANGUAGE  0.2903  0.0455    325
+     tfMRI_MOTOR    -0.0239  0.0462    325
+     tfMRI_SOCIAL    0.4019  0.0378    325
+     tfMRI_WM        0.3680  0.0558    325
+wrote /home/ubuntu/repos/smartontheinside/figures/manuscript/RegionCV_Fig2_adult_accuracy.png
+wrote /home/ubuntu/repos/smartontheinside/figures/manuscript/RegionCV_Fig2_adult_specificity.png
+wrote data/results/regioncv/RegionCV_Fig2_adult_specificity_row.csv  (26/40 with the diagonal significantly higher)
+wrote data/results/regioncv/RegionCV_Fig2_adult_specificity_column.csv  (36/40 with the diagonal significantly higher)
+wrote data/results/regioncv/RegionCV_Fig2_adult_specificity_table.tsv  (40 pairwise comparisons)
+
+mean within-task accuracy (r):
+                       mean     std  count
+hemi task                                 
+L    tfMRI_EMOTION   0.1130  0.1063    155
+     tfMRI_LANGUAGE  0.2048  0.1297    155
+     tfMRI_MOTOR     0.1377  0.1414    155
+     tfMRI_SOCIAL    0.1210  0.1151    155
+     tfMRI_WM        0.2233  0.1307    155
+R    tfMRI_EMOTION   0.1605  0.1203    155
+     tfMRI_LANGUAGE  0.1473  0.1288    155
+     tfMRI_MOTOR     0.0617  0.1298    155
+     tfMRI_SOCIAL    0.1832  0.1283    155
+     tfMRI_WM        0.1868  0.1192    155
+wrote /home/ubuntu/repos/smartontheinside/figures/manuscript/RegionCV_S7_adult_average_accuracy.png
+wrote /home/ubuntu/repos/smartontheinside/figures/manuscript/RegionCV_S7_adult_average_specificity.png
+wrote data/results/regioncv/RegionCV_S7_adult_average_specificity_row.csv  (30/40 with the diagonal significantly higher)
+wrote data/results/regioncv/RegionCV_S7_adult_average_specificity_column.csv  (36/40 with the diagonal significantly higher)
+wrote data/results/regioncv/RegionCV_S7_adult_average_specificity_table.tsv  (40 pairwise comparisons)
+
+mean within-task accuracy (r):
+                       mean     std  count
+hemi task                                 
+L    tfMRI_EMOTION   0.3811  0.1831    155
+     tfMRI_LANGUAGE  0.4006  0.1972    155
+     tfMRI_MOTOR     0.1991  0.1992    155
+     tfMRI_SOCIAL    0.2786  0.1713    155
+     tfMRI_WM        0.4124  0.2044    155
+R    tfMRI_EMOTION   0.4354  0.2018    155
+     tfMRI_LANGUAGE  0.3305  0.1974    155
+     tfMRI_MOTOR     0.0918  0.1838    155
+     tfMRI_SOCIAL    0.4182  0.1932    155
+     tfMRI_WM        0.3581  0.1981    155
+
+done 2026-10-30T18:20:57+00:00
