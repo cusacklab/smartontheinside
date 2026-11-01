@@ -25,7 +25,7 @@ Cusack, 2026, Nat Neurosci].
 > cortex (DLPFC): topographies of task preference that recur, individual after
 > individual, across working memory, language, social cognition, emotion and
 > action [refs: HCP task battery; DLPFC parcellation/function]. This
-> consistency implies that something specifies which patch of prefrontal
+> consistency implies that something specifies which region of prefrontal
 > cortex comes to serve which function, and that the specifying information is
 > in place by the time each function emerges. Here we ask what that
 > information is, and how early it can be measured.
@@ -33,12 +33,12 @@ Cusack, 2026, Nat Neurosci].
 ## ¶2 — The candidate specifiers
 
 > Three broad classes of answer are on offer. The first is *geometry*: a
-> patch's fate follows from its position in the cortical sheet. Positional
+> region's fate follows from its position in the cortical sheet. Positional
 > identity is established early by morphogen gradients [Rakic protomap;
 > O'Leary], macroscale function is organised along smooth spatial gradients
 > [Margulies 2016], and much of adult functional organisation is predictable
 > from the geometry of the cortex alone [Pang et al. 2023; subsequent debate].
-> The second is *extrinsic connectivity*: a patch computes what its
+> The second is *extrinsic connectivity*: a region computes what its
 > connections allow, so function follows the connectional fingerprint
 > [Passingham et al. 2002] — an account with causal support from rewiring
 > experiments [Sur] and correlational support from studies predicting adult
