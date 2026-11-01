@@ -591,51 +591,154 @@ Methods).
 
 \section{Discussion}
 
-[Structured draft --- prose to be completed with Chiara.]
+We asked what specifies the functional topography of the adult DLPFC, and
+how early the specifying information can be measured. In adults, a
+location's structural connectivity predicted its functional profile in
+individuals, and in cortical regions, that the models had never seen.
+Position in the cortical sheet reproduced much of the same topography when
+interpolation was possible, but almost none of it survived extrapolation to
+held-out regions; connectivity did. Applied without retraining to 325
+term-born neonates, the adult models predicted the adult topography at a
+median of 95\% of the adult benchmark, task-specifically, and the prediction
+survived the removal of tractography's distance dependence and exceeded
+surrogate maps passed through the identical pipeline. The connectional
+component of the specification of adult prefrontal topography --- the part
+that geometry cannot carry --- is present at birth.
 
-\begin{itemize}
-\item \textbf{Summary.} The topography of five task domains within adult
-DLPFC is partly specified by geometry; connectivity carries a
-function-specific component beyond geometry; that component is present in
-the neonatal connectome at close to adult strength. State the increments,
-not the absolute correlations, as the findings.
-\item \textbf{Geometry.} The strength of the distance-only model situates
-the result within the geometric accounts of functional organisation
-\citep{pang2023,margulies2016}: much of the DLPFC's group-average topography
-can be reproduced from position alone. A task-specific component cannot ---
-it survives every geometric control --- and it is the only component whose
-developmental timing is informative. Geometry is in place from the start in
-every account, so finding it early distinguishes nothing; finding the
-\emph{connectional} component at birth is what shows that specification
-precedes the experience of the repertoire. That is the finding.
-\item \textbf{The connectional component.} Relation to the connectional
-fingerprint \citep{passingham2002} and to connectivity-based
-proto-organisation \citep{saygin2016}: the present result extends the
-scaffold evidence to the beginning of postnatal life, to five domains, and
-to a form that survives geometric controls. Availability, not causality: we
-show the specifying information is present at birth, not that it is used.
-\item \textbf{Motor.} The motor contrast as a demonstration that the
-controls discriminate: the most geometry-predictable map, the one raw
-tractography failed on, rescued by removing the distance decay
-\citep{donahue2016}. Discuss tractography's documented biases in this light.
-\item \textbf{Microstructure.} The design cannot separate connectivity from
-cytoarchitectonic identity as the proximate specifier
-\citep{kubota2025}; connectivity may be a marker of areal identity rather
-than the mechanism. State plainly as an open question.
-\item \textbf{What neonatal DLPFC is doing.} Precursor computations
-consistent with the neonatal literature
-\citep{mahmoudzadeh2013,dehaenelambertz2002,ellis2021,odoherty2026}; the
-present claim is temporal, not functional --- the adult task repertoire has
-not yet been performed, so its specification precedes its exercise.
-\item \textbf{Individual differences.} The mapping demonstrated is shared
-across individuals; whether connectivity predicts individual deviations
-from the group topography is unresolved here.
-\item \textbf{Limitations.} No neonatal task fMRI (availability of
-information, not a longitudinal test of the scaffold); registration between
-such different brains, mitigated by manual QC and by controls that would
-not survive registration artefact; term-only cohort entangles age at scan
-with age at birth; group-average targets for the transfer analyses.
-\end{itemize}
+Because none of the adult task repertoire is available to a term neonate,
+this component cannot have been shaped by co-activation during the
+performance of those tasks. The pattern across contrasts reinforces the
+point: the strongest neonatal predictions were for emotion and working
+memory, the functions for which a co-activation account would be hardest to
+sustain, whereas the weakest --- even after the distance artefact was
+removed --- was motor, the one function a fetus's brain is already engaged
+in something like. This is the opposite of what co-development would
+predict. It does not exclude a role for activity-dependent refinement,
+which may act on this initial scaffold, but it indicates that the scaffold
+is largely adult-like at birth and so constrains, rather than emerges from,
+later specialisation.
+
+The geometric results carry a methodological lesson that extends beyond
+this study. Much of adult functional organisation is predictable from the
+geometry of the cortex \citep{pang2023,margulies2016}, and our distance-only
+model reproduces that observation within the DLPFC: in-sample, position
+matched or exceeded tractography for most contrasts. But geometry's
+predictive success was interpolation. Evaluated on regions the model had
+never seen, its unique contribution collapsed to near zero, while
+connectivity's survived almost intact (Fig.~1b). Predictive accuracy
+obtained where a model can interpolate across a smooth map does not
+demonstrate that the predictor specifies the map; evaluating on held-out
+regions distinguishes the two, and we suggest it as a standard for the
+geometry-versus-connectome debate generally. Geometry's share of the DLPFC
+map is real but small under this standard --- with one exception, motor ---
+and, because position is in place from the start under every account of
+development, its early presence distinguishes nothing. It is the
+connectional component whose timing is informative, and that component is
+present at birth.
+
+The motor contrast shows that these controls discriminate rather than
+rubber-stamp. Its map is the most geometry-predictable of the five, raw
+tractography transferred it no better than surrogate maps of matched
+smoothness, and removing tractography's distance dependence
+\citep{donahue2016} \emph{raised} its accuracy --- the proximity bias was
+actively corrupting the motor prediction, not merely inflating it. Both
+failure modes of tractography-based prediction are therefore on display in
+a single contrast: distance bias can masquerade as connectional signal for
+smooth maps, and can bury genuine signal beneath it. Studies that predict
+function from tractography without distance controls will contain an
+unknown mixture of the two.
+
+What is the neonatal DLPFC doing while this connectivity is in place? Our
+claim is temporal, not functional: the specification of the repertoire's
+adult topography is measurable before the repertoire is practised, and we
+make no claim that the tissue is idle --- it shows organised spontaneous
+activity, speech responses \citep{mahmoudzadeh2013,dehaenelambertz2002},
+attentional signals within months \citep{ellis2021}, and neural measures
+can reveal function well before behaviour does \citep{odoherty2026}. Two
+readings of the connectivity are compatible with our data. It may form a
+proto-organisation in the sense proposed for the visual word form area,
+where connectivity at age five predicts where the region will emerge by age
+eight \citep{saygin2016,saygin2011,osher2016}; our results extend that
+principle to the association cortex most remote from the sensory periphery
+and push its origin back to birth. The macaque visual system offers an
+instructive parallel: a retinotopic proto-map is present at birth, yet
+face domains form within it only with experience of faces
+\citep{arcaro2017proto,arcaro2017faces} --- the map is innate, the domain
+is learned, and the map determines where the domain will appear.
+Alternatively, the regions may already compute precursors of the adult
+functions, distributed as in adults; characterising what such precursors
+could be may require computational models that can be interrogated at
+intermediate stages of learning. Distinguishing these readings will require
+functional measurement in infants, for which naturalistic paradigms are the
+most promising avenue.
+
+How do these results bear on interactive specialisation? That framework
+does not hold that connectivity begins from nothing, and by term the cortex
+has experienced months of spontaneous and sensory-driven activity in utero,
+which is activity-dependent in the relevant sense. Our claim is
+correspondingly specific and quantitative: the connectivity that
+distinguishes the adult functions of the DLPFC is in place before those
+functions, at a median of 95\% of the adult benchmark, and for emotion,
+working memory and social cognition at a level statistically
+indistinguishable from adults. Language showed the largest genuine
+shortfall, and accuracy rose modestly across the neonatal period --- an
+effect that is small relative to what is already in place, and that a
+term-born sample cannot attribute specifically to postnatal rather than
+gestational age. Whether the remainder is filled in by activity-dependent
+processes, by continued programmed growth, or by both is a question for
+longitudinal designs that measure connectivity and function in the same
+infants.
+
+Two interpretive limits deserve emphasis. First, our design measures the
+\emph{availability} of specifying information at birth, not its use:
+without longitudinal functional data we show that the scaffold is present,
+not that development builds on it. Second, connectivity may be a marker
+rather than the mechanism. Cytoarchitectonic identity could determine both
+a region's connections and its eventual function, and in ventral temporal
+cortex white-matter organisation follows cytoarchitecture more closely than
+category selectivity \citep{kubota2025}. Our design cannot separate these,
+though the question is tractable: microstructural maps are measurable at
+birth and could enter the same predictive framework as a third candidate
+specifier. Relatedly, the mapping we demonstrate is one shared across
+individuals: individual connectivity-based predictions did not exceed the
+group-average benchmark, so whether connectivity predicts individual
+\emph{deviations} from the common topography --- in adults or in
+development --- remains open, and is bounded by the reliability of
+individual activation maps.
+
+Several further limitations should be noted. Tractography in neonates is
+challenging because myelination is incomplete and the brain is small, and
+streamline counts are an indirect index of connection strength; these
+factors would weaken rather than inflate the correspondence with adult
+function. The adult parcellation was carried into neonatal space through a
+chain of registrations; imperfect registration would likewise blur rather
+than create structure. The regions used as cross-validation folds were
+defined in adults; the vertex-wise analyses do not depend on the boundaries
+being functionally correct in neonates, only on their being spatially
+contiguous. Our models were linear and moderately regularised, and the
+unexplained share of each map (Fig.~1b) indicates that much of the
+variation in function is not captured by the features we measured. Finally,
+the functional profiles were characterised with five representative
+contrasts from one task battery; broader sampling would test whether the
+conclusion generalises across the full repertoire of the DLPFC.
+
+Together with the finding that visual-cortex connectivity is adult-like at
+birth \citep{cabral2022}, these results suggest that connectional
+specification before function is a general property of the cortex rather
+than a peculiarity of early-maturing sensory areas: the two studies span
+the hierarchy from primary visual cortex to the prefrontal association
+cortex most remote from it. This is consistent with an account in which the
+coarse connectional architecture is specified early --- plausibly
+genetically, with intrauterine activity contributing --- and
+activity-dependent processes act to refine rather than to establish it,
+a view that gains force from evidence that early frontoparietal disruption
+impairs subsequent learning \citep{linke2018}. In conclusion: the
+functional topography of the adult DLPFC is specified by information that
+can be partitioned, measured, and timed. Geometry contributes, but what it
+contributes is available everywhere and always; the connectional component
+--- task-specific, robust to every geometric control, and carried by
+regions the models never saw --- is present in the first weeks of life,
+years before the functions it predicts.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
