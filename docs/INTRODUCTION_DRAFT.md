@@ -21,7 +21,7 @@ Cusack, 2026, Nat Neurosci].
 > At term birth, a human is still years away from comprehending a story,
 > months from reaching for an object, and more than a decade from the mature
 > working memory of an adult. Yet in every neurotypical adult, these functions
-> occupy a consistent arrangement of subregions within dorsolateral prefrontal
+> occupy a consistent arrangement of regions within dorsolateral prefrontal
 > cortex (DLPFC): topographies of task preference that recur, individual after
 > individual, across working memory, language, social cognition, emotion and
 > action [refs: HCP task battery; DLPFC parcellation/function]. This
@@ -155,5 +155,6 @@ Cusack, 2026, Nat Neurosci].
   neonatal specification of prefrontal functional topography"; "The
   connectional component of adult prefrontal organisation is present at
   birth"; or keep the subtitle form: "The structural connectivity that
-  distinguishes adult prefrontal subregions is present in neonates" with the
+  distinguishes the regions of adult prefrontal cortex is present in
+  neonates" ("subregions" retired for terminological consistency) with the
   geometry work carried by the abstract.
