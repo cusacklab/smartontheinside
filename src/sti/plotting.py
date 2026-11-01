@@ -699,17 +699,19 @@ def plot_pipeline_null_ladder(nulls: dict, summaries: dict, *, title: str = ""):
 
     ``nulls`` maps a feature-set label (e.g. "tractography", "distance
     regressed") to the merged per-surrogate null table; ``summaries`` maps the
-    same labels to the summary tables (observed_r, p_fdr, stars). One panel
-    per (hemisphere, feature set): the null distribution of each contrast as
-    a violin, the observed accuracy as a filled marker in the contrast's
-    colour. Under region-level cross-validation the nulls sit below zero
-    (stitched intercepts anti-predict), so the zero line is drawn explicitly.
+    same labels to the summary tables (observed_r, p_fdr, stars). Hemispheres
+    are the columns (L left, R right, matching the other figures) and the
+    feature sets the rows; each panel shows the null distribution of each
+    contrast as a violin and the observed accuracy as a filled marker in the
+    contrast's colour. Under region-level cross-validation the nulls sit
+    below zero (stitched intercepts anti-predict), so the zero line is drawn
+    explicitly.
     """
     plt = _mpl()
     labels = list(nulls)
     hemis = ("L", "R")
-    fig, axes = plt.subplots(len(hemis), len(labels),
-                             figsize=(4.4 * len(labels), 2.9 * len(hemis)),
+    fig, axes = plt.subplots(len(labels), len(hemis),
+                             figsize=(4.4 * len(hemis), 2.9 * len(labels)),
                              sharex=True, sharey=True)
     axes = np.atleast_2d(axes)
 
@@ -717,8 +719,8 @@ def plot_pipeline_null_ladder(nulls: dict, summaries: dict, *, title: str = ""):
     short = [t.replace("tfMRI_", "") for t in tasks]
     colours = dict(zip(tasks, PALETTE))
 
-    for i, hemi in enumerate(hemis):
-        for j, lab in enumerate(labels):
+    for i, lab in enumerate(labels):
+        for j, hemi in enumerate(hemis):
             ax = axes[i][j]
             null, summ = nulls[lab], summaries[lab]
             for x, task in enumerate(tasks):
@@ -740,9 +742,9 @@ def plot_pipeline_null_ladder(nulls: dict, summaries: dict, *, title: str = ""):
             ax.set_xticks(range(len(tasks)))
             ax.set_xticklabels(short, rotation=45, ha="right")
             if i == 0:
-                ax.set_title(lab, color=INK)
+                ax.set_title(f"{hemi} hemisphere", color=INK)
             if j == 0:
-                ax.set_ylabel(f"{hemi} hemisphere\naccuracy (r)")
+                ax.set_ylabel(f"{lab}\naccuracy (r)")
             _style(ax)
     if title:
         fig.suptitle(title, color=INK)
