@@ -71,16 +71,15 @@ organised, and microstructure varies smoothly with position. A demonstration
 that any one of them predicts function therefore does not, by itself,
 distinguish between them.
 
-These accounts can be brought to data. Task fMRI measures each cortical
-location's functional profile; diffusion tractography estimates, in the same
-individuals, how strongly that location connects to every other region of
-the brain; and the connectional account then becomes a prediction: if
+These accounts can be tested using neuroimaging. Task fMRI can measure each cortical
+location's functional profile; diffusion tractography can estimate how strongly that location connects to every other region of
+the brain. If
 function follows connectivity, a model trained to map connectivity profiles
 onto activation in one group of individuals should predict activation, from
 connectivity alone, in individuals it has never seen
-\citep{saygin2011,osher2016}. Applied across development, the same logic
-asks whether the information that specifies adult topography is already
-measurable in the neonatal connectome. The inferential risk is that such
+\citep{saygin2011,osher2016}. The same method can be used to investigate development \citep{saygin2016}, for example by testing
+whether the information that specifies adult topography is already
+measurable in the neonatal connectome \citep{cabral2022} (Fig.~1a). An inferential risk is that such
 predictions can succeed for the wrong reason. Diffusion tractography is
 biased toward nearby targets, so a location's tractography profile partly
 encodes its position; and group-average activation maps are spatially
@@ -89,12 +88,12 @@ connectivity-based prediction of function can therefore succeed as a
 re-description of geometry \citep{donahue2016,pang2023}. We address this by comparison against explicit
 geometric baselines. We measure what spatial smoothness alone achieves, by
 passing surrogate maps with matched spatial autocorrelation
-\citep{burt2020} through the full analysis pipeline; what geometry achieves,
+\citep{burt2020}; what geometry achieves,
 with a model given only each vertex's distances to the rest of the brain; and
 what connectivity adds beyond both, including after the distance dependence
-of tractography is removed from its profiles. Beyond these baselines, every
+of tractography is removed from its profiles. Every
 primary analysis is evaluated only on cortical regions the model has never
-seen, so success requires extrapolation rather than interpolation. We also
+seen and in particiapnts it has never seen. We also
 estimate how the variance of each functional map divides into geometric,
 connectional and shared components (Fig.~1b).
 
@@ -103,15 +102,13 @@ available relative to experience. We make no claim that neonatal DLPFC is
 inactive or uncommitted: it shows organised spontaneous activity, responses
 to speech are detectable in frontal cortex even in premature neonates
 \citep{mahmoudzadeh2013,dehaenelambertz2002}, attentional signals appear
-within months \citep{ellis2021}, and neural activity can reveal function well
-before behaviour does --- infants hold visual category information that overt
-behaviour alone would not show \citep{odoherty2026}. Our premise is narrower
+within months \citep{ellis2021}. Our premise is narrower
 and behavioural: the functions indexed by our five contrasts --- instructed
 working memory, narrative comprehension, explicit mentalising, cued action
 selection, emotion recognition --- constitute an \emph{adult task repertoire}
 that emerges over years and matures into the second decade
 \citep{wellman2001,luna2004}, and DLPFC is among the last cortical
-territories to mature by every anatomical index
+territories to mature on a number of anatomical indices
 \citep{chugani1986,huttenlocher1997,gogtay2004}. At term, essentially all of
 the experience of performing this repertoire lies in the future. Whatever
 precursor computations neonatal DLPFC performs, a specification of the
@@ -125,7 +122,7 @@ at once, and under explicit geometric controls: is the \emph{connectional}
 component of adult DLPFC topography --- the part geometry cannot carry ---
 already present in the neonatal connectome?
 
-We studied the topography of five task activations within DLPFC in 155 adults
+We studied the topography of the five task activations within DLPFC in 155 adults
 \citep{vanessen2013,barch2013} and structural connectivity in the same adults
 and in 325 term neonates \citep{edwards2022}, within a single predictive
 framework: identical models, targets and metrics throughout, so that
