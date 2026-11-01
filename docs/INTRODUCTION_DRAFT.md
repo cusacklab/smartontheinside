@@ -53,12 +53,23 @@ Cusack, 2026, Nat Neurosci].
 
 ## ¶3 — The inferential standard
 
-> The entanglement is not hypothetical. Diffusion tractography is biased
-> toward nearby targets, so a vertex's tractography profile partly encodes
-> its position; and group-average activation maps are spatially smooth, so a
-> model needs little more than position to approximate them. A
-> connectivity-based prediction of function can therefore succeed as a
-> re-description of geometry [cf. Donahue et al. 2016; Pang et al. 2023]. We
+> These accounts can be brought to data. Task fMRI measures each cortical
+> location's functional profile; diffusion tractography estimates, in the
+> same individuals, how strongly that location connects to every other
+> region of the brain; and the connectional account then becomes a
+> prediction: if function follows connectivity, a model trained to map
+> connectivity profiles onto activation in one group of individuals should
+> predict activation, from connectivity alone, in individuals it has never
+> seen [Saygin et al. 2011; Osher et al. 2016]. Applied across development,
+> the same logic asks whether the information that specifies adult
+> topography is already measurable in the neonatal connectome. The
+> inferential risk is that such predictions can succeed for the wrong
+> reason. Diffusion tractography is biased toward nearby targets, so a
+> location's tractography profile partly encodes its position; and
+> group-average activation maps are spatially smooth, so a model needs
+> little more than position to approximate them. A connectivity-based
+> prediction of function can therefore succeed as a re-description of
+> geometry [cf. Donahue et al. 2016; Pang et al. 2023]. We
 > address this by comparison against explicit geometric baselines. We measure
 > what spatial smoothness alone achieves, by passing surrogate maps with
 > matched spatial autocorrelation through the full analysis pipeline; what
